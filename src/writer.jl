@@ -1,6 +1,5 @@
-import Documenter: Anchor, Builder, Expanders, Documenter, Document
-import Documenter: DocsNodes, DocsNode, IndexNode, ContentsNode, EvalNode, MetaNode, RawNode
-import Documenter: MultiCodeBlock, MultiOutput
+import Documenter: Anchors, Builder, Documents, Expanders, Documenter, Utilities
+
 import ANSIColoredPrinters
 
 # import Markdown as MarkdownStdlib
@@ -15,7 +14,7 @@ end
 # return the same file with the extension changed to .md
 mdext(f) = string(splitext(f)[1], ".md")
 
-function render(doc::Document, settings::MarkdownVitepress=MarkdownVitepress())
+function render(doc::Documents.Document, settings::MarkdownVitepress=MarkdownVitepress())
     @info "DocumenterMarkdownVitepress: rendering MarkdownVitepress pages."
     copy_assets(doc)
     mime = MIME"text/plain"()
@@ -29,7 +28,7 @@ function render(doc::Document, settings::MarkdownVitepress=MarkdownVitepress())
     end
 end
 
-function copy_assets(doc::Document)
+function copy_assets(doc::Documents.Document)
     @debug "copying assets to build directory."
     assets = ASSETS
     if isdir(assets)
@@ -52,25 +51,25 @@ function render(io::IO, mime::MIME"text/plain", vec::Vector, page, doc)
     end
 end
 
-function render(io::IO, mime::MIME"text/plain", anchor::Anchor, page, doc)
-    println(io, "\n<a id='", lstrip(anchor_fragment(anchor), '#'), "'></a>")
+function render(io::IO, mime::MIME"text/plain", anchor::Anchors.Anchor, page, doc)
+    println(io, "\n<a id='", lstrip(Anchors.fragment(anchor), '#'), "'></a>")
     return render(io, mime, anchor.object, page, doc)
 end
 
 ## Documentation Nodes.
 
-function render(io::IO, mime::MIME"text/plain", node::DocsNodes, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documents.DocsNodes, page, doc)
     for node in node.nodes
         render(io, mime, node, page, doc)
     end
 end
 
-function render(io::IO, mime::MIME"text/plain", node::DocsNode, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documents.DocsNode, page, doc)
     # Docstring header based on the name of the binding and it's category.
     println(io,
         "<div style='border-width:1px; border-style:solid; border-color:black; padding: 1em; border-radius: 25px;'>")
     anchor = "<a id='$(node.anchor.id)' href='#$(node.anchor.id)'>#</a>"
-    header = "&nbsp;<b><u>$(node.object.binding)</u></b> &mdash; <i>$(doccat(node.object))</i>."
+    header = "&nbsp;<b><u>$(node.object.binding)</u></b> &mdash; <i>$(Utilities.doccat(node.object))</i>."
     println(io, anchor, header, "\n\n")
     # Body. May contain several concatenated docstrings.
     renderdoc(io, mime, node.docstr, page, doc)
@@ -85,7 +84,7 @@ function renderdoc(io::IO, mime::MIME"text/plain", md::MarkdownStdlib.MD, page, 
         for (markdown, result) in zip(md.content, md.meta[:results])
             render(io, mime, dropheaders(markdown), page, doc)
             # When a source link is available then print the link.
-            url = url(doc.internal.remote, doc.user.repo, result)
+            url = Utilities.url(doc.internal.remote, doc.user.repo, result)
             if url !== nothing
                 link = "<a target='_blank' href='$url' class='documenter-source'>source</a><br>"
                 println(io, "\n", link, "\n")
@@ -105,40 +104,40 @@ end
 
 ## Index, Contents, and Eval Nodes.
 
-function render(io::IO, ::MIME"text/plain", index::IndexNode, page, doc)
+function render(io::IO, ::MIME"text/plain", index::Documents.IndexNode, page, doc)
     for (object, _, page, mod, cat) in index.elements
         page = mdext(page)
-        url = string("#", slugify(object))
+        url = string("#", Utilities.slugify(object))
         println(io, "- [`", object.binding, "`](", url, ")")
     end
     return println(io)
 end
 
-function render(io::IO, ::MIME"text/plain", contents::ContentsNode, page, doc)
+function render(io::IO, ::MIME"text/plain", contents::Documents.ContentsNode, page, doc)
     for (count, path, anchor) in contents.elements
         path = mdext(path)
         header = anchor.object
-        url = string(path, anchor_fragment(anchor))
+        url = string(path, Anchors.fragment(anchor))
         link = MarkdownStdlib.Link(header.text, url)
-        level = header_level(header)
+        level = Utilities.header_level(header)
         print(io, "    "^(level - 1), "- ")
-        linkfix = ".md#"
-        println(io, replace(MarkdownStdlib.plaininline(link), linkfix => "#"))
+        MarkdownStdlib.plaininline(io, link)
+        println(io)
     end
     return println(io)
 end
 
-function render(io::IO, mime::MIME"text/plain", node::EvalNode, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documents.EvalNode, page, doc)
     return node.result === nothing ? nothing : render(io, mime, node.result, page, doc)
 end
 
-function render(io::IO, mime::MIME"text/plain", mcb::MultiCodeBlock, page, doc)
-    return render(io, mime, join_multiblock(mcb), page, doc)
+function render(io::IO, mime::MIME"text/plain", mcb::Documents.MultiCodeBlock, page, doc)
+    return render(io, mime, Documents.join_multiblock(mcb), page, doc)
 end
 
 # Select the "best" representation for Markdown output.
 using Base64: base64decode
-function render(io::IO, mime::MIME"text/plain", d::MultiOutput, page, doc)
+function render(io::IO, mime::MIME"text/plain", d::Documents.MultiOutput, page, doc)
     return foreach(x -> Base.invokelatest(render, io, mime, x, page, doc), d.content)
 end
 function render(io::IO, mime::MIME"text/plain", d::Dict{MIME, Any}, page, doc)
@@ -203,9 +202,9 @@ render(io::IO, ::MIME"text/plain", str::AbstractString, page, doc) = print(io, s
 
 # Metadata Nodes get dropped from the final output for every format but are needed throughout
 # rest of the build and so we just leave them in place and print a blank line in their place.
-render(io::IO, ::MIME"text/plain", node::MetaNode, page, doc) = println(io, "\n")
+render(io::IO, ::MIME"text/plain", node::Documents.MetaNode, page, doc) = println(io, "\n")
 
-function render(io::IO, ::MIME"text/plain", raw::RawNode, page, doc)
+function render(io::IO, ::MIME"text/plain", raw::Documents.RawNode, page, doc)
     return raw.name === :html ? println(io, raw.text, "\n") : nothing
 end
 
