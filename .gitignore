@@ -2,3 +2,4 @@ Manifest.toml
 .vscode
 docs/docs
 docs/docs/cache
+.DS_Store

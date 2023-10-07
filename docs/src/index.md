@@ -4,11 +4,17 @@
 layout: home
 
 hero:
-  name: "Template DocumenterVitepress"
-  text: "A VitePress Site"
+  name: "DocumenterVitePress"
+  text: "A Documenter.jl + VitePress Site"
   tagline: My great project tagline
+  image:
+    src: /logo-dark.svg
+    alt: DocumenterVitepress
   actions:
     - theme: brand
+      text: Getting Started
+      link: /getting_started
+    - theme: alt
       text: Markdown Examples
       link: /markdown-examples
     - theme: alt
