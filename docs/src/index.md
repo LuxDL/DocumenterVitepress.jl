@@ -8,7 +8,7 @@ hero:
   text: "A Documenter.jl + VitePress Site"
   tagline: My great project tagline
   image:
-    src: /logo-dark.svg
+    src: /logo_dark.png
     alt: DocumenterVitepress
   actions:
     - theme: brand

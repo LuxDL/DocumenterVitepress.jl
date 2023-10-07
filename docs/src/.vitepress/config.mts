@@ -19,14 +19,14 @@ export default defineConfig({
   },
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    logo: { src: '/logo-dark.svg', width: 24, height: 24 },
+    logo: { src: '/logo_dark.png', width: 24, height: 24 },
     search: {
       provider: 'local'
     },
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/getting_started' },
-      { text: 'Examples', link: '/code-example' }
+      { text: 'Examples', link: '/code_example' }
     ],
 
     sidebar: [
