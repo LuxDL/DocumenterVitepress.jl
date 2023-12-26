@@ -1,16 +1,12 @@
 @import url(https://fonts.googleapis.com/css?family=Space+Mono:regular,italic,700,700italic);
 @import url(https://fonts.googleapis.com/css?family=Space+Grotesk:regular,italic,700,700italic);
 
-/**
- * Customize default theme styling by overriding CSS variables:
- * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
+/* Customize default theme styling by overriding CSS variables:
+https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
  */
 
-/**
+  /* Layouts */
 
-/**
- * Layouts
- * -------------------------------------------------------------------------- */
 /* 
  :root {
   --vp-layout-max-width: 1440px;
@@ -21,10 +17,9 @@
   max-width: 500px;
 }
 
- * Fonts
- * -------------------------------------------------------------------------- 
- */
-:root {
+/* Fonts */
+
+ :root {
   /* Typography */
   --vp-font-family-base: "Barlow", "Inter var experimental", "Inter var",
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
@@ -35,9 +30,7 @@
     monospace;
 }
 
-/**
- * Colors
- * -------------------------------------------------------------------------- */
+/* Colors */
 
 :root {
   --julia-blue: #4063D8;
@@ -54,9 +47,7 @@
   --vp-c-brand-dimm: #212425;
 }
 
-/**
- * Component: Button
- * -------------------------------------------------------------------------- */
+ /* Component: Button */
 
 :root {
   --vp-button-brand-border: var(--vp-c-brand-light);
@@ -70,10 +61,7 @@
   --vp-button-brand-active-bg: var(--vp-button-brand-bg);
 }
 
-
-/**
- * Component: Home
- * -------------------------------------------------------------------------- */
+/* Component: Home */
 
 :root {
   --vp-home-hero-name-color: transparent;
@@ -104,9 +92,7 @@
   }
 }
 
-/**
- * Component: Custom Block
- * -------------------------------------------------------------------------- */
+/* Component: Custom Block */
 
 :root.dark {
   --vp-custom-block-tip-border: var(--vp-c-brand);
@@ -136,17 +122,14 @@
      */
 }
 
-/**
- * Component: Algolia
- * -------------------------------------------------------------------------- */
+ /* Component: Algolia */
 
 .DocSearch {
   --docsearch-primary-color: var(--vp-c-brand) !important;
 }
 
-/**
- * Component: MathJax
- * -------------------------------------------------------------------------- */
+/* Component: MathJax */
+
 mjx-container > svg {
   display: block;
   margin: auto;
