@@ -4,9 +4,9 @@
 layout: home
 
 hero:
-  name: "DocumenterVitePress"
-  text: "A Documenter.jl + VitePress Site"
-  tagline: My great project tagline
+  name: "DocumenterVitepress"
+  text: "Document your code"
+  tagline: A Markdown backend designed to work with VitePress
   image:
     src: /logo_dark.png
     alt: DocumenterVitepress
@@ -22,12 +22,12 @@ hero:
       link: /api-examples
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Markdown
+    details: Write in standar markdown syntax
+  - title: Scripts
+    details: Parse scripts into markdown via Literate.jl
+  - title: VUE components
+    details: Explore the possibilities with VUE components
 ---
 ```
 

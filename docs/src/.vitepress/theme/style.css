@@ -7,6 +7,20 @@
  */
 
 /**
+
+/**
+ * Layouts
+ * -------------------------------------------------------------------------- */
+/* 
+ :root {
+  --vp-layout-max-width: 1440px;
+} */
+
+.VPHero .clip {
+  white-space: pre;
+  max-width: 500px;
+}
+
  * Fonts
  * -------------------------------------------------------------------------- 
  */
@@ -32,12 +46,12 @@
   --julia-green: #389826;
 
   --vp-c-brand: #389826;
-  --vp-c-brand-light: #a0a0ab;
+  --vp-c-brand-light: #e3e3f3;
   --vp-c-brand-lighter: #9499ff;
   --vp-c-brand-lightest: #bcc0ff;
   --vp-c-brand-dark: #535bf2;
   --vp-c-brand-darker: #454ce1;
-  --vp-c-brand-dimm: rgba(100, 108, 255, 0.08);
+  --vp-c-brand-dimm: #212425;
 }
 
 /**
@@ -56,6 +70,7 @@
   --vp-button-brand-active-bg: var(--vp-button-brand-bg);
 }
 
+
 /**
  * Component: Home
  * -------------------------------------------------------------------------- */
@@ -70,8 +85,9 @@
 
   --vp-home-hero-image-background-image: linear-gradient(
     -45deg,
-    #9558B2 50%,
-    #CB3C33 50%
+    #9558B2 30%,
+    #389826 30%,
+    #CB3C33 
   );
   --vp-home-hero-image-filter: blur(40px);
 }
@@ -92,16 +108,32 @@
  * Component: Custom Block
  * -------------------------------------------------------------------------- */
 
-:root {
-  --vp-custom-block-tip-border: var(--vp-c-brand);
-  --vp-custom-block-tip-text: var(--vp-c-brand-darker);
-  --vp-custom-block-tip-bg: var(--vp-c-brand-dimm);
-}
-
-.dark {
+:root.dark {
   --vp-custom-block-tip-border: var(--vp-c-brand);
   --vp-custom-block-tip-text: var(--vp-c-brand-lightest);
   --vp-custom-block-tip-bg: var(--vp-c-brand-dimm);
+
+    /* // Tweak the color palette for blacks and dark grays */
+    --vp-c-black: hsl(220 20% 9%);
+    --vp-c-black-pure: hsl(220, 24%, 4%);
+    --vp-c-black-soft: hsl(220 16% 13%);
+    --vp-c-black-mute: hsl(220 14% 17%);
+    --vp-c-gray: hsl(220 8% 56%);
+    --vp-c-gray-dark-1: hsl(220 10% 39%);
+    --vp-c-gray-dark-2: hsl(220 12% 28%);
+    --vp-c-gray-dark-3: hsl(220 12% 23%);
+    --vp-c-gray-dark-4: hsl(220 14% 17%);
+    --vp-c-gray-dark-5: hsl(220 16% 13%);
+  
+    /* // Backgrounds */
+    /* --vp-c-bg: hsl(240, 2%, 11%); */
+    --vp-custom-block-info-bg: hsl(220 14% 17%);
+    /* --vp-c-gutter: hsl(220 20% 9%);
+
+    --vp-c-bg-alt: hsl(220 20% 9%);
+    --vp-c-bg-soft: hsl(220 14% 17%);
+    --vp-c-bg-mute: hsl(220 12% 23%);
+     */
 }
 
 /**
@@ -111,7 +143,6 @@
 .DocSearch {
   --docsearch-primary-color: var(--vp-c-brand) !important;
 }
-
 
 /**
  * Component: MathJax

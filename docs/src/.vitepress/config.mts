@@ -3,7 +3,7 @@ import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: '/DocumenterVitepress/',
+  // base: '/DocumenterVitepress/',
   title: "DocumenterVitepress",
   description: "A VitePress Site",
   lastUpdated: true,
@@ -41,11 +41,11 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: 'github', link: 'https://github.com/LuxDL/DocumenterVitepress.jl' }
     ],
     footer: {
-      message: 'Made with <a href="https://documenter.juliadocs.org/stable/" target="_blank"><strong>Documenter.jl</strong></a> & <a href="https://vitepress.dev" target="_blank"><strong>VitePress</strong></a> <br> Released under the MIT License. Powered by the <a href="https://julialang.org" target="_blank">Julia Programming Language.</a>',
-      copyright: 'Copyright © 2023-present <strong>LuxDL</strong>'
+      message: 'Made with <a href="https://documenter.juliadocs.org/stable/" target="_blank"><strong>Documenter.jl</strong></a> & <a href="https://vitepress.dev" target="_blank"><strong>VitePress</strong></a> <br>',
+      copyright: `© Copyright ${new Date().getUTCFullYear()}. Released under the MIT License.`
     }
   }
 })
