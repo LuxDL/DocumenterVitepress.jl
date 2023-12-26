@@ -5,6 +5,6 @@
     "docs:preview": "vitepress preview docs/docs"
   },
   "devDependencies": {
-    "vitepress-plugin-tabs": "workspace:*"
+    "vitepress-plugin-tabs": "^0.5.0"
   }
 }
