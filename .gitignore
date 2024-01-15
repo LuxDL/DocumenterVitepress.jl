@@ -3,3 +3,7 @@ Manifest.toml
 docs/docs
 docs/docs/cache
 .DS_Store
+node_modules
+docs/docs/.vitepress/dist
+docs/docs/.vitepress/cache
+docs/src/.vitepress/cache
