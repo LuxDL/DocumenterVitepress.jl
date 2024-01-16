@@ -3,7 +3,7 @@ import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: '/',
+  base: '/DocumenterVitepress/',
   title: "DocumenterVitepress",
   description: "A VitePress Site",
   lastUpdated: true,
