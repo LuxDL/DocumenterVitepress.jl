@@ -12,6 +12,7 @@ using Documenter.Utilities: Selectors
 const ASSETS = normpath(joinpath(@__DIR__, "..", "assets"))
 
 include("writer.jl")
+include("ANSIBlocks.jl")
 
 export MarkdownVitepress
 

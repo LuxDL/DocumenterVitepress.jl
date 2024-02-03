@@ -5,11 +5,7 @@ Visit at https://luxdl.github.io/DocumenterVitepress.jl/
 ## npm dependencies
 
 ```shell
-npm add -D vitepress
-```
-
-```shell
-npm install -D vitest
+npm i
 ```
 
 ## run docs locally
