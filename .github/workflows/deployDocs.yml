@@ -32,27 +32,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Not needed if lastUpdated is not enabled
       # - uses: pnpm/action-setup@v2 # Uncomment this if you're using pnpm
       # - uses: oven-sh/setup-bun@v1 # Uncomment this if you're using Bun
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+            node-version: 20
+            cache: npm # or pnpm / yarn
+            cache-dependency-path: 'package-lock.json' # this should be a package-lock.json file
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Install dependencies
+        run: npm ci # or pnpm install / yarn install / bun install
       - name: Julia version
         uses: julia-actions/setup-julia@v1
       - name: Julia cache
         uses: julia-actions/cache@v1
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-            node-version: 18
-            cache: npm # or pnpm / yarn
-            cache-dependency-path: 'package-lock.json' # this should be a package-lock.json file
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-      - name: Install dependencies
-        run: npm add -D vitepress # or pnpm install / yarn install / bun install
       - name: Install documentation dependencies
-        run: julia --project=docs -e 'using Pkg; pkg"dev ."; Pkg.instantiate(); Pkg.precompile()'
+        run: julia --project=docs -e 'using Pkg; pkg"dev ."; Pkg.instantiate(); Pkg.precompile(); Pkg.status()'
       - name: generating examples md files
         run: |
           julia --project=docs/ --color=yes docs/make.jl
@@ -61,7 +61,7 @@ jobs:
           NODE_OPTIONS=--max-old-space-size=32768 npm run docs:build # or pnpm docs:build / yarn docs:build / bun run docs:build
           touch docs/docs_site/.vitepress/dist/.nojekyll
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: docs/docs_site/.vitepress/dist
 
@@ -76,4 +76,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
