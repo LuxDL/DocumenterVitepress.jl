@@ -16,6 +16,7 @@ on:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
+  actions: write # useful to delete gh cache
   contents: read
   pages: write
   id-token: write
