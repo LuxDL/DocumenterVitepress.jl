@@ -202,7 +202,6 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
         end
         # push the last code block
         push!(codes, Markdown.Code(intelligent_language(current_language), current_string))
-        Main.@infiltrate
         return codes
 
     end
