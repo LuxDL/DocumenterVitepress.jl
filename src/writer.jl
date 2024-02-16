@@ -361,7 +361,7 @@ end
 #     end
 # end
 
-
+# TODO: list ordering is broken!
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc)
     # @infiltrate
     if list.type === :ordered
@@ -400,4 +400,17 @@ function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::M
     `$(value.ref)` which is of type `$(typeof(value.ref))`
     """)
     println(io, value.ref)
+end
+
+# Documenter.jl page links
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc)
+    # @infiltrate
+   path = if !isempty(link.fragment)
+        string(hash(link.fragment))
+    else
+        Documenter.pagekey(io.doc, link.page)
+    end
+    print(io, "<a href=\"$path\">")
+    render(io, mime, node, node.children, page, doc)
+    print(io, "</a>")
 end
