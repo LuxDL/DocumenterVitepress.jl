@@ -414,3 +414,14 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(io, mime, node, node.children, page, doc)
     print(io, "</a>")
 end
+
+# Documenter.jl local links
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.LocalLink, page, doc)
+    # @infiltrate
+    href = isempty(link.fragment) ? link.path : "$(link.path)#($(link.fragment))"
+    print(io, "<a href=\"$href\">")
+    render(io, mime, node, node.children, page, doc)
+    print(io, "</a>")
+end
+
+
