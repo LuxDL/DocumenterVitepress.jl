@@ -1,29 +1,31 @@
-import Documenter: Anchors, Builder, Documents, Expanders, Documenter, Utilities
-import Documenter.Utilities: Selectors
+import Documenter: Builder, Expanders, Documenter
+import Documenter: Selectors
 import Markdown, REPL
 import Base64: stringmime
 import IOCapture
-import Documenter.Expanders: iscode, droplines, prepend_prompt, remove_sandbox_from_output
+import Documenter: iscode, droplines, prepend_prompt, remove_sandbox_from_output
 
 abstract type ANSIBlocks <: Expanders.ExpanderPipeline end
 
 Selectors.order(::Type{ANSIBlocks})     = 12.0
 Selectors.matcher(::Type{ANSIBlocks},     node, page, doc) = iscode(node, r"^@ansi")
 
-function Selectors.runner(::Type{ANSIBlocks}, x, page, doc)
-    matched = match(r"^@ansi(?:\s+([^\s;]+))?\s*(;.*)?$", x.language)
-    matched === nothing && error("invalid '@ansi' syntax: $(x.language)")
+function Selectors.runner(::Type{ANSIBlocks}, node, page, doc)
+    matched = match(r"^@ansi(?:\s+([^\s;]+))?\s*(;.*)?$", node.element.info)
+    matched === nothing && error("invalid '@ansi' syntax: $(node.element.info)")
     name, kwargs = matched.captures
 
+    x = node.element
+
     # Bail early if in draft mode
-    if Utilities.is_draft(doc, page)
+    if Documenter.is_draft(doc, page)
         @debug "Skipping evaluation of @ansi block in draft mode:\n$(x.code)"
         page.mapping[x] = create_draft_result(x; blocktype="@ansi")
         return
     end
 
     # The sandboxed module -- either a new one or a cached one from this page.
-    mod = Utilities.get_sandbox_module!(page.globals.meta, "atexample", name)
+    mod = Documenter.get_sandbox_module!(page.globals.meta, "atexample", name)
 
     # "parse" keyword arguments to repl
     ansicolor = true
@@ -31,10 +33,10 @@ function Selectors.runner(::Type{ANSIBlocks}, x, page, doc)
     multicodeblock = Markdown.Code[]
     linenumbernode = LineNumberNode(0, "REPL") # line unused, set to 0
     @debug "Evaluating @ansi block:\n$(x.code)"
-    for (ex, str) in Utilities.parseblock(x.code, doc, page; keywords = false,
+    for (ex, str) in Documenter.parseblock(x.code, doc, page; keywords = false,
                                           linenumbernode = linenumbernode)
         input  = droplines(str)
-        if VERSION >= v"1.5.0-DEV.178"
+        @static if VERSION >= v"1.5.0-DEV.178"
             # Use the REPL softscope for REPLBlocks,
             # see https://github.com/JuliaLang/julia/pull/33864
             ex = REPL.softscope!(ex)
@@ -49,9 +51,9 @@ function Selectors.runner(::Type{ANSIBlocks}, x, page, doc)
         buf = IOContext(IOBuffer(), :color=>ansicolor)
         output = if !c.error
             hide = REPL.ends_with_semicolon(input)
-            Documenter.DocTests.result_to_string(buf, hide ? nothing : c.value)
+            Documenter.result_to_string(buf, hide ? nothing : c.value)
         else
-            Documenter.DocTests.error_to_string(buf, c.value, [])
+            Documenter.error_to_string(buf, c.value, [])
         end
         if !isempty(input)
             push!(multicodeblock, Markdown.Code("ansi", prepend_prompt(input)))
@@ -69,5 +71,8 @@ function Selectors.runner(::Type{ANSIBlocks}, x, page, doc)
         outstr = remove_sandbox_from_output(outstr, mod)
         push!(multicodeblock, Markdown.Code("documenter-ansi", rstrip(outstr)))
     end
-    page.mapping[x] = Documents.MultiCodeBlock("ansi", multicodeblock)
+    # @infiltrate
+    # idx = findfirst(==(node), page.elements)
+    new_element = Documenter.MultiCodeBlock(x, "ansi", multicodeblock)
+    node.element = new_element
 end
