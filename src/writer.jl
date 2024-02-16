@@ -239,7 +239,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
             base64decode(d[MIME"image/gif"()]))
         println(io,
             """
-    ![]($(filename).mp4)
+    <video src="$filename.mp4" controls="controls" autoplay="autoplay"></video>)
     """)
     elseif haskey(d, MIME"text/plain"())
         text = d[MIME"text/plain"()]
