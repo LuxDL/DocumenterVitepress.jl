@@ -164,18 +164,61 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     return evalnode.result === nothing ? nothing : render(io, mime, node, evalnode.result, page, doc)
 end
 
+function intelligent_language(lang::String)
+    if lang == "ansi"
+        "julia"
+    elseif lang == "documenter-ansi"
+        "ansi"
+    else
+        lang
+    end
+end
+
 function join_multiblock(mcb::Documenter.MultiCodeBlock)
-    io = IOBuffer()
-    for (i, thing) in enumerate(mcb.content)
-        print(io, thing.code)
-        if i != length(mcb.content)
-            println(io)
-            if findnext(x -> x.language == mcb.language, mcb.content, i + 1) == i + 1
+    if mcb.language == "ansi"
+        # Return a vector of Markdown code blocks
+        # where each block is a single line of the output or input.
+        # Basically, we iterate through the code,
+        # and whenever the language changes, we
+        # start a new code block and push the old one to the array!
+        codes = Markdown.Code[]
+        current_language = first(mcb.content).language
+        current_string = ""
+        for thing in mcb.content
+            # reset the buffer and push the old code block
+            if thing.language != current_language
+                # Remove this if statement if you want to 
+                # include empty code blocks in the output.
+                if isempty(thing.code) 
+                    current_string *= "\n\n"
+                    continue
+                end
+                push!(codes, Markdown.Code(intelligent_language(current_language), current_string))
+                current_string = ""
+                current_language = thing.language # reset the current language
+            end
+            # push the current code to `io`
+            current_string *= thing.code
+        end
+        # push the last code block
+        push!(codes, Markdown.Code(intelligent_language(current_language), current_string))
+        Main.@infiltrate
+        return codes
+
+    end
+    # else
+        io = IOBuffer()
+        for (i, thing) in enumerate(mcb.content)
+            print(io, thing.code)
+            if i != length(mcb.content)
                 println(io)
+                if findnext(x -> x.language == mcb.language, mcb.content, i + 1) == i + 1
+                    println(io)
+                end
             end
         end
-    end
-    return Markdown.Code(mcb.language, String(take!(io)))
+        return Markdown.Code(mcb.language, String(take!(io)))
+    # end
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc)
@@ -315,7 +358,11 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc)
-    render(io, mime, node, Markdown.Code(code.info, code.code), page, doc)
+    info = code.info
+    if info == "julia-repl"
+        info = "julia"
+    end
+    render(io, mime, node, Markdown.Code(info, code.code), page, doc)
 end
 # Inline code
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.Code, page, doc)
