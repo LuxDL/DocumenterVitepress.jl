@@ -388,7 +388,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io, "\">")
 end
 # Interpolated Julia values
-function render(io, mime, node::MarkdownAST.Node, value::MarkdownAST.JuliaValue, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::MarkdownAST.JuliaValue, page, doc)
     @warn("""
     Unexpected Julia interpolation in the Markdown. This probably means that you
     have an unbalanced or un-escaped \$ in the text.
