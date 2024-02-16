@@ -164,18 +164,60 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     return evalnode.result === nothing ? nothing : render(io, mime, node, evalnode.result, page, doc)
 end
 
+function intelligent_language(lang::String)
+    if lang == "ansi"
+        "julia"
+    elseif lang == "documenter-ansi"
+        "ansi"
+    else
+        lang
+    end
+end
+
 function join_multiblock(mcb::Documenter.MultiCodeBlock)
-    io = IOBuffer()
-    for (i, thing) in enumerate(mcb.content)
-        print(io, thing.code)
-        if i != length(mcb.content)
-            println(io)
-            if findnext(x -> x.language == mcb.language, mcb.content, i + 1) == i + 1
+    if mcb.language == "ansi"
+        # Return a vector of Markdown code blocks
+        # where each block is a single line of the output or input.
+        # Basically, we iterate through the code,
+        # and whenever the language changes, we
+        # start a new code block and push the old one to the array!
+        codes = Markdown.Code[]
+        current_language = first(mcb.content).language
+        current_string = ""
+        for thing in mcb.content
+            # reset the buffer and push the old code block
+            if thing.language != current_language
+                # Remove this if statement if you want to 
+                # include empty code blocks in the output.
+                if isempty(thing.code) 
+                    current_string *= "\n\n"
+                    continue
+                end
+                push!(codes, Markdown.Code(intelligent_language(current_language), current_string))
+                current_string = ""
+                current_language = thing.language # reset the current language
+            end
+            # push the current code to `io`
+            current_string *= thing.code
+        end
+        # push the last code block
+        push!(codes, Markdown.Code(intelligent_language(current_language), current_string))
+        return codes
+
+    end
+    # else
+        io = IOBuffer()
+        for (i, thing) in enumerate(mcb.content)
+            print(io, thing.code)
+            if i != length(mcb.content)
                 println(io)
+                if findnext(x -> x.language == mcb.language, mcb.content, i + 1) == i + 1
+                    println(io)
+                end
             end
         end
-    end
-    return Markdown.Code(mcb.language, String(take!(io)))
+        return Markdown.Code(mcb.language, String(take!(io)))
+    # end
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc)
@@ -204,7 +246,15 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         # as browsers seem to need to have the xmlns attribute set in the <svg> tag if you
         # want to include it with <img>. However, setting that attribute is up to the code
         # creating the SVG image.
-        println(io, d[MIME"image/svg+xml"()])
+        image_text = d[MIME"image/svg+xml"()]
+        # Additionally, Vitepress complains about the XML version and encoding string below,
+        # so we just remove this bad hombre!
+        bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
+        location = findfirst(bad_hombre_string, lowercase(image_text))    
+        if !isnothing(location)
+            image_text = replace(image_text, image_text[location] => "")
+        end
+        println(io, image_text)
     elseif haskey(d, MIME"image/png"())
         write(joinpath(dirname(page.build), "$(filename).png"),
             base64decode(d[MIME"image/png"()]))
@@ -307,7 +357,11 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc)
-    render(io, mime, node, Markdown.Code(code.info, code.code), page, doc)
+    info = code.info
+    if info == "julia-repl"
+        info = "julia"
+    end
+    render(io, mime, node, Markdown.Code(info, code.code), page, doc)
 end
 # Inline code
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.Code, page, doc)
@@ -333,35 +387,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io, "\n:::")
 end
 # Lists
-
-# function latex(io::Context, node::Node, list::MarkdownAST.List)
-#     # TODO: MarkdownAST doesn't support lists starting at arbitrary numbers
-#     isordered = (list.type === :ordered)
-#     ordered = (list.type === :bullet) ? -1 : 1
-#     # `\begin{itemize}` is used here for both ordered and unordered lists since providing
-#     # custom starting numbers for enumerated lists is simpler to do by manually assigning
-#     # each number to `\item` ourselves rather than using `\setcounter{enumi}{<start>}`.
-#     #
-#     # For an ordered list starting at 5 the following will be generated:
-#     #
-#     # \begin{itemize}
-#     #   \item[5. ] ...
-#     #   \item[6. ] ...
-#     #   ...
-#     # \end{itemize}
-#     #
-#     pad = ndigits(ordered + length(node.children)) + 2
-#     fmt = n -> (isordered ? "[$(rpad("$(n + ordered - 1).", pad))]" : "")
-#     wrapblock(io, "itemize") do
-#         for (n, item) in enumerate(node.children)
-#             _print(io, "\\item$(fmt(n)) ")
-#             latex(io, item.children)
-#             n < length(node.children) && _println(io)
-#         end
-#     end
-# end
-
-
+# TODO: list ordering is broken!
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc)
     # @infiltrate
     if list.type === :ordered
@@ -387,8 +413,19 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(io, mime, node, node.children, page, doc)
     println(io, "\">")
 end
+
+# Footnote links
+# TODO: not handled yet
+# We would have to keep track of all footnotes per page
+# probably handled best in `page.meta` or so
+# but see e.g. 
+# function latex(io::Context, node::Node, f::MarkdownAST.FootnoteLink)
+#     id = get!(io.footnotes, f.id, length(io.footnotes) + 1)
+#     _print(io, "\\footnotemark[", id, "]")
+# end
+
 # Interpolated Julia values
-function render(io, mime, node::MarkdownAST.Node, value::MarkdownAST.JuliaValue, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::MarkdownAST.JuliaValue, page, doc)
     @warn("""
     Unexpected Julia interpolation in the Markdown. This probably means that you
     have an unbalanced or un-escaped \$ in the text.
@@ -401,3 +438,27 @@ function render(io, mime, node::MarkdownAST.Node, value::MarkdownAST.JuliaValue,
     """)
     println(io, value.ref)
 end
+
+# Documenter.jl page links
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc)
+    # @infiltrate
+   path = if !isempty(link.fragment)
+        string(hash(link.fragment))
+    else
+        Documenter.pagekey(io.doc, link.page)
+    end
+    print(io, "<a href=\"$path\">")
+    render(io, mime, node, node.children, page, doc)
+    print(io, "</a>")
+end
+
+# Documenter.jl local links
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.LocalLink, page, doc)
+    # @infiltrate
+    href = isempty(link.fragment) ? link.path : "$(link.path)#($(link.fragment))"
+    print(io, "<a href=\"$href\">")
+    render(io, mime, node, node.children, page, doc)
+    print(io, "</a>")
+end
+
+
