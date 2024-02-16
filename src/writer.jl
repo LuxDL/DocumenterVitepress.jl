@@ -204,7 +204,15 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         # as browsers seem to need to have the xmlns attribute set in the <svg> tag if you
         # want to include it with <img>. However, setting that attribute is up to the code
         # creating the SVG image.
-        println(io, d[MIME"image/svg+xml"()])
+        image_text = d[MIME"image/svg+xml"()]
+        # Additionally, Vitepress complains about the XML version and encoding string below,
+        # so we just remove this bad hombre!
+        bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
+        location = findfirst(bad_hombre_string, lowercase(image_text))    
+        if !isnothing(location)
+            image_text = replace(image_text, image_text[location] => "")
+        end
+        println(io, image_text)
     elseif haskey(d, MIME"image/png"())
         write(joinpath(dirname(page.build), "$(filename).png"),
             base64decode(d[MIME"image/png"()]))
@@ -333,34 +341,6 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io, "\n:::")
 end
 # Lists
-
-# function latex(io::Context, node::Node, list::MarkdownAST.List)
-#     # TODO: MarkdownAST doesn't support lists starting at arbitrary numbers
-#     isordered = (list.type === :ordered)
-#     ordered = (list.type === :bullet) ? -1 : 1
-#     # `\begin{itemize}` is used here for both ordered and unordered lists since providing
-#     # custom starting numbers for enumerated lists is simpler to do by manually assigning
-#     # each number to `\item` ourselves rather than using `\setcounter{enumi}{<start>}`.
-#     #
-#     # For an ordered list starting at 5 the following will be generated:
-#     #
-#     # \begin{itemize}
-#     #   \item[5. ] ...
-#     #   \item[6. ] ...
-#     #   ...
-#     # \end{itemize}
-#     #
-#     pad = ndigits(ordered + length(node.children)) + 2
-#     fmt = n -> (isordered ? "[$(rpad("$(n + ordered - 1).", pad))]" : "")
-#     wrapblock(io, "itemize") do
-#         for (n, item) in enumerate(node.children)
-#             _print(io, "\\item$(fmt(n)) ")
-#             latex(io, item.children)
-#             n < length(node.children) && _println(io)
-#         end
-#     end
-# end
-
 # TODO: list ordering is broken!
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc)
     # @infiltrate
@@ -387,6 +367,17 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(io, mime, node, node.children, page, doc)
     println(io, "\">")
 end
+
+# Footnote links
+# TODO: not handled yet
+# We would have to keep track of all footnotes per page
+# probably handled best in `page.meta` or so
+# but see e.g. 
+# function latex(io::Context, node::Node, f::MarkdownAST.FootnoteLink)
+#     id = get!(io.footnotes, f.id, length(io.footnotes) + 1)
+#     _print(io, "\\footnotemark[", id, "]")
+# end
+
 # Interpolated Julia values
 function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::MarkdownAST.JuliaValue, page, doc)
     @warn("""
