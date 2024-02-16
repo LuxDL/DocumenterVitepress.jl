@@ -100,6 +100,66 @@ This is a details block.
 
 :::
 
+## Tabs
+
+:::tabs
+
+== tab a
+
+a content
+
+== tab b
+
+b content
+
+:::
+
+:::tabs
+
+== tab a
+
+a content 2
+
+== tab b
+
+b content 2
+
+:::
+
+## Nested Tabs
+
+::::tabs
+
+=== first one
+
+:::tabs
+
+== tab a
+
+a content
+
+== tab b
+
+b content
+
+:::
+
+=== second one
+
+:::tabs
+
+== tab c
+
+c content 2
+
+== tab d
+
+d content 2
+
+:::
+
+::::
+
 ## More
 
 Check out the documentation for the [full list of markdown extensions](https://vitepress.dev/guide/markdown).
