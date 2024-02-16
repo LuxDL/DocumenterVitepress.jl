@@ -1,11 +1,10 @@
-import Documenter: Builder, Expanders, Documenter
+import Documenter: Documenter, Builder, Expanders, MarkdownAST
 
 import ANSIColoredPrinters
 using Base64: base64decode
 
 # import Markdown as Markdown
 import Markdown
-import Documenter.MarkdownAST
 struct MarkdownVitepress <: Documenter.Writer
 end
 
@@ -278,7 +277,7 @@ end
 
 # Paragraphs - they have special regions _and_ plain text
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, ::MarkdownAST.Paragraph, page, doc)
-    println(io)
+    # println(io)
     render(io, mime, node, node.children, page, doc)
     println(io)
 end
@@ -325,6 +324,60 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(io, mime, node, heading.children, page, doc)
     print(io, " {#$id}")
     println(io)
+end
+# Admonitions
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, admonition::MarkdownAST.Admonition, page, doc)
+    # @infiltrate
+    println(io, "\n::: $(admonition.category) $(admonition.title)")
+    render(io, mime, node, node.children, page, doc)
+    println(io, "\n:::")
+end
+# Lists
+
+# function latex(io::Context, node::Node, list::MarkdownAST.List)
+#     # TODO: MarkdownAST doesn't support lists starting at arbitrary numbers
+#     isordered = (list.type === :ordered)
+#     ordered = (list.type === :bullet) ? -1 : 1
+#     # `\begin{itemize}` is used here for both ordered and unordered lists since providing
+#     # custom starting numbers for enumerated lists is simpler to do by manually assigning
+#     # each number to `\item` ourselves rather than using `\setcounter{enumi}{<start>}`.
+#     #
+#     # For an ordered list starting at 5 the following will be generated:
+#     #
+#     # \begin{itemize}
+#     #   \item[5. ] ...
+#     #   \item[6. ] ...
+#     #   ...
+#     # \end{itemize}
+#     #
+#     pad = ndigits(ordered + length(node.children)) + 2
+#     fmt = n -> (isordered ? "[$(rpad("$(n + ordered - 1).", pad))]" : "")
+#     wrapblock(io, "itemize") do
+#         for (n, item) in enumerate(node.children)
+#             _print(io, "\\item$(fmt(n)) ")
+#             latex(io, item.children)
+#             n < length(node.children) && _println(io)
+#         end
+#     end
+# end
+
+
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc)
+    # @infiltrate
+    if list.type === :ordered
+        println(io)
+        for (i, item) in enumerate(node.children)
+            print(io, "$(i). ")
+            render(io, mime, item, item.children, page, doc)
+            print(io, "\n")
+        end
+    else
+        for item in node.children
+            print(io, "- ")
+            render(io, mime, item, item.children, page, doc)
+            print(io, "\n")
+        end
+    end
 end
 # Images
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc)

@@ -6,10 +6,7 @@ Similar to DocumentationMarkdown.jl but designed to work with
 """
 module DocumenterVitepress
 
-using Infiltrator
-
-using Documenter: Documenter
-using Documenter: Selectors
+using Documenter: Documenter, Selectors
 
 const ASSETS = normpath(joinpath(@__DIR__, "..", "assets"))
 
