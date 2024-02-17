@@ -41,7 +41,7 @@ export default defineConfig({
         items: [
           { text: 'Code Example', link: '/code_example' },
           { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Tables', link: '/tables' },
+          { text: 'Plotting', link: '/plotting' },
           { text: 'Runtime API Examples', link: '/api-examples' }
         ]
       }

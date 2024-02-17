@@ -1,5 +1,6 @@
 using Documenter
 using DocumenterVitepress
+using GLMakie
 
 makedocs(; 
     sitename="DocumenterVitepress", 
