@@ -15,8 +15,8 @@ hero:
       text: Getting Started
       link: /getting_started
     - theme: alt
-      text: Markdown Examples
-      link: /markdown-examples
+      text: View on Github
+      link: https://github.com/LuxDL/DocumenterVitepress.jl
     - theme: alt
       text: API Examples
       link: /api-examples

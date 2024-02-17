@@ -33,16 +33,19 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/getting_started' },
-      { text: 'Examples', link: '/code_example' }
+      { text: 'Markdown', link: '/markdown-examples' },
+      { text: 'Code', link: '/code_example' },
+      { text: 'API', link: '/api-examples' }
     ],
 
     sidebar: [
       {
         text: 'Examples',
         items: [
-          { text: 'Code Example', link: '/code_example' },
+          { text: 'Getting Started', link: '/getting_started' },
           { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
+          { text: 'Code Examples', link: '/code_example' },
+          { text: 'API', link: '/api-examples' }
         ]
       }
     ],
