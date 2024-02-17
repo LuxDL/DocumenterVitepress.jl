@@ -15,7 +15,7 @@ pkg> add DocumenterVitepress
 
 ## Usage
 
-To enable the backend import the package in `make.jl` and then just pass `format = Markdown()` to makedocs:
+To enable the backend import the package in `make.jl` and then just pass `format = DocumenterVitepress.MarkdownVitepress()` to makedocs:
 
 ```shell
 using Documenter
