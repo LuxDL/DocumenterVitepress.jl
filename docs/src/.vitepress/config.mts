@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
+import mathjax3 from "markdown-it-mathjax3";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -10,8 +11,10 @@ export default defineConfig({
   cleanUrls: true,
   
   markdown: {
+    math: true,
     config(md) {
-      md.use(tabsMarkdownPlugin)
+      md.use(tabsMarkdownPlugin),
+      md.use(mathjax3)
     },
     theme: {
       light: "github-light",
