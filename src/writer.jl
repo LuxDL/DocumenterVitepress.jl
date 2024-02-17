@@ -22,7 +22,7 @@ called directly.
 
 To extend this function, the general signature is:
 ```julia
-render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, element::Eltype, page, doc)
+render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, element::Eltype, page, doc; kwargs...)
 ```
 where `Eltype` is the type of the `element` field of the `node` object which you care about.
 """
@@ -42,14 +42,14 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 end
 
 # This function catches all nodes and decomposes them to their elements.
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, page, doc)
-    render(io, mime, node, node.element, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, page, doc; kwargs...)
+    render(io, mime, node, node.element, page, doc; kwargs...)
 end
 
 # This function catches nodes dispatched with their children, and renders each child.
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, children::Documenter.MarkdownAST.NodeChildren{<: Documenter.MarkdownAST.Node}, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, children::Documenter.MarkdownAST.NodeChildren{<: Documenter.MarkdownAST.Node}, page, doc; kwargs...)
     for child in children
-        render(io, mime, child, child.element, page, doc)
+        render(io, mime, child, child.element, page, doc; kwargs...)
     end
 end
 
@@ -70,31 +70,31 @@ function copy_assets(doc::Documenter.Document)
     end
 end
 
-function render(io::IO, mime::MIME"text/plain", vec::Vector, page, doc)
+function render(io::IO, mime::MIME"text/plain", vec::Vector, page, doc; kwargs...)
     for each in vec
-        render(io, mime, each, page, doc)
+        render(io, mime, each, page, doc; kwargs...)
     end
 end
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, anchor::Documenter.Anchor, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, anchor::Documenter.Anchor, page, doc; kwargs...)
     println(io, "\n<a id='", lstrip(Documenter.anchor_fragment(anchor), '#'), "'></a>")
-    return render(io, mime, node, anchor.object, page, doc)
+    return render(io, mime, node, anchor.object, page, doc; kwargs...)
 end
 
 
 ## Documentation Nodes.
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docblock::Documenter.DocsNodesBlock, page, doc)
-    render(io, mime, node, node.children, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docblock::Documenter.DocsNodesBlock, page, doc; kwargs...)
+    render(io, mime, node, node.children, page, doc; kwargs...)
 end
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docs::Documenter.DocsNodes, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docs::Documenter.DocsNodes, page, doc; kwargs...)
     for docstr in docs.docs
-        render(io, mime, docstr, page, doc)
+        render(io, mime, docstr, page, doc; kwargs...)
     end
 end
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docs::Documenter.DocsNode, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docs::Documenter.DocsNode, page, doc; kwargs...)
     # @infiltrate
     anchor_id = Documenter.anchor_label(docs.anchor)
     # Docstring header based on the name of the binding and it's category.
@@ -104,18 +104,18 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     header = "&nbsp;<b><u>$(docs.object.binding)</u></b> &mdash; <i>$(Documenter.doccat(docs.object))</i>."
     println(io, anchor, header, "\n\n")
     # Body. May contain several concatenated docstrings.
-    renderdoc(io, mime, node, page, doc)
+    renderdoc(io, mime, node, page, doc; kwargs...)
     return println(io, "</div>\n<br>")
 end
 
-function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, page, doc)
+function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, page, doc; kwargs...)
     @assert node.element isa Documenter.DocsNode
     # The `:results` field contains a vector of `Docs.DocStr` objects associated with
     # each markdown object. The `DocStr` contains data such as file and line info that
     # we need for generating correct source links.
     for (docstringast, result) in zip(node.element.mdasts, node.element.results)
         println(io)
-        render(io, mime, docstringast, docstringast.children, page, doc)
+        render(io, mime, docstringast, docstringast.children, page, doc; kwargs...)
         println(io)
         # When a source link is available then print the link.
         url = Documenter.source_url(doc, result)
@@ -130,14 +130,14 @@ function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.
     end
 end
 
-function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, other, page, doc)
+function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, other, page, doc; kwargs...)
     # TODO: properly support non-markdown docstrings at some point.
-    return render(io, mime, other, page, doc)
+    return render(io, mime, other, page, doc; kwargs...)
 end
 
 ## Index, Contents, and Eval Nodes.
 
-function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, index::Documenter.IndexNode, page, doc)
+function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, index::Documenter.IndexNode, page, doc; kwargs...)
     for (object, _, page, mod, cat) in index.elements
         page = mdext(page)
         url = string("#", Documenter.slugify(object))
@@ -146,7 +146,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, i
     return println(io)
 end
 
-function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, contents::Documenter.ContentsNode, page, doc)
+function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, contents::Documenter.ContentsNode, page, doc; kwargs...)
     for (count, path, anchor) in contents.elements
         path = mdext(path)
         header = anchor.object
@@ -160,8 +160,8 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
     return println(io)
 end
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, evalnode::Documenter.EvalNode, page, doc)
-    return evalnode.result === nothing ? nothing : render(io, mime, node, evalnode.result, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, evalnode::Documenter.EvalNode, page, doc; kwargs...)
+    return evalnode.result === nothing ? nothing : render(io, mime, node, evalnode.result, page, doc; kwargs...)
 end
 
 function intelligent_language(lang::String)
@@ -220,22 +220,22 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
     # end
 end
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc)
-    return render(io, mime, node, join_multiblock(mcb), page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc; kwargs...)
+    return render(io, mime, node, join_multiblock(mcb), page, doc; kwargs...)
 end
 
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Documenter.MultiOutput, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Documenter.MultiOutput, page, doc; kwargs...)
     # @infiltrate
-    return render(io, mime, node, node.children, page, doc)
+    return render(io, mime, node, node.children, page, doc; kwargs...)
 end
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Documenter.MultiOutputElement, page, doc)
-    return render(io, mime, node, d.element, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Documenter.MultiOutputElement, page, doc; kwargs...)
+    return render(io, mime, node, d.element, page, doc; kwargs...)
 end
 
 # Select the "best" rendering MIME for markdown output!
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Dict{MIME, Any}, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Dict{MIME, Any}, page, doc; kwargs...)
     filename = String(rand('a':'z', 7))
     if haskey(d, MIME"text/markdown"())
         println(io, d[MIME"text/markdown"()])
@@ -293,7 +293,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     elseif haskey(d, MIME"text/plain"())
         text = d[MIME"text/plain"()]
         out = repr(MIME"text/plain"(), ANSIColoredPrinters.PlainTextPrinter(IOBuffer(text)))
-        render(io, mime, node, Markdown.Code(out), page, doc)
+        render(io, mime, node, Markdown.Code(out), page, doc; kwargs...)
     else
         error("this should never happen.")
     end
@@ -302,130 +302,130 @@ end
 
 ## Basic Nodes. AKA: any other content that hasn't been handled yet.
 
-function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, other, page, doc)
+function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, other, page, doc; kwargs...)
     println(io)
     linkfix = ".md#"
     return println(io, replace(Markdown.plain(other), linkfix => "#"))
 end
 
-render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, str::AbstractString, page, doc) = print(io, str)
+render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, str::AbstractString, page, doc; kwargs...) = print(io, str)
 
 # Metadata Nodes get dropped from the final output for every format but are needed throughout
 # the rest of the build, and so we just leave them in place and print a blank line in their place.
-render(io::IO, ::MIME"text/plain", n::Documenter.MarkdownAST.Node, node::Documenter.MetaNode, page, doc) = println(io, "\n")
+render(io::IO, ::MIME"text/plain", n::Documenter.MarkdownAST.Node, node::Documenter.MetaNode, page, doc; kwargs...) = println(io, "\n")
 # In the original AST, SetupNodes were just mapped to empty Markdown.MD() objects.
-render(io, mime, node::MarkdownAST.Node, ::Documenter.SetupNode, page, doc) = nothing
+render(io, mime, node::MarkdownAST.Node, ::Documenter.SetupNode, page, doc; kwargs...) = nothing
 
 
 # Raw nodes are used to insert raw HTML into the output. We just print it as is.
 # TODO: what if the `raw` is not HTML?
-function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, raw::Documenter.RawNode, page, doc)
+function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, raw::Documenter.RawNode, page, doc; kwargs...)
     return raw.name === :html ? println(io, raw.text, "\n") : nothing
 end
 
 # This is straight Markdown to Markdown, so no issues for most of these!
 
 # Paragraphs - they have special regions _and_ plain text
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, ::MarkdownAST.Paragraph, page, doc)
-    # println(io)
-    render(io, mime, node, node.children, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, ::MarkdownAST.Paragraph, page, doc; prenewline = true, kwargs...)
+    prenewline && println(io)
+    render(io, mime, node, node.children, page, doc; prenewline, kwargs...)
     println(io)
 end
 # Plain text
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
     print(io, text.text)
 end
 # Bold text (strong)
 # These are wrapper elements - so the wrapper doesn't actually contain any text, the current node's children do.
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, strong::MarkdownAST.Strong, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, strong::MarkdownAST.Strong, page, doc; kwargs...)
     # @infiltrate
     print(io, "**")
-    render(io, mime, node, node.children, page, doc)
+    render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "**")
 end
 # Italic text (emph)
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, emph::MarkdownAST.Emph, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, emph::MarkdownAST.Emph, page, doc; kwargs...)
     print(io, "_")
-    render(io, mime, node, node.children, page, doc)
+    render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "_")
 end
 # Links
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::MarkdownAST.Link, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::MarkdownAST.Link, page, doc; kwargs...)
     # @infiltrate
     print(io, "<a href=\"$(link.destination)\">")
-    render(io, mime, node, node.children, page, doc)
+    render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "</a>")
 end
 # Code blocks
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
     info = code.info
     if info == "julia-repl"
         info = "julia"
     end
-    render(io, mime, node, Markdown.Code(info, code.code), page, doc)
+    render(io, mime, node, Markdown.Code(info, code.code), page, doc; kwargs...)
 end
 # Inline code
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.Code, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.Code, page, doc; kwargs...)
     print(io, "`", code.code, "`")
 end
 # Headers
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, header::Documenter.AnchoredHeader, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, header::Documenter.AnchoredHeader, page, doc; kwargs...)
     anchor = header.anchor
     id = string(hash(Documenter.anchor_label(anchor)))
     # @infiltrate
     heading = first(node.children)
     println(io)
     print(io, "#"^(heading.element.level), " ")
-    render(io, mime, node, heading.children, page, doc)
+    render(io, mime, node, heading.children, page, doc; kwargs...)
     print(io, " {#$id}")
     println(io)
 end
 # Admonitions
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, admonition::MarkdownAST.Admonition, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, admonition::MarkdownAST.Admonition, page, doc; kwargs...)
     # Main.@infiltrate
     println(io, "\n::: $(admonition.category) $(admonition.title)")
-    render(io, mime, node, node.children, page, doc)
+    render(io, mime, node, node.children, page, doc; kwargs...)
     println(io, "\n:::")
 end
 # Block quotes
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, q::MarkdownAST.BlockQuote, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, q::MarkdownAST.BlockQuote, page, doc; kwargs...)
     # Main.@infiltrate
     iob = IOBuffer()
-    render(iob, mime, node, node.children, page, doc)
+    render(iob, mime, node, node.children, page, doc; kwargs...)
     output = String(take!(iob))
     eachline = split(output, '\n')
     println.((io,), "> " .* eachline)
 end
 # Inline math
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.InlineMath, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.InlineMath, page, doc; kwargs...)
     # Main.@infiltrate
     print(io, "\$", math.math, "\$")
 end
 # Display math 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.DisplayMath, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.DisplayMath, page, doc; kwargs...)
     # Main.@infiltrate
     println(io)
     println(io, "\$\$", math.math, "\$\$")
 end
 # Lists
 # TODO: list ordering is broken!
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc; kwargs...)
     # @infiltrate
     bullet = list.type === :ordered ? "1. " : "- "
     iob = IOBuffer()
     for item in node.children
-        render(iob, mime, item, item.children, page, doc)
+        render(iob, mime, item, item.children, page, doc; prenewline = false, kwargs...)
         eachline = split(String(take!(iob)), '\n')
         print(io, bullet)
         println.((io,), "    " .* eachline)
     end
 end
 # Tables
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.TableCell, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.TableCell, page, doc; kwargs...)
     println("Encountered table cell!")
 end
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.Table, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.Table, page, doc; kwargs...)
     th_row, tbody_rows = Iterators.peel(MarkdownAST.tablerows(node))
     # function mdconvert(t::Markdown.Table, parent; kwargs...)
     alignment_style = map(table.spec) do align
@@ -445,7 +445,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # Main.@infiltrate
     for (cell, align) in zip(th_row.children, alignment_style)
         print(io, "<th style=\"$align\">")
-        render(io, mime, cell, cell.children, page, doc)
+        render(io, mime, cell, cell.children, page, doc; kwargs...)
         println(io, "</th>")
     end
     println(io, "</tr>") # end header row
@@ -455,7 +455,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         println(io, "<tr>") # begin row
         for (cell, align) in zip(row.children, alignment_style)
             print(io, "<td style=\"$align\">")
-            render(io, mime, cell, cell.children, page, doc)
+            render(io, mime, cell, cell.children, page, doc; kwargs...)
             println(io, "</td>")        end
         println(io, "</tr>") # end row
     end
@@ -464,11 +464,11 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 
 end
 # Images
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc; kwargs...)
     println()
     url = replace(image.destination, "\\" => "/")
     print(io, "<img src=\"", url, "\" alt=\"")
-    render(io, mime, node, node.children, page, doc)
+    render(io, mime, node, node.children, page, doc; kwargs...)
     println(io, "\">")
 end
 
@@ -483,7 +483,7 @@ end
 # end
 
 # Interpolated Julia values
-function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::MarkdownAST.JuliaValue, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::MarkdownAST.JuliaValue, page, doc; kwargs...)
     @warn("""
     Unexpected Julia interpolation in the Markdown. This probably means that you
     have an unbalanced or un-escaped \$ in the text.
@@ -498,7 +498,7 @@ function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::M
 end
 
 # Documenter.jl page links
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc; kwargs...)
     # @infiltrate
    path = if !isempty(link.fragment)
         string(hash(link.fragment))
@@ -506,16 +506,16 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         Documenter.pagekey(io.doc, link.page)
     end
     print(io, "<a href=\"$path\">")
-    render(io, mime, node, node.children, page, doc)
+    render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "</a>")
 end
 
 # Documenter.jl local links
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.LocalLink, page, doc)
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.LocalLink, page, doc; kwargs...)
     # @infiltrate
     href = isempty(link.fragment) ? link.path : "$(link.path)#($(link.fragment))"
     print(io, "<a href=\"$href\">")
-    render(io, mime, node, node.children, page, doc)
+    render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "</a>")
 end
 
