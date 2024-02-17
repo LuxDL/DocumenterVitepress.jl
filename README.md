@@ -17,7 +17,7 @@ pkg> add DocumenterVitepress
 
 To enable the backend import the package in `make.jl` and then just pass `format = DocumenterVitepress.MarkdownVitepress()` to makedocs:
 
-```shell
+```julia
 using Documenter
 using DocumenterVitepress
 makedocs(;
@@ -40,4 +40,5 @@ docs> npm run docs:dev
 ```
 
 The documentation needs documentation.
+
 -a Bellevue Linux Users Group member, 2005-
