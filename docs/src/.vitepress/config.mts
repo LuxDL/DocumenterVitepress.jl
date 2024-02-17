@@ -4,7 +4,7 @@ import mathjax3 from "markdown-it-mathjax3";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: '/DocumenterVitepress.jl/',
+  base: 'REPLACE_ME_WITH_DOCUMENTER_VITEPRESS_BASE_URL_WITH_TRAILING_SLASH',
   title: "DocumenterVitepress",
   description: "A VitePress Site",
   lastUpdated: true,
