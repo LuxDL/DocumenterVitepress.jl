@@ -39,7 +39,7 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
   --julia-green: #389826;
 
   --vp-c-brand: #389826;
-  --vp-c-brand-light: #e3e3f3;
+  --vp-c-brand-light: #3dd027;
   --vp-c-brand-lighter: #9499ff;
   --vp-c-brand-lightest: #bcc0ff;
   --vp-c-brand-dark: #535bf2;
@@ -147,4 +147,24 @@ mjx-container {
 mjx-container > svg {
   margin: auto;
   display: inline-block;
+}
+
+/**
+ * Colors links
+ * -------------------------------------------------------------------------- */
+
+ :root {
+  --vp-c-brand-1: #CB3C33;
+  --vp-c-brand-2: #CB3C33;
+  --vp-c-brand-3: #CB3C33;
+  --vp-c-sponsor: #ca2971;
+  --vitest-c-sponsor-hover: #c13071;
+}
+
+.dark {
+  --vp-c-brand-1: #91dd33;
+  --vp-c-brand-2: #91dd33;
+  --vp-c-brand-3: #91dd33;
+  --vp-c-sponsor: #91dd33;
+  --vitest-c-sponsor-hover: #e51370;
 }

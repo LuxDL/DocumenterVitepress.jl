@@ -18,3 +18,13 @@ And a simple task:
 ````@ansi
 printstyled("this is my color"; color = :red)
 ````
+
+A more colorful example for [documenter](https://documenter.juliadocs.org/stable/showcase/#Raw-ANSI-code-output):
+
+````@ansi
+for color in 0:15
+    print("\e[38;5;$color;48;5;$(color)m  ")
+    print("\e[49m", lpad(color, 3), " ")
+    color % 8 == 7 && println()
+end
+````
