@@ -416,8 +416,9 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     for item in node.children
         render(iob, mime, item, item.children, page, doc; prenewline = false, kwargs...)
         eachline = split(String(take!(iob)), '\n')
+        eachline[2:end] .= "  " .* eachline[2:end]
         print(io, bullet)
-        println.((io,), "    " .* eachline)
+        println.((io,), eachline)
     end
 end
 # Tables
