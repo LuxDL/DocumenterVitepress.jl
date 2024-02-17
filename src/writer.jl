@@ -336,6 +336,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     print(io, text.text)
 end
 # Bold text (strong)
+# These are wrapper elements - so the wrapper doesn't actually contain any text, the current node's children do.
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, strong::MarkdownAST.Strong, page, doc)
     # @infiltrate
     print(io, "**")
@@ -381,29 +382,86 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Admonitions
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, admonition::MarkdownAST.Admonition, page, doc)
-    # @infiltrate
+    # Main.@infiltrate
     println(io, "\n::: $(admonition.category) $(admonition.title)")
     render(io, mime, node, node.children, page, doc)
     println(io, "\n:::")
+end
+# Block quotes
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, q::MarkdownAST.BlockQuote, page, doc)
+    # Main.@infiltrate
+    iob = IOBuffer()
+    render(iob, mime, node, node.children, page, doc)
+    output = String(take!(iob))
+    eachline = split(output, '\n')
+    println.((io,), "> " .* eachline)
+end
+# Inline math
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.InlineMath, page, doc)
+    # Main.@infiltrate
+    print(io, "\$", math.math, "\$")
+end
+# Display math 
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.DisplayMath, page, doc)
+    # Main.@infiltrate
+    println(io)
+    println(io, "\$\$", math.math, "\$\$")
 end
 # Lists
 # TODO: list ordering is broken!
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc)
     # @infiltrate
-    if list.type === :ordered
-        println(io)
-        for (i, item) in enumerate(node.children)
-            print(io, "$(i). ")
-            render(io, mime, item, item.children, page, doc)
-            print(io, "\n")
-        end
-    else
-        for item in node.children
-            print(io, "- ")
-            render(io, mime, item, item.children, page, doc)
-            print(io, "\n")
+    bullet = list.type === :ordered ? "1. " : "- "
+    iob = IOBuffer()
+    for item in node.children
+        render(iob, mime, item, item.children, page, doc)
+        eachline = split(String(take!(iob)), '\n')
+        print(io, bullet)
+        println.((io,), "    " .* eachline)
+    end
+end
+# Tables
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.TableCell, page, doc)
+    println("Encountered table cell!")
+end
+
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.Table, page, doc)
+    th_row, tbody_rows = Iterators.peel(MarkdownAST.tablerows(node))
+    # function mdconvert(t::Markdown.Table, parent; kwargs...)
+    alignment_style = map(table.spec) do align
+        if align == :right
+            "text-align: right"
+        elseif align == :center
+            "text-align: center"
+        else
+            "text-align: left"
         end
     end
+    # We now emit a HTML table, which is of course styled by CSS - so that images etc. can be included more easily,
+    # without worrying about Markdown spacing issues.
+    println(io, "<table>") # begin table
+    println(io, "<thead>")
+    println(io, "<tr>") # begin header row
+    # Main.@infiltrate
+    for (cell, align) in zip(th_row.children, alignment_style)
+        print(io, "<th style=\"$align\">")
+        render(io, mime, cell, cell.children, page, doc)
+        println(io, "</th>")
+    end
+    println(io, "</tr>") # end header row
+    println(io, "</thead>")
+    println(io, "<tbody>")
+    for row in tbody_rows
+        println(io, "<tr>") # begin row
+        for (cell, align) in zip(row.children, alignment_style)
+            print(io, "<td style=\"$align\">")
+            render(io, mime, cell, cell.children, page, doc)
+            println(io, "</td>")        end
+        println(io, "</tr>") # end row
+    end
+    println(io, "</tbody>")
+    println(io, "</table>") # end table
+
 end
 # Images
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc)

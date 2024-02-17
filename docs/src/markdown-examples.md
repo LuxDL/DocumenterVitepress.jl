@@ -32,6 +32,52 @@ export default {
 }
 ```
 
+### Code groups
+
+::: code-group
+
+```js [config.js]
+/**
+ * @type {import('vitepress').UserConfig}
+ */
+const config = {
+  // ...
+}
+
+export default config
+```
+
+```ts [config.ts]
+import type { UserConfig } from 'vitepress'
+
+const config: UserConfig = {
+  // ...
+}
+
+export default config
+```
+
+:::
+
+### Code focus
+
+```js
+export default {
+  data () {
+    return {
+      msg: 'Focused!' // [!code focus]
+    }
+  }
+}
+```
+### Lists
+
+1. a
+1. b
+    1. c
+        1. d
+1. e
+
 ## Custom Containers
 
 **Input**
@@ -159,6 +205,31 @@ d content 2
 :::
 
 ::::
+
+
+## GitHub-flavored Alerts
+See: https://vitepress.dev/guide/markdown#github-flavored-alerts
+
+> [!WARNING]
+> Critical content.
+
+## Tables
+See: https://vitepress.dev/guide/markdown#github-style-tables
+
+| Tables        |      Are      |  Cool |
+| ------------- | :-----------: | ----: |
+| col 3 is      | right-aligned | \$1600 |
+| col 2 is      |   centered    |   \$12 |
+| zebra stripes |   are neat    |    \$1 |
+
+## Equations
+
+When $a \ne 0$, there are two solutions to $(ax^2 + bx + c = 0)$ and they are
+
+$$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
+
+Don't type anything after the last double dollar sign, and make sure there are no spaces after the opening double dollar sign in the display math!
+
 
 ## More
 
