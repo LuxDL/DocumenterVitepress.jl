@@ -21,6 +21,7 @@ export default defineConfig({
       dark: "github-dark"}
   },
   themeConfig: {
+    outline: 'deep',
     // https://vitepress.dev/reference/default-theme-config
     logo: { src: '/logo_dark.png', width: 24, height: 24 },
     search: {
