@@ -1,9 +1,10 @@
-# Structure of this Package
+# Getting started
 
-As a tutorial we will explain the folders and files structure used to generate this website. Actually, you could use this a template for your documentation project.
+As a tutorial we will explain the folders and files structure used to generate this website. You could use this as a template for your project's documentation.
 
 Starting at the top level, this project is organised as follows:
 
+## Project structure
 
 ```
 DocumenterVitepress/
@@ -16,6 +17,12 @@ DocumenterVitepress/
 ```
 
 ## VitePress Installation
+
+Start at the `docs` level
+
+```sh
+docs $
+```
 
 ### Prerequisites
 
@@ -81,7 +88,7 @@ this will generate the `package-lock.json` necessary to install dependencies lat
 
 ```
 {
-  "name": "DocumenterVitepress.jl",
+  "name": "docs",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {...
@@ -113,21 +120,30 @@ Note that also `package.json` as been updated.
   "devDependencies": {
     "markdown-it": "^14.0.0",
     "markdown-it-mathjax3": "^4.3.2",
-    "vitepress": "^1.0.0-rc.41",
     "vitepress-plugin-tabs": "^0.5.0",
-    "vitest": "^1.2.0"
+    "vitest": "^1.3.0"
   }
 }
 ```
 
-Then, to start working on your docs do the following steps:
+## Preview docs
 
 ```shell
-DocumenterVitepress> cd docs
-docs>
+npm run docs:dev
 ```
 
-Then, here in `docs` start a julia session and activate a new environment.
+This shows you the default generated template in `build`. For more generated content see the next section. 
+
+## Build new docs from docs/src
+
+To start working on your docs do the following steps:
+
+```shell
+$ cd docs
+docs $
+```
+
+Then, in `docs` start a julia session and activate a new environment.
 
 ```shell
 docs> julia
@@ -141,10 +157,10 @@ Add packages as necessary. Here, we will need
 ```shell
 pkg>  add DocumenterVitepress, Documenter
 ```
-These packages will be used on the `make.jl` file shown later on the following section.
+These packages will be used on the `make.jl` file.
 
 ## Setting up the Folder Structure
-The files for this page in the `docs` folder are arrange into the following structure: 
+The files for this page in the `docs` folder have the following structure: 
 
 ```
 docs/
