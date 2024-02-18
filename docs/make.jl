@@ -21,7 +21,7 @@ makedocs(; sitename="DocumenterVitepress",
 deploy_config = Documenter.auto_detect_deploy_system()
 deploy_decision = Documenter.deploy_folder(
     deploy_config;
-    repo="github.com/LuxDL/DocumenterVitepress.jl",
+    repo="github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
     devbranch="master",
     devurl = "dev",
     push_preview=true,
@@ -37,7 +37,10 @@ folder = deploy_decision.subfolder
 println("Deploying to $folder")
 vitepress_config_file = joinpath(@__DIR__, "build", ".vitepress", "config.mts")
 config = read(vitepress_config_file, String)
-new_config = replace(config, "base: 'REPLACE_ME_WITH_DOCUMENTER_VITEPRESS_BASE_URL_WITH_TRAILING_SLASH'" => "base: '/DocumenterVitepress.jl/$(folder)$(isempty(folder) ? "" : "/")'")
+new_config = replace(
+    config, 
+    "base: 'REPLACE_ME_WITH_DOCUMENTER_VITEPRESS_BASE_URL_WITH_TRAILING_SLASH'" => "base: '/DocumenterVitepress.jl/$(folder)$(isempty(folder) ? "" : "/")'"
+)
 write(vitepress_config_file, new_config)
 
 # Build the docs using `npm` - we are assuming it's installed here!
@@ -49,7 +52,7 @@ haskey(ENV, "CI") && begin
 end
 
 deploydocs(; 
-    repo="github.com/LuxDL/DocumenterVitepress.jl",
+    repo="github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
     target="build/.vitepress/dist", # this is where Vitepress stores its output
     branch = "gh-pages",
     devbranch="master",

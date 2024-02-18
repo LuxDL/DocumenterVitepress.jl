@@ -35,7 +35,19 @@ features:
 ---
 ```
 
-::: raw
-This is a Wraps in a <div class="vp-raw">
-:::
 
+<p style="margin-bottom:3cm"></p>
+
+<div class="vp-doc" style="width:60%; margin:auto">
+
+<h1> What is DocumenterVitepress.jl? </h1>
+
+DocumenterVitepress is a Markdown backend for Documenter.jl which is designed to work with the [`VitePress`](https://vitepress.dev/) site generator, which is built off `Vue.js`.  
+
+It is meant to be used in conjunction with the `vitepress` Node.js package, which is why so much customization is required!
+
+<h2> Basic usage </h2>
+
+If you copy the contents of the `docs/` directory and the `.github/Documenter.yml` file to your repo, you should be good to go!
+
+</div>
