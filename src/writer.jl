@@ -522,7 +522,7 @@ end
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.LocalLink, page, doc; kwargs...)
     # @infiltrate
     path = isempty(link.fragment) ? link.path : "$(link.path)#$(link.fragment)"
-    print(io, "[]")
+    print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($path)")
 end
