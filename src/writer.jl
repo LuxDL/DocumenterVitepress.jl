@@ -378,7 +378,7 @@ end
 # Headers
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, header::Documenter.AnchoredHeader, page, doc; kwargs...)
     anchor = header.anchor
-    id = string(hash(Documenter.anchor_label(anchor)))
+    id = string(Documenter.anchor_label(anchor))
     # @infiltrate
     heading = first(node.children)
     println(io)
@@ -509,7 +509,7 @@ end
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc; kwargs...)
     # @infiltrate
    path = if !isempty(link.fragment)
-        string(hash(link.fragment))
+        string(link.fragment)
     else
         Documenter.pagekey(io.doc, link.page)
     end
