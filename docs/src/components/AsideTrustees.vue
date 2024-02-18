@@ -7,7 +7,7 @@
     href="https://rafaqz.github.io/DimensionalData.jl/dev/"
     target="_blank"
   >
-    <img width="22" height="22" src="https://rafaqz.github.io/DimensionalData.jl/dev/logoDD.png" />
+    <img width="32" height="32" src="https://rafaqz.github.io/DimensionalData.jl/dev/logoDD.png" />
     <span>
       <p class="extra-info">Named Dimensions</p>
       <p class="heading">DimensionalData.jl</p>
@@ -20,11 +20,11 @@
     href="https://lux.csail.mit.edu/"
     target="_blank"
   >
-    <img width="22" height="22" src="https://lux.csail.mit.edu/lux-logo-dark.svg" />
+    <img width="32" height="32" src="https://lux.csail.mit.edu/lux-logo-dark.svg" />
     <span>
       <p class="extra-info">Deep Learning</p>
       <p class="heading">Lux.jl</p>
-      <p class="extra-info">Performance First</p>
+      <p class="extra-info">Performance first</p>
     </span>
   </a>
 
@@ -33,7 +33,7 @@
     href="https://beautiful.makie.org"
     target="_blank"
   >
-    <img width="22" height="22" src="https://beautiful.makie.org/test_alpha_s.png" />
+    <img width="32" height="32" src="https://beautiful.makie.org/test_alpha_s.png" />
     <span>
       <p class="extra-info">Visualize your data</p>
       <p class="heading">BeautifulMakie</p>
