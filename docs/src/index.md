@@ -36,7 +36,7 @@ features:
 ```
 
 
-<p style="margin-bottom:3cm"></p>
+<p style="margin-bottom:2cm"></p>
 
 <div class="vp-doc" style="width:60%; margin:auto">
 
@@ -48,6 +48,8 @@ It is meant to be used in conjunction with the `vitepress` Node.js package, whic
 
 <h2> Basic usage </h2>
 
-If you copy the contents of the `docs/` directory and the `.github/Documenter.yml` file to your repo, you should be good to go!
+If you copy the contents of the `docs/` directory and the `.github/Documenter.yml` file to your repo, you should be good to go and edit docs as usual! 
+
+Just remember to edit the sidebar in `docs/src/.vitepress/config.mts`.
 
 </div>
