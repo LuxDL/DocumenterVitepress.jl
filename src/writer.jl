@@ -352,9 +352,16 @@ end
 # Links
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::MarkdownAST.Link, page, doc; kwargs...)
     # @infiltrate
-    print(io, "<a href=\"$(link.destination)\">")
-    render(io, mime, node, node.children, page, doc; kwargs...)
-    print(io, "</a>")
+    # For HTML links, use:
+    # print(io, "<a href=\"$(link.destination)\">")
+    # render(io, mime, node, node.children, page, doc; kwargs...)
+    # print(io, "</a>")
+    # However, we may have Markdown syntax in these links
+    # so, we use markdown link syntax which Vitepress can parse
+    # appropriately.
+    print(io, "[")
+    render(io, mime, node, node.children, page, doc; prenewline = false, kwargs...)
+    print(io, "]($(link.destination))")
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)

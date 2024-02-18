@@ -15,3 +15,5 @@ end
 Modules = [DocumenterVitepress]
 Private = false
 ```
+
+See e.g. [`DocumenterVitepress.DocumenterVitepress`](@ref)
