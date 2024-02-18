@@ -378,7 +378,7 @@ end
 # Headers
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, header::Documenter.AnchoredHeader, page, doc; kwargs...)
     anchor = header.anchor
-    id = string(hash(Documenter.anchor_label(anchor)))
+    id = string(Documenter.anchor_label(anchor))
     # @infiltrate
     heading = first(node.children)
     println(io)
@@ -507,24 +507,24 @@ end
 
 # Documenter.jl page links
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc; kwargs...)
-    # @infiltrate
+    # Main.@infiltrate
    path = if !isempty(link.fragment)
-        string(hash(link.fragment))
+        replace(Documenter.pagekey(doc, link.page), ".md" => "") * "#" * string(link.fragment)
     else
-        Documenter.pagekey(io.doc, link.page)
+        Documenter.pagekey(doc, link.page)
     end
-    print(io, "<a href=\"$path\">")
+    print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
-    print(io, "</a>")
+    print(io, "]($path)")
 end
 
 # Documenter.jl local links
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.LocalLink, page, doc; kwargs...)
     # @infiltrate
-    href = isempty(link.fragment) ? link.path : "$(link.path)#($(link.fragment))"
-    print(io, "<a href=\"$href\">")
+    path = isempty(link.fragment) ? link.path : "$(link.path)#$(link.fragment)"
+    print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
-    print(io, "</a>")
+    print(io, "]($path)")
 end
 
 
