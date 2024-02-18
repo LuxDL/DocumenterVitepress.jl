@@ -60,10 +60,8 @@ This will create a `package.json` and `package-lock.json` file, necessary for vi
 
 ```
 {
-  "scripts": {
-    "docs:dev": "vitepress dev build",
-    "docs:build": "vitepress build build",
-    "docs:preview": "vitepress preview build"
+  "devDependencies": {
+    "vitepress": "^1.0.0-rc.43",
   }
 }
 ```
@@ -103,16 +101,16 @@ Note that also the `package.json` file has been updated.
 
 ```
 {
+  "devDependencies": {
+    "markdown-it": "^14.0.0",
+    "markdown-it-mathjax3": "^4.3.2",
+    "vitepress": "^1.0.0-rc.43",
+    "vitest": "^1.3.0"
+  },
   "scripts": {
     "docs:dev": "vitepress dev build",
     "docs:build": "vitepress build build",
     "docs:preview": "vitepress preview build"
-  },
-  "devDependencies": {
-    "markdown-it": "^14.0.0",
-    "markdown-it-mathjax3": "^4.3.2",
-    "vitepress-plugin-tabs": "^0.5.0",
-    "vitest": "^1.3.0"
   }
 }
 ```
@@ -158,7 +156,13 @@ pkg>  add DocumenterVitepress, Documenter
 These packages will be used on the `make.jl` file.
 
 ## Setting up the Folder Structure
-The files for this page in the `docs` folder have the following structure: 
+The files for this page in the `docs` folder have the following structure:
+
+::: info
+
+To edit the sidebar, you must edit `docs/src/.vitepress/config.mts`.
+
+:::
 
 ```
 docs/
@@ -183,5 +187,6 @@ Then, running first `make.jl` and then in the `docs` folder type
 ```shell
 npm run docs:dev
 ```
+
 
 This should do a local deploy for your docs. See [here](https://vitepress.dev/guide/getting-started#up-and-running) to know more.
