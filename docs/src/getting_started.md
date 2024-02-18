@@ -55,15 +55,8 @@ bun add -D vitepress
 
 :::
 
-## Generate docs template
 
-### `package.json`
-
-```sh [vitepress]
-npx vitepress init
-```
-
-This will create a `package.json` file, necessary for vitepress to know from where start building your docs. Set it to `build`. Your `.json` file should look like:
+This will create a `package.json` and `package-lock.json` file, necessary for vitepress to know from where start building your docs. Set it to `build`. Your `.json` file should look like:
 
 ```
 {
@@ -76,15 +69,13 @@ This will create a `package.json` file, necessary for vitepress to know from whe
 ```
 
 
-### `package-lock.json`
-
 Also, install [vitetest](https://vitest.dev/guide/#adding-vitest-to-your-project) with
 
 ```sh [vitetest]
 npm install -D vitest
 ```
 
-this will generate the `package-lock.json` necessary to install dependencies later on. 
+this will update your `*.json` files with new dependencies. 
 
 ```
 {
@@ -108,7 +99,7 @@ npm i -D vitepress-plugin-tabs
 npm add -D markdown-it markdown-it-mathjax3
 ```
 
-Note that also `package.json` as been updated.
+Note that also the `package.json` file has been updated.
 
 ```
 {
@@ -124,6 +115,13 @@ Note that also `package.json` as been updated.
     "vitest": "^1.3.0"
   }
 }
+```
+
+
+## Generate docs template
+
+```sh [vitepress]
+npx vitepress init
 ```
 
 ## Preview docs
