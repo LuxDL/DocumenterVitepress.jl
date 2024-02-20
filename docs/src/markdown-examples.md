@@ -230,7 +230,14 @@ $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
 
 Don't type anything after the last double dollar sign, and make sure there are no spaces after the opening double dollar sign in the display math!
 
+## Footnotes (citation-style)
+
+Here is the link for the paper of Babushka[^1]
+
 
 ## More
 
 Check out the documentation for the [full list of markdown extensions](https://vitepress.dev/guide/markdown).
+
+
+[^1]: This is Babushka's footnote!

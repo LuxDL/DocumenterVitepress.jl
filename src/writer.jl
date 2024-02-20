@@ -467,10 +467,11 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     end
     # Finally, convert to Markdown table and render.
     println(io)
-    println(io, Markdown.plaininline(Markdown.MD(Markdown.Table(cell_strings, alignment_style))))
+    println(io, Markdown.plain(Markdown.MD(Markdown.Table(cell_strings, alignment_style))))
 
 end
 # Images
+# Here, we are rendering images as HTML.  It is my hope that at some point we figure out how to render them in Markdown, but for now, this is also perfectly sufficient.
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc; kwargs...)
     println()
     url = replace(image.destination, "\\" => "/")
@@ -479,17 +480,25 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io, "\">")
 end
 
-# Footnote links
-# TODO: not handled yet
-# We would have to keep track of all footnotes per page
-# probably handled best in `page.meta` or so
-# but see e.g. 
-# function latex(io::Context, node::Node, f::MarkdownAST.FootnoteLink)
-#     id = get!(io.footnotes, f.id, length(io.footnotes) + 1)
-#     _print(io, "\\footnotemark[", id, "]")
-# end
+# ### Footnote Links
 
-# Interpolated Julia values
+# This is literally emitting back to standard Markdown - we don't need any fancypants handling because the footnote will be at the bottom
+# of the original Markdown page anyway.
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::MarkdownAST.FootnoteLink, page, doc; kwargs...)
+    print(io, "[^", link.id, "]")
+end
+
+# This is literally emitting back to standard Markdown - we don't need any fancypants handling because the footnote will be at the bottom
+# of the original Markdown page anyway.
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, footnote::MarkdownAST.FootnoteDefinition, page, doc; kwargs...)
+    println(io)
+    print(io, "[^", footnote.id, "]: ")
+    render(io, mime, node, node.children, page, doc; prenewline = false, kwargs...)
+    println(io)
+end
+
+# ### Interpolated Julia values
+# This is pretty self-explanatory.  We just print the value of the interpolated Julia value, and warn in stdout that one has been encountered.
 function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::MarkdownAST.JuliaValue, page, doc; kwargs...)
     @warn("""
     Unexpected Julia interpolation in the Markdown. This probably means that you
