@@ -33,6 +33,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # @infiltrate
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
+        # This is where you can operate on a per-page level.
         open(mdext(page.build), "w") do io
             for node in page.mdast.children
                 render(io, mime, node, page, doc)
@@ -318,7 +319,7 @@ render(io, mime, node::MarkdownAST.Node, ::Documenter.SetupNode, page, doc; kwar
 
 
 # Raw nodes are used to insert raw HTML into the output. We just print it as is.
-# TODO: what if the `raw` is not HTML?
+# TODO: what if the `raw` is not HTML?  That is not addressed here but we ought to address it...
 function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, raw::Documenter.RawNode, page, doc; kwargs...)
     return raw.name === :html ? println(io, raw.text, "\n") : nothing
 end
@@ -513,7 +514,9 @@ function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::M
     println(io, value.ref)
 end
 
-# Documenter.jl page links
+# ### Documenter.jl page links
+# We figure out the correct path to the page, and render it as a link in Markdown.
+# TODO: generate a `Markdown.Link` object?  But that seems like overkill...
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc; kwargs...)
     # Main.@infiltrate
     path = if !isempty(link.fragment)
@@ -534,5 +537,3 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($path)")
 end
-
-
