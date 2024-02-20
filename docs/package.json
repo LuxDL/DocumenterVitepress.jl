@@ -10,5 +10,8 @@
     "docs:dev": "vitepress dev build",
     "docs:build": "vitepress build build",
     "docs:preview": "vitepress preview build"
+  },
+  "dependencies": {
+    "markdown-it-footnote": "^4.0.0"
   }
 }

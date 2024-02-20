@@ -33,6 +33,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # @infiltrate
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
+        # This is where you can operate on a per-page level.
         open(mdext(page.build), "w") do io
             for node in page.mdast.children
                 render(io, mime, node, page, doc)
@@ -318,7 +319,7 @@ render(io, mime, node::MarkdownAST.Node, ::Documenter.SetupNode, page, doc; kwar
 
 
 # Raw nodes are used to insert raw HTML into the output. We just print it as is.
-# TODO: what if the `raw` is not HTML?
+# TODO: what if the `raw` is not HTML?  That is not addressed here but we ought to address it...
 function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, raw::Documenter.RawNode, page, doc; kwargs...)
     return raw.name === :html ? println(io, raw.text, "\n") : nothing
 end
@@ -432,46 +433,46 @@ end
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.TableCell, page, doc; kwargs...)
     println("Encountered table cell!")
 end
-
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.Table, page, doc; kwargs...)
-    th_row, tbody_rows = Iterators.peel(MarkdownAST.tablerows(node))
-    # function mdconvert(t::Markdown.Table, parent; kwargs...)
     alignment_style = map(table.spec) do align
         if align == :right
-            "text-align: right"
+            :r
         elseif align == :center
-            "text-align: center"
+            :c
+        elseif align == :left
+            :l
         else
-            "text-align: left"
+            @warn """
+            Invalid alignment style $align encountered in a markdown table at:
+            $(joinpath(doc.user.root, page.source))
+            Valid alignment styles are `:left`, `:center`, and `:right`.
+
+            Defaulting to left alignment.
+            """
+            :l
         end
     end
-    # We now emit a HTML table, which is of course styled by CSS - so that images etc. can be included more easily,
-    # without worrying about Markdown spacing issues.
-    println(io, "<table>") # begin table
-    println(io, "<thead>")
-    println(io, "<tr>") # begin header row
-    # Main.@infiltrate
-    for (cell, align) in zip(th_row.children, alignment_style)
-        print(io, "<th style=\"$align\">")
-        render(io, mime, cell, cell.children, page, doc; kwargs...)
-        println(io, "</th>")
+    # We create this IOBuffer in order to render to it.
+    iob = IOBuffer() 
+    # This will eventually hold the rendered table cells as Strings.
+    cell_strings = Vector{Vector{String}}()
+    current_row_vec = String[]
+    # We iterate over the rows of the table, rendering each cell in turn.
+    for (i, row) in enumerate(MarkdownAST.tablerows(node))
+        current_row_vec = String[]
+        push!(cell_strings, current_row_vec)
+        for (j, cell) in enumerate(row.children)
+            render(iob, mime, cell, cell.children, page, doc; kwargs...)
+            push!(current_row_vec, String(take!(iob)))
+        end
     end
-    println(io, "</tr>") # end header row
-    println(io, "</thead>")
-    println(io, "<tbody>")
-    for row in tbody_rows
-        println(io, "<tr>") # begin row
-        for (cell, align) in zip(row.children, alignment_style)
-            print(io, "<td style=\"$align\">")
-            render(io, mime, cell, cell.children, page, doc; kwargs...)
-            println(io, "</td>")        end
-        println(io, "</tr>") # end row
-    end
-    println(io, "</tbody>")
-    println(io, "</table>") # end table
+    # Finally, convert to Markdown table and render.
+    println(io)
+    println(io, Markdown.plain(Markdown.MD(Markdown.Table(cell_strings, alignment_style))))
 
 end
 # Images
+# Here, we are rendering images as HTML.  It is my hope that at some point we figure out how to render them in Markdown, but for now, this is also perfectly sufficient.
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc; kwargs...)
     println()
     url = replace(image.destination, "\\" => "/")
@@ -480,17 +481,25 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io, "\">")
 end
 
-# Footnote links
-# TODO: not handled yet
-# We would have to keep track of all footnotes per page
-# probably handled best in `page.meta` or so
-# but see e.g. 
-# function latex(io::Context, node::Node, f::MarkdownAST.FootnoteLink)
-#     id = get!(io.footnotes, f.id, length(io.footnotes) + 1)
-#     _print(io, "\\footnotemark[", id, "]")
-# end
+# ### Footnote Links
 
-# Interpolated Julia values
+# This is literally emitting back to standard Markdown - we don't need any fancypants handling because the footnote will be at the bottom
+# of the original Markdown page anyway.
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::MarkdownAST.FootnoteLink, page, doc; kwargs...)
+    print(io, "[^", link.id, "]")
+end
+
+# This is literally emitting back to standard Markdown - we don't need any fancypants handling because the footnote will be at the bottom
+# of the original Markdown page anyway.
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, footnote::MarkdownAST.FootnoteDefinition, page, doc; kwargs...)
+    println(io)
+    print(io, "[^", footnote.id, "]: ")
+    render(io, mime, node, node.children, page, doc; prenewline = false, kwargs...)
+    println(io)
+end
+
+# ### Interpolated Julia values
+# This is pretty self-explanatory.  We just print the value of the interpolated Julia value, and warn in stdout that one has been encountered.
 function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::MarkdownAST.JuliaValue, page, doc; kwargs...)
     @warn("""
     Unexpected Julia interpolation in the Markdown. This probably means that you
@@ -505,11 +514,13 @@ function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::M
     println(io, value.ref)
 end
 
-# Documenter.jl page links
+# ### Documenter.jl page links
+# We figure out the correct path to the page, and render it as a link in Markdown.
+# TODO: generate a `Markdown.Link` object?  But that seems like overkill...
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc; kwargs...)
     # Main.@infiltrate
-   path = if !isempty(link.fragment)
-        replace(Documenter.pagekey(doc, link.page), ".md" => "") * "#" * string(link.fragment)
+    path = if !isempty(link.fragment)
+        "/" * replace(Documenter.pagekey(doc, link.page), ".md" => "") * "#" * string(link.fragment)
     else
         Documenter.pagekey(doc, link.page)
     end
@@ -520,11 +531,9 @@ end
 
 # Documenter.jl local links
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.LocalLink, page, doc; kwargs...)
-    # @infiltrate
-    path = isempty(link.fragment) ? link.path : "$(link.path)#$(link.fragment)"
+    # Main.@infiltrate
+    path = isempty(link.fragment) ? link.path : "$(Documenter.pagekey(doc, page))#$(link.fragment)"
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($path)")
 end
-
-
