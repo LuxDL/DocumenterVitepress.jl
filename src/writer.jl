@@ -526,7 +526,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     end
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
-    print(io, "]($path)")
+    print(io, "]($(replace(path, " " => "%20")))")
 end
 
 # Documenter.jl local links
@@ -535,5 +535,5 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     path = isempty(link.fragment) ? link.path : "$(Documenter.pagekey(doc, page))#$(link.fragment)"
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
-    print(io, "]($path)")
+    print(io, "]($(replace(path, " " => "%20")))")
 end
