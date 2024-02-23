@@ -25,7 +25,7 @@ DocumenterVitepress/docs
     ├── getting_started.md
     ├── index.md
     └── assets
-        └── .vitepress
+        └── favicon.ico
         └── logo_dark.png
     └── .vitepress
         ├── config.mts
@@ -96,40 +96,35 @@ Add packages as necessary. Here, we will need
 ```shell
 pkg>  add DocumenterVitepress, Documenter
 ```
-These packages will be used on the `make.jl` file.
+These packages will be used in the `make.jl` file.
 
 ## Setting up the Folder Structure
 The files for this page in the `docs` folder have the following structure:
 
-::: info
-
-To edit the sidebar, you must edit `docs/src/.vitepress/config.mts`.
-
-:::
-
 ```
 docs/
-├── src/
-    ├── .vitepress/
-        ├── theme/
-            └─ index.ts
-            └─ style.css
-        └─ config.mts
-    ├── assets/
-       └─ logo-dark.svg
-    └─ index.md
-    └─ getting_started.md
-    └─ api.md
-└─ make.jl
-└─ package.json
-└─ Project.toml
+├── Project.toml
+├── make.jl
+├── package-lock.json
+├── package.json
+└── src
+    ├── getting_started.md
+    ├── index.md
+    └── assets
+        └── favicon.ico
+        └── logo_dark.png
+    └── .vitepress
+        ├── config.mts
+        └── theme
+            └── index.ts
+            └── style.css
 ```
 
-Then, running first `make.jl` and then in the `docs` folder type
+Then, run `docs/make.jl`, and in another terminal in the `docs` directory, run:
 
 ```shell
 npm run docs:dev
 ```
 
+This will deploy your documentation locally on a webserver.  See [here](https://vitepress.dev/guide/getting-started#up-and-running) to know more.
 
-This should do a local deploy for your docs. See [here](https://vitepress.dev/guide/getting-started#up-and-running) to know more.
