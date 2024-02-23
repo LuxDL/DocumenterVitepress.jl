@@ -22,7 +22,8 @@ makedocs(;
         "Examples" => [
             "Code example" => "code_example.md",
             "Markdown example" => "markdown-examples.md",
-        ]
+        ],
+        "Developer documentation" => "render_pipeline.md",
     ]
 )
 
