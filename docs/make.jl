@@ -14,7 +14,7 @@ makedocs(;
     ),
     draft = false,
     source = "src",
-    build = "build",
+    build = joinpath(@__DIR__, "build"),
 )
 
 
