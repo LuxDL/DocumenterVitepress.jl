@@ -132,9 +132,28 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     if settings.build_vitepress
         @info "DocumenterVitepress: building Vitepress site."
         # Build the docs using `npm`
-        cd(dirname(builddir)) do
-            settings.install_npm && run(`$(npm) install`)
-            run(`$(npm) run docs:build`)
+        should_remove_package_json = false
+        try
+            if !isfile(joinpath(dirname(builddir), "package.json"))
+                @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
+                cp(joinpath(dirname(@__DIR__), "docs", "package.json"), joinpath(dirname(builddir), "package.json"))
+                cp(joinpath(dirname(@__DIR__), "docs", "package-lock.json"), joinpath(dirname(builddir), "package-lock.json"))
+                should_remove_package_json = true
+            end
+
+            cd(dirname(builddir)) do
+                if settings.install_npm || should_remove_package_json 
+                    run(`$(npm) install`)
+                end
+                run(`$(npm) run docs:build`)
+            end
+        catch e
+            rethrow(e)
+        finally
+            if should_remove_package_json
+                rm(joinpath(dirname(builddir), "package.json"))
+                rm(joinpath(dirname(builddir), "package-lock.json"))
+            end
         end
         touch(joinpath(builddir, "final_site", ".nojekyll"))
 
