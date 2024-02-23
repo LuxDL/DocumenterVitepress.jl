@@ -3,7 +3,7 @@
 As a tutorial, we will go through and explain the folder and files structure used to generate this website. You could use this as a template for your project's documentation.
 
 !!! tip
-    In general, you can copy the `docs` folder and the `.github/Documenter.yml` action file from https://github.com/LuxDL/DocumenterVitepress.jl to your repo, and be pretty much good to go and edit docs as usual! 
+    In general, you can copy the `docs` folder and the `.github/Documenter.yml` action file from [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl) to your repo, and be pretty much good to go and edit docs as usual! 
     
     Just remember to edit the sidebar in `docs/src/.vitepress/config.mts`.
 
