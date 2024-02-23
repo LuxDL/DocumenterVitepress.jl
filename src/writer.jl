@@ -151,6 +151,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         # Clean up afterwards
         clean_md_output = isnothing(settings.clean_md_output) ? deploy_decision.all_ok : settings.clean_md_output
         if clean_md_output
+            @info "DocumenterVitepress: cleaning up Markdown output."
             rm(joinpath(doc.user.build, settings.md_output_path); recursive = true)
             contents = readdir(joinpath(doc.user.build, "final_site"))
             for item in contents
@@ -159,6 +160,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 cp(src, dst)
             end
             rm(joinpath(doc.user.build, "final_site"); recursive = true)
+
+            @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
         end
 
     else
