@@ -34,7 +34,7 @@ DocumenterVitepress/docs
             └── style.css
 ```
 
-You can ignore the rest of the files which are actually in `DocumenterVitepress/docs/src` for now - those show how to use advanced APIs.
+You can ignore the rest of the files which are actually in `DocumenterVitepress/docs/src` for now - those show how to use advanced APIs, like 
 
 
 ## VitePress Installation
@@ -72,81 +72,6 @@ bun add -D vitepress
 ```
 
 :::
-
-
-This will create a `package.json` and `package-lock.json` file, necessary for vitepress to know from where start building your docs. Set it to `build`. Your `.json` file should look like:
-
-```
-{
-  "devDependencies": {
-    "vitepress": "^1.0.0-rc.43",
-  }
-}
-```
-
-
-Also, install [vitetest](https://vitest.dev/guide/#adding-vitest-to-your-project) with
-
-```sh [vitetest]
-npm install -D vitest
-```
-
-this will update your `*.json` files with new dependencies. 
-
-```
-{
-  "name": "docs",
-  "lockfileVersion": 3,
-  "requires": true,
-  "packages": {...
-    }
-}
-```
-
-For `tabs` and `math` install the following packages.
-
-### Tabs and Math
-
-```sh
-npm i -D vitepress-plugin-tabs
-```
-
-```sh
-npm add -D markdown-it markdown-it-mathjax3
-```
-
-Note that also the `package.json` file has been updated.
-
-```
-{
-  "devDependencies": {
-    "markdown-it": "^14.0.0",
-    "markdown-it-mathjax3": "^4.3.2",
-    "vitepress": "^1.0.0-rc.43",
-    "vitest": "^1.3.0"
-  },
-  "scripts": {
-    "docs:dev": "vitepress dev build",
-    "docs:build": "vitepress build build",
-    "docs:preview": "vitepress preview build"
-  }
-}
-```
-
-
-## Generate docs template
-
-```sh [vitepress]
-npx vitepress init
-```
-
-## Preview docs
-
-```shell
-npm run docs:dev
-```
-
-This shows you the default generated template in `build`. For more generated content see the next section. 
 
 ## Build new docs from docs/src
 
@@ -190,13 +115,13 @@ docs/
             └─ index.ts
             └─ style.css
         └─ config.mts
-    ├── public/
+    ├── assets/
        └─ logo-dark.svg
     └─ index.md
     └─ getting_started.md
+    └─ api.md
 └─ make.jl
 └─ package.json
-└─ package-lock.json
 └─ Project.toml
 ```
 
