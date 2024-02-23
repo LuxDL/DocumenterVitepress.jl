@@ -14,7 +14,7 @@ makedocs(;
     ),
     draft = false,
     source = "src",
-    build = joinpath(@__DIR__, "build"),
+    build = "build",
     pages = [
         "DocumenterVitepress.jl" => "index.md",
         "Getting started" => "getting_started.md",
