@@ -2,28 +2,44 @@
 
 As a tutorial, we will go through and explain the folder and files structure used to generate this website. You could use this as a template for your project's documentation.
 
-!!! tip
+!!! tip "Quick start"
     In general, you can copy the `docs` folder and the `.github/Documenter.yml` action file from [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl) to your repo, and be pretty much good to go and edit docs as usual! 
     
     Just remember to edit the sidebar in `docs/src/.vitepress/config.mts`.
 
-Starting at the top level, this project is organised as follows:
+Since we're concerned only with documentation, we'll specifically look at the `docs` folder of your Julia project or package here.  
+
+For more information on how to structure this, see the [Documenter.jl guide](https://documenter.juliadocs.org/stable/man/guide/)!  In this quick start, we will focus solely on how to set up DocumenterVitepress assuming you already have some basic docs (even just an `index.md` will do).
 
 ## Project structure
 
+In order to start as quickly as possible, we recommend you copy the `Project.toml`, `make.jl`, `package.json`, and `src` folders to your own documentation.
+
 ```
-DocumenterVitepress/
-├── docs/
-├── src/
-└─ .gitignore
-└─ LICENSE
-└─ Project.toml
-└─ README.md
+DocumenterVitepress/docs
+├── Project.toml
+├── make.jl
+├── package-lock.json
+├── package.json
+└── src
+    ├── getting_started.md
+    ├── index.md
+    └── assets
+        └── .vitepress
+        └── logo_dark.png
+    └── .vitepress
+        ├── config.mts
+        └── theme
+            └── index.ts
+            └── style.css
 ```
+
+You can ignore the rest of the files which are actually in `DocumenterVitepress/docs/src` for now - those show how to use advanced APIs.
+
 
 ## VitePress Installation
 
-Start at the `docs` level
+Start at the `docs` level:
 
 ```sh
 docs $
@@ -31,12 +47,9 @@ docs $
 
 ### Prerequisites
 
-From the [VitePress manual](https://vitepress.dev/guide/getting-started#installation).
+DocumenterVitepress.jl is completely self-contained and installs all of its dependencies (including its own isolated version of `npm`) automatically. 
 
-- [Node.js](https://nodejs.org/en) version 20 or higher.
-- Terminal for accessing VitePress via its command line interface (CLI).
-- Text Editor with Markdown syntax support.
-    - [VSCode](https://code.visualstudio.com) is recommended, along with the official [Vue extension](https://marketplace.visualstudio.com/items?itemName=Vue.volar).
+However, to view your documentation live when developing locally, you will need to install `npm` and instantiate the 
 
 VitePress can be used on its own, or be installed into an existing project. In both cases, you can install it with:
 

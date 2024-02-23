@@ -96,6 +96,11 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         cp(src, dst)
         rm(src; recursive = true)
     end
+    # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
+    # so we rename the folder.
+    if isdir(joinpath(doc.user.build, settings.md_output_path, "assets")) && !isdir(joinpath(doc.user.build, settings.md_output_path, "public"))
+        mv(joinpath(doc.user.build, settings.md_output_path, "assets"), joinpath(doc.user.build, settings.md_output_path, "public"))
+    end
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
