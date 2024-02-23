@@ -29,12 +29,16 @@ function modify_config_file(doc, settings, deploy_decision)
     sidebar_navbar_string = join(sidebar_navbar_info, ",\n")
     push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: [\n$sidebar_navbar_string\n]\n")
     push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
-    new_config = replace(config, replacers...)
-    write(vitepress_config_file, new_config)
-
+   
     # # Title
     push!(replacers, "title: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "title: '$(doc.user.sitename)'")
 
+    # Finally, run all the replacers and write the new config file
+   
+    new_config = replace(config, replacers...)
+    write(vitepress_config_file, new_config)
+
+   
     # 
 
 end
