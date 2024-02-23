@@ -54,7 +54,7 @@ export default defineConfig({
     ],
     editLink: {
       pattern: 'https://github.com/LuxDL/DocumenterVitepress.jl/edit/main/docs/src/:path'
-    }
+    },
     socialLinks: [
       { icon: 'github', link: 'https://github.com/LuxDL/DocumenterVitepress.jl' }
     ],
