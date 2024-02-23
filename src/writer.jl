@@ -5,11 +5,65 @@ using Base64: base64decode
 
 # import Markdown as Markdown
 import Markdown
-struct MarkdownVitepress <: Documenter.Writer
+"""
+    MarkdownVitepress(; repo, devbranch, devurl, kwargs...)
+
+This is the main entry point for the Vitepress Markdown writer.  
+    
+It is a config which can be passed to the `format` keyword argument in `Documenter.makedocs`, and causes it to emit a Vitepress site.
+
+!!! tip "Quick start"
+    When invoking `Documenter.makedocs`, replace the default `format=Documenter.HTML(...)` with:
+    ```julia
+    format=DocumenterVitepress.MarkdownVitepress(; repo = "...", devbranch = "...", devurl = "...")
+    ```
+
+## Keyword arguments (config)
+$(FIELDS)
+
+## Extended help
+
+The `repo` kwarg is used to set the edit link for the documentation.
+
+The `devbranch` and `devurl` kwargs are used to set the path of the static site, which Vitepress expects in advance.
+"""
+Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
+    "*Required*: The full URL of the repository to which the documentation will be deployed."
+    repo::String
+    "*Required*: The name of the development branch, like `master` or `main`."
+    devbranch::String
+    "*Required*: The URL path to the development site, like `dev` or `dev-branch`."
+    devurl::String # TODO: hopefully, remove this!
+    """Determines whether to build the Vitepress site or only emit markdown files.  Defaults to `true`, i.e., building the full Vitepress site."""
+    build_vitepress::Bool = true
+    "Determines whether to run `npm install` before building the Vitepress site.  Defaults to `true`."
+    install_npm::Bool = true
+    """The path to which the Markdown files will be output.  Defaults to `\$build/.documenter`."""
+    md_output_path::String = ".documenter"
+    """
+    Determines whether to clean up the Markdown assets after build, i.e., whether to remove the contents of `md_output_path` after the Vitepress site is built.  
+    Options are:
+    - `nothing`: **Default**.  Only remove the contents of `md_output_path` if the documentation will deploy, to save space.
+    - `true`: Removes the contents of `md_output_path` after the Vitepress site is built.
+    - `false`: Does not remove the contents of `md_output_path` after the Vitepress site is built.
+    """
+    clean_md_output::Union{Nothing, Bool} = nothing
 end
 
 # return the same file with the extension changed to .md
 mdext(f) = string(splitext(f)[1], ".md")
+
+"""
+    docpath(file, mdfolder)
+
+This function takes the filename `file`, and returns a file path in the `mdfolder` directory which has the same tree as the `src` directory.  This is used to ensure that the Markdown files are output in the correct location for Vitepress to find them.
+
+"""
+function docpath(file, mdfolder)
+    filename = mdext(file)
+    path = splitpath(filename)
+    return joinpath((path[1:end-1])..., mdfolder, path[end]) 
+end
 
 """
     render(args...)
@@ -27,18 +81,89 @@ render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, elemen
 where `Eltype` is the type of the `element` field of the `node` object which you care about.
 """
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
-    @info "DocumenterMarkdownVitepress: rendering MarkdownVitepress pages."
-    copy_assets(doc)
-    mime = MIME"text/plain"() # TODO why?
-    # @infiltrate
+    @info "DocumenterVitepress: rendering MarkdownVitepress pages."
+    copy_assets(doc, settings.md_output_path)
+    # Handle the case where the site name has to be set...
+    mime = MIME"text/plain"() # TODO: why?
+    # First, we check what Documenter has copied for us already:
+    current_build_files_or_dirs = readdir(doc.user.build)
+    # Then, we create a path to the folder where we will emit the markdown,
+    mkpath(joinpath(doc.user.build, settings.md_output_path))
+    # and copy the previous build files to the new location.
+    for file_or_dir in current_build_files_or_dirs
+        src = joinpath(doc.user.build, file_or_dir)
+        dst = joinpath(doc.user.build, settings.md_output_path, file_or_dir)
+        cp(src, dst)
+        rm(src; recursive = true)
+    end
+    # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
+    # so we rename the folder.
+    if isdir(joinpath(doc.user.build, settings.md_output_path, "assets")) && !isdir(joinpath(doc.user.build, settings.md_output_path, "public"))
+        mv(joinpath(doc.user.build, settings.md_output_path, "assets"), joinpath(doc.user.build, settings.md_output_path, "public"))
+    end
+    # Main.@infiltrate
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
-        open(mdext(page.build), "w") do io
+        open(docpath(page.build, settings.md_output_path), "w") do io
             for node in page.mdast.children
                 render(io, mime, node, page, doc)
             end
         end
+    end
+
+    # We manually obtain the Documenter deploy configuration,
+    # so we can use it to set Vitepress's settings.
+    # TODO: make it so that the user does not have to provide a repo url!
+    deploy_config = Documenter.auto_detect_deploy_system()
+    deploy_decision = Documenter.deploy_folder(
+        deploy_config;
+        repo = settings.repo, # this must be the full URL!
+        devbranch = settings.devbranch,
+        devurl = settings.devurl,
+        push_preview=true,
+    )
+    
+    # from `vitepress_config.jl`
+    modify_config_file(doc, settings, deploy_decision)
+
+    # Now that the Markdown files are written, we can build the Vitepress site if required.
+    if settings.build_vitepress
+        @info "DocumenterVitepress: building Vitepress site."
+        # Build the docs using `npm`
+        cd(dirname(doc.user.build)) do
+            settings.install_npm && run(`$(npm) install`)
+            run(`$(npm) run docs:build`)
+        end
+        touch(joinpath(doc.user.build, "final_site", ".nojekyll"))
+
+        # Clean up afterwards
+        clean_md_output = isnothing(settings.clean_md_output) ? deploy_decision.all_ok : settings.clean_md_output
+        if clean_md_output
+            @info "DocumenterVitepress: cleaning up Markdown output."
+            rm(joinpath(doc.user.build, settings.md_output_path); recursive = true)
+            contents = readdir(joinpath(doc.user.build, "final_site"))
+            for item in contents
+                src = joinpath(doc.user.build, "final_site", item)
+                dst = joinpath(doc.user.build, item)
+                cp(src, dst)
+            end
+            rm(joinpath(doc.user.build, "final_site"); recursive = true)
+
+            @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
+        end
+
+    else
+        @info """
+            DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
+            You can view it yourself by running the following in the `docs` folder:
+            ```
+            npm run docs:dev
+            ```
+            and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
+
+            All emitted markdown can be found in `$(joinpath(doc.user.build, settings.md_output_path))`.
+            """
     end
 end
 
@@ -54,11 +179,11 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     end
 end
 
-function copy_assets(doc::Documenter.Document)
+function copy_assets(doc::Documenter.Document, mdfolder::String)
     @debug "copying assets to build directory."
     assets = ASSETS
     if isdir(assets)
-        builddir = joinpath(doc.user.build, "assets")
+        builddir = joinpath(doc.user.build, mdfolder, "assets")
         isdir(builddir) || mkdir(builddir)
         for each in readdir(assets)
             src = joinpath(assets, each)
@@ -67,7 +192,7 @@ function copy_assets(doc::Documenter.Document)
             cp(src, dst; force=true)
         end
     else
-        @warn "DocumenterMarkdownVitepress: no assets directory found."
+        @warn "DocumenterVitepress: no assets directory found."
     end
 end
 
@@ -526,7 +651,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     end
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
-    print(io, "]($path)")
+    print(io, "]($(replace(path, " " => "%20")))")
 end
 
 # Documenter.jl local links
@@ -535,5 +660,5 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     path = isempty(link.fragment) ? link.path : "$(Documenter.pagekey(doc, page))#$(link.fragment)"
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
-    print(io, "]($path)")
+    print(io, "]($(replace(path, " " => "%20")))")
 end

@@ -50,6 +50,6 @@ It is meant to be used in conjunction with the `vitepress` Node.js package, whic
 
 If you copy the contents of the `docs/` directory and the `.github/Documenter.yml` file to your repo, you should be good to go and edit docs as usual! 
 
-Just remember to edit the sidebar in `docs/src/.vitepress/config.mts`.
+Just remember to edit the navbar in `docs/src/.vitepress/config.mts`.
 
 </div>
