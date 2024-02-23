@@ -71,7 +71,7 @@ function sidebar_items(doc, page::String)
 end
 
 function _item_link(page, item)
-    return "{ text: '$item', link: '/$(splitext(page)[1])#$(replace(item, " " => "%20"))' }"
+    return "{ text: '$item', link: '/$(splitext(page)[1])#$(replace(item, " " => "-"))' }"
 
 end
 
