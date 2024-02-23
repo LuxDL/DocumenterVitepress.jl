@@ -8,6 +8,9 @@ module DocumenterVitepress
 
 using Documenter: Documenter, Selectors
 
+using DocStringExtensions
+using NodeJS_20_jll: npm
+
 const ASSETS = normpath(joinpath(@__DIR__, "..", "assets"))
 
 include("writer.jl")
