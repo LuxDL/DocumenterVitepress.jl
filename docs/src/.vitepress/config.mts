@@ -10,6 +10,7 @@ export default defineConfig({
   description: "A VitePress Site",
   lastUpdated: true,
   cleanUrls: true,
+  outDir: '../', // This is required for MarkdownVitepress to work correctly...
   head: [['link', { rel: 'icon', href: '/base/favicon.ico' }]],
   
   markdown: {
