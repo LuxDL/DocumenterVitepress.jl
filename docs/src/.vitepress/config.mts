@@ -39,7 +39,7 @@ export default defineConfig({
       { text: 'Getting Started', link: '/getting_started' },
       { text: 'Markdown', link: '/markdown-examples' },
       { text: 'Code', link: '/code_example' },
-      { text: 'API', link: '/api-examples' }
+      { text: 'API', link: '/api' }
     ],
 
     sidebar: [
@@ -49,7 +49,7 @@ export default defineConfig({
           { text: 'Getting Started', link: '/getting_started' },
           { text: 'Markdown Examples', link: '/markdown-examples' },
           { text: 'Code Examples', link: '/code_example' },
-          { text: 'API', link: '/api-examples' }
+          { text: 'API', link: '/api' }
         ]
       }
     ],
