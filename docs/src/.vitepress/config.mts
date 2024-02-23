@@ -5,7 +5,7 @@ import footnote from "markdown-it-footnote";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: 'REPLACE_ME_WITH_DOCUMENTER_VITEPRESS_BASE_URL_WITH_TRAILING_SLASH',// TODO: replace this in makedocs!
+  base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
   title: "DocumenterVitepress",
   description: "A VitePress Site",
   lastUpdated: true,
@@ -42,17 +42,7 @@ export default defineConfig({
       { text: 'API', link: '/api' }
     ],
 
-    sidebar: [
-      {
-        text: 'Examples',
-        items: [
-          { text: 'Getting Started', link: '/getting_started' },
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Code Examples', link: '/code_example' },
-          { text: 'API', link: '/api' }
-        ]
-      }
-    ],
+    sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     editLink: {
       pattern: 'https://github.com/LuxDL/DocumenterVitepress.jl/edit/master/docs/src/:path' // TODO: replace this in makedocs!
     },

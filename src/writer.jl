@@ -65,6 +65,90 @@ function docpath(file, mdfolder)
     return joinpath((path[1:end-1])..., mdfolder, path[end]) 
 end
 
+function modify_config_file(doc, settings, deploy_decision)
+
+    # Main.@infiltrate
+
+    replacers = Vector{Pair{String, String}}()
+
+    # 1. Vitepress base path
+
+    # VitePress relies on its config file in order to understand where files will exist.
+    # We need to modify this file to reflect the correct base URL, however, Documenter
+    # only knows about the base URL at the time of deployment.
+
+    # So, after building the Markdown, we need to modify the config file to reflect the
+    # correct base URL, and then build the VitePress site.
+    folder = deploy_decision.subfolder
+
+    vitepress_config_file = joinpath(doc.user.build, settings.md_output_path, ".vitepress", "config.mts")
+    config = read(vitepress_config_file, String)
+    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "base: '/DocumenterVitepress.jl/$(folder)$(isempty(folder) ? "" : "/")'")
+
+    # 2. Vitepress navbar and sidebar
+
+    provided_page_list = doc.user.pages
+    sidebar_navbar_info = pagelist2str.((doc,), provided_page_list)
+    sidebar_navbar_string = join(sidebar_navbar_info, ",\n")
+    push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: [\n$sidebar_navbar_string\n]\n")
+    push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
+    new_config = replace(config, replacers...)
+    write(vitepress_config_file, new_config)
+
+end
+
+function pagelist2str(doc, page::String)
+    # If no name is given, find the first header in the page, 
+    # and use that as the name.
+    elements = doc.blueprint.pages[page].elements
+    idx = findfirst(x -> x isa Markdown.Header, elements)
+    name = if isnothing(idx)
+        splitext(page)[1]
+    else
+        elements[idx].text[1]
+    end
+    return "{ text: '$name', link: '/$(splitext(page)[1])', $(sidebar_items(doc, page)) }"
+end
+
+function pagelist2str(doc, name_page::Pair{String, String})
+    name, page = name_page
+    # This is the simplest and easiest case.
+    return "{ text: '$name', link: '/$(splitext(page)[1])', $(sidebar_items(doc, page)) }"
+end
+
+function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
+    name, contents = name_contents
+    # This is for nested stuff.  Should work automatically but you never know...
+    rendered_contents = pagelist2str.((doc,), contents)
+    return "{ text: '$name', collapsed: false, items: [\n$(join(rendered_contents, ",\n"))]\n }" # TODO: add a link here if the name is the same name as a file?
+end
+
+function sidebar_items(doc, page::String)
+    # We look at the page elements, and obtain all level 1 and 2 headers.
+    elements = doc.blueprint.pages[page].elements
+    headers = elements[findall(x -> x isa Union{Markdown.Header{1}, Markdown.Header{2}}, elements)]
+    # If nothing is found, move on in life
+    if length(headers) ≤ 1
+        return ""
+    end
+    # Otherwise, we return a collapsible tree of headers for each level 1 and 2 header.
+    items = _get_first_or_string.(getproperty.(headers, :text))
+    return "collapsed: true, items: [\n $(join(_item_link.((page,), items), ",\n"))\n]"
+end
+
+function _item_link(page, item)
+    return "{ text: '$item', link: '/$(splitext(page)[1])#$(replace(item, " " => "%20"))' }"
+
+end
+
+function _get_first_or_string(x::String)
+    return x
+end
+
+function _get_first_or_string(x)
+    return first(x)
+end
+
 """
     render(args...)
 
@@ -101,6 +185,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     if isdir(joinpath(doc.user.build, settings.md_output_path, "assets")) && !isdir(joinpath(doc.user.build, settings.md_output_path, "public"))
         mv(joinpath(doc.user.build, settings.md_output_path, "assets"), joinpath(doc.user.build, settings.md_output_path, "public"))
     end
+    # Main.@infiltrate
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
@@ -110,37 +195,24 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
         end
     end
+
+    # We manually obtain the Documenter deploy configuration,
+    # so we can use it to set Vitepress's settings.
+    # TODO: make it so that the user does not have to provide a repo url!
+    deploy_config = Documenter.auto_detect_deploy_system()
+    deploy_decision = Documenter.deploy_folder(
+        deploy_config;
+        repo = settings.repo, # this must be the full URL!
+        devbranch = settings.devbranch,
+        devurl = settings.devurl,
+        push_preview=true,
+    )
+    
+    modify_config_file(doc, settings, deploy_decision)
+
     # Now that the Markdown files are written, we can build the Vitepress site if required.
     if settings.build_vitepress
         @info "DocumenterVitepress: building Vitepress site."
-        # We manually obtain the Documenter deploy configuration,
-        # so we can use it to set Vitepress's settings.
-        # TODO: make it so that the user does not have to provide a repo url!
-        deploy_config = Documenter.auto_detect_deploy_system()
-        deploy_decision = Documenter.deploy_folder(
-            deploy_config;
-            repo = settings.repo, # this must be the full URL!
-            devbranch = settings.devbranch,
-            devurl = settings.devurl,
-            push_preview=true,
-        )
-
-        # VitePress relies on its config file in order to understand where files will exist.
-        # We need to modify this file to reflect the correct base URL, however, Documenter
-        # only knows about the base URL at the time of deployment.
-
-        # So, after building the Markdown, we need to modify the config file to reflect the
-        # correct base URL, and then build the VitePress site.
-        folder = deploy_decision.subfolder
-
-        vitepress_config_file = joinpath(doc.user.build, settings.md_output_path, ".vitepress", "config.mts")
-        config = read(vitepress_config_file, String)
-        new_config = replace(
-            config, 
-            "base: 'REPLACE_ME_WITH_DOCUMENTER_VITEPRESS_BASE_URL_WITH_TRAILING_SLASH'" => "base: '/DocumenterVitepress.jl/$(folder)$(isempty(folder) ? "" : "/")'",
-            )
-        write(vitepress_config_file, new_config)
-
         # Build the docs using `npm`
         cd(dirname(doc.user.build)) do
             settings.install_npm && run(`$(npm) install`)
