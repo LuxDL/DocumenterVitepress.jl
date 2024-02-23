@@ -85,21 +85,22 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
     mime = MIME"text/plain"() # TODO: why?
+    builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
     # First, we check what Documenter has copied for us already:
-    current_build_files_or_dirs = readdir(doc.user.build)
+    current_build_files_or_dirs = readdir(builddir)
     # Then, we create a path to the folder where we will emit the markdown,
-    mkpath(joinpath(doc.user.build, settings.md_output_path))
+    mkpath(joinpath(builddir, settings.md_output_path))
     # and copy the previous build files to the new location.
     for file_or_dir in current_build_files_or_dirs
-        src = joinpath(doc.user.build, file_or_dir)
-        dst = joinpath(doc.user.build, settings.md_output_path, file_or_dir)
+        src = joinpath(builddir, file_or_dir)
+        dst = joinpath(builddir, settings.md_output_path, file_or_dir)
         cp(src, dst)
         rm(src; recursive = true)
     end
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
-    if isdir(joinpath(doc.user.build, settings.md_output_path, "assets")) && !isdir(joinpath(doc.user.build, settings.md_output_path, "public"))
-        mv(joinpath(doc.user.build, settings.md_output_path, "assets"), joinpath(doc.user.build, settings.md_output_path, "public"))
+    if isdir(joinpath(builddir, settings.md_output_path, "assets")) && !isdir(joinpath(builddir, settings.md_output_path, "public"))
+        mv(joinpath(builddir, settings.md_output_path, "assets"), joinpath(builddir, settings.md_output_path, "public"))
     end
     # Main.@infiltrate
     # Iterate over the pages, render each page separately
@@ -131,24 +132,24 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     if settings.build_vitepress
         @info "DocumenterVitepress: building Vitepress site."
         # Build the docs using `npm`
-        cd(dirname(doc.user.build)) do
+        cd(dirname(builddir)) do
             settings.install_npm && run(`$(npm) install`)
             run(`$(npm) run docs:build`)
         end
-        touch(joinpath(doc.user.build, "final_site", ".nojekyll"))
+        touch(joinpath(builddir, "final_site", ".nojekyll"))
 
         # Clean up afterwards
         clean_md_output = isnothing(settings.clean_md_output) ? deploy_decision.all_ok : settings.clean_md_output
         if clean_md_output
             @info "DocumenterVitepress: cleaning up Markdown output."
-            rm(joinpath(doc.user.build, settings.md_output_path); recursive = true)
-            contents = readdir(joinpath(doc.user.build, "final_site"))
+            rm(joinpath(builddir, settings.md_output_path); recursive = true)
+            contents = readdir(joinpath(builddir, "final_site"))
             for item in contents
-                src = joinpath(doc.user.build, "final_site", item)
-                dst = joinpath(doc.user.build, item)
+                src = joinpath(builddir, "final_site", item)
+                dst = joinpath(builddir, item)
                 cp(src, dst)
             end
-            rm(joinpath(doc.user.build, "final_site"); recursive = true)
+            rm(joinpath(builddir, "final_site"); recursive = true)
 
             @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
         end
@@ -162,7 +163,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             ```
             and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
 
-            All emitted markdown can be found in `$(joinpath(doc.user.build, settings.md_output_path))`.
+            All emitted markdown can be found in `$(joinpath(builddir, settings.md_output_path))`.
             """
     end
 end
