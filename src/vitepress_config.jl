@@ -5,7 +5,8 @@ function modify_config_file(doc, settings, deploy_decision)
 
     replacers = Vector{Pair{String, String}}()
 
-    # 1. Vitepress base path
+
+    # # Vitepress base path
 
     # VitePress relies on its config file in order to understand where files will exist.
     # We need to modify this file to reflect the correct base URL, however, Documenter
@@ -19,7 +20,9 @@ function modify_config_file(doc, settings, deploy_decision)
     config = read(vitepress_config_file, String)
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "base: '/DocumenterVitepress.jl/$(folder)$(isempty(folder) ? "" : "/")'")
 
-    # 2. Vitepress navbar and sidebar
+    # # Vitepress output path
+    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../final_site'")
+    # # Vitepress navbar and sidebar
 
     provided_page_list = doc.user.pages
     sidebar_navbar_info = pagelist2str.((doc,), provided_page_list)
@@ -28,6 +31,11 @@ function modify_config_file(doc, settings, deploy_decision)
     push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
     new_config = replace(config, replacers...)
     write(vitepress_config_file, new_config)
+
+    # # Title
+    push!(replacers, "title: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "title: '$(doc.user.sitename)'")
+
+    # 
 
 end
 

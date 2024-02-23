@@ -15,19 +15,25 @@ pkg> add DocumenterVitepress
 
 ## Usage
 
-To enable the backend import the package in `make.jl` and then just pass `format = DocumenterVitepress.MarkdownVitepress()` to makedocs:
+To enable the backend:
+1. Add the `docs/src/.vitepress` folder from this repository to your own,
+2. Import the package in `make.jl`,
+3. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so:
 
 ```julia
 using Documenter
 using DocumenterVitepress
 makedocs(;
-    format=DocumenterVitepress.MarkdownVitepress(),
+    format=DocumenterVitepress.MarkdownVitepress(repo = "...", devbranch = "...", devurl = "dev"),
     )
 ```
+and enjoy the fruits of your labour!
 
 # Run locally
 
-## npm dependencies
+Because this is based on the Vitepress static site generator, you have to use NodeJS to view this site locally:
+
+## Install npm dependencies
 
 ```shell
 docs > npm i
@@ -38,6 +44,9 @@ docs > npm i
 ```shell
 docs> npm run docs:dev 
 ```
+and edit your `make.jl` file to add `build_vitepress = false` as a keyword argument to the `MarkdownVitepress` config, in order to save time.  If you keep this running, perhaps in a separate Terminal window, it will automatically rebuild whenever you run `make.jl`.
+
+***
 
 The documentation needs documentation.
 

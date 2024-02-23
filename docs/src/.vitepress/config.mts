@@ -6,12 +6,12 @@ import footnote from "markdown-it-footnote";
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
-  title: "DocumenterVitepress",
+  title: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
   description: "A VitePress Site",
   lastUpdated: true,
   cleanUrls: true,
-  outDir: '../final_site', // This is required for MarkdownVitepress to work correctly...
-  head: [['link', { rel: 'icon', href: '/base/favicon.ico' }]],
+  outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
+  head: [['link', { rel: 'icon', href: '/favicon.ico' }]],
   
   markdown: {
     math: true,
