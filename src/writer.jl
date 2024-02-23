@@ -135,7 +135,6 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             "base: 'REPLACE_ME_WITH_DOCUMENTER_VITEPRESS_BASE_URL_WITH_TRAILING_SLASH'" => "base: '/DocumenterVitepress.jl/$(folder)$(isempty(folder) ? "" : "/")'",
             )
         write(vitepress_config_file, new_config)
-        Main.@infiltrate
 
         # Build the docs using `npm`
         cd(dirname(doc.user.build)) do
