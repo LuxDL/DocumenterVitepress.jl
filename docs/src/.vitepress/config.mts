@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
+import { versions } from '../composables/versions'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -39,10 +40,12 @@ export default defineConfig({
       { text: 'Getting Started', link: '/getting_started' },
       { text: 'Markdown', link: '/markdown-examples' },
       { text: 'Code', link: '/code_example' },
-      { text: 'API', link: '/api' }
+      { text: 'API', link: '/api' },
+      { text: 'versions',
+      items: versions},
     ],
 
-    sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+    sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // this should also be a composable
     editLink: {
       pattern: 'https://github.com/LuxDL/DocumenterVitepress.jl/edit/master/docs/src/:path' // TODO: replace this in makedocs!
     },
