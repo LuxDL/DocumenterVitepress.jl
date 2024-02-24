@@ -29,6 +29,13 @@ makedocs(;
 ```
 and enjoy the fruits of your labour!
 
+> [!IMPORTANT]  
+> If you are deploying from a custom URL, like `geo.makie.org`, 
+> please provide the entire URL to the `deploy_url = "geo.makie.org"` keyword argument 
+> of `MarkdownVitepress`!  
+> 
+> Otherwise, the documentation will not render correctly.
+
 # Run locally
 
 Because this is based on the Vitepress static site generator, you have to use NodeJS to view this site locally:
