@@ -61,10 +61,10 @@ mdext(f) = string(splitext(f)[1], ".md")
 This function takes the filename `file`, and returns a file path in the `mdfolder` directory which has the same tree as the `src` directory.  This is used to ensure that the Markdown files are output in the correct location for Vitepress to find them.
 
 """
-function docpath(file, mdfolder)
-    filename = mdext(file)
-    path = splitpath(filename)
-    return joinpath((path[1:end-1])..., mdfolder, path[end]) 
+function docpath(file, builddir, mdfolder)
+    path = relpath(file, builddir)
+    filename = mdext(path)
+    return joinpath(builddir, mdfolder, filename) 
 end
 
 """
@@ -108,7 +108,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
-        open(docpath(page.build, settings.md_output_path), "w") do io
+        open(docpath(page.build, builddir, settings.md_output_path), "w") do io
             for node in page.mdast.children
                 render(io, mime, node, page, doc)
             end
