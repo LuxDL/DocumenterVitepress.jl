@@ -28,6 +28,8 @@ The `repo` kwarg is used to set the edit link for the documentation.
 The `devbranch` and `devurl` kwargs are used to set the path of the static site, which Vitepress expects in advance.
 """
 Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
+    "*Required*: The URL of the repository to which the documentation will be deployed.  This must be the full URL, like `rafaqz.github.io/Rasters.jl` or `geo.makie.jl`."
+    deploy_url::Union{String, Nothing} = nothing
     "*Required*: The full URL of the repository to which the documentation will be deployed."
     repo::String
     "*Required*: The name of the development branch, like `master` or `main`."
