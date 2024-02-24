@@ -2,7 +2,18 @@
 function modify_config_file(doc, settings, deploy_decision)
 
     # Main.@infiltrate
+    # Read in the config file, 
+    vitepress_config_file = joinpath(doc.user.build, settings.md_output_path, ".vitepress", "config.mts")
+    if !isfile(vitepress_config_file)
+        mkpath(splitdir(vitepress_config_file)[1])
+        @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file.  Substituting in the default file."
+        if !isdir(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"))
+            cp(joinpath(dirname(@__DIR__), "docs", "src", ".vitepress", "theme"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"); follow_symlinks = true)
+        end
+        cp(joinpath(@__DIR__, "docs", "src", ".vitepress", "config.mts"), vitepress_config_file)
+    end
 
+    config = read(vitepress_config_file, String)
     replacers = Vector{Pair{String, String}}()
 
 
@@ -15,10 +26,15 @@ function modify_config_file(doc, settings, deploy_decision)
     # So, after building the Markdown, we need to modify the config file to reflect the
     # correct base URL, and then build the VitePress site.
     folder = deploy_decision.subfolder
-
-    vitepress_config_file = joinpath(doc.user.build, settings.md_output_path, ".vitepress", "config.mts")
-    config = read(vitepress_config_file, String)
-    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "base: '/DocumenterVitepress.jl/$(folder)$(isempty(folder) ? "" : "/")'")
+    deploy_relpath = "$(folder)$(isempty(folder) ? "" : "/")"
+    deploy_abspath = if isnothing(settings.deploy_url) 
+        "/" * splitdir(settings.repo)[2] 
+        else
+            s = splitdir(settings.deploy_url)[2]
+            isempty(s) ? "/" : "/$(s)"
+        end
+   
+    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "base: '$(deploy_abspath)/$(deploy_relpath)'")
 
     # # Vitepress output path
     push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../final_site'")
