@@ -1,6 +1,6 @@
 import { ref, onMounted } from 'vue'
 export const versions = [
-  {text: 'stable', link: '/',},
+  {text: 'stable', link: '/v0.0.3/',},
   {text: 'dev', link: '/dev/',},
   {text: 'v0.0.3', link: '/v0.0.3/'}
 ]
