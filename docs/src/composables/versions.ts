@@ -2,7 +2,7 @@ import { ref, onMounted } from 'vue'
 export const versions = [
   {text: 'stable', link: '/',},
   {text: 'dev', link: '/dev/',},
-  {text: 'v0.0.3', link: '/v.0.0.3/'}
+  {text: 'v0.0.3', link: '/v0.0.3/'}
 ]
 
 // shared data across instances so we load only once.
