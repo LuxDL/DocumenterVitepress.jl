@@ -115,6 +115,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
 
+    mkpath(joinpath(builddir, "final_site"))
+
     # We manually obtain the Documenter deploy configuration,
     # so we can use it to set Vitepress's settings.
     # TODO: make it so that the user does not have to provide a repo url!
@@ -157,7 +159,9 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 rm(joinpath(dirname(builddir), "package-lock.json"))
             end
         end
-        touch(joinpath(builddir, "final_site", ".nojekyll"))
+        # This is only useful if placed in the root of the `docs` folder, and we don't 
+        # have any names which conflict with Jekyll (beginning with _ or .) in any case.
+        # touch(joinpath(builddir, "final_site", ".nojekyll"))
 
         # Clean up afterwards
         clean_md_output = isnothing(settings.clean_md_output) ? deploy_decision.all_ok : settings.clean_md_output

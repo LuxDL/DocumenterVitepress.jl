@@ -14,7 +14,7 @@ function modify_config_file(doc, settings, deploy_decision)
     end
 
     config = read(vitepress_config_file, String)
-    replacers = Vector{Pair{String, String}}()
+    replacers = Vector{Pair{<: AbstractString, <: AbstractString}}()
 
 
     # # Vitepress base path
