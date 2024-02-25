@@ -69,13 +69,13 @@ function pagelist2str(doc, page::String)
     else
         elements[idx].text[1]
     end
-    return "{ text: '$name', link: '/$(splitext(page)[1])', $(sidebar_items(doc, page)) }"
+    return "{ text: '$name', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$name', link: '/$(splitext(page)[1])', $(sidebar_items(doc, page)) }"
+    return "{ text: '$name', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
