@@ -723,3 +723,11 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")
 end
+
+# Documenter.jl local images
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::Documenter.LocalImage, page, doc; kwargs...)
+    # Main.@infiltrate
+    image_path = relpath(joinpath(doc.user.build, image.path), dirname(page.build))
+    println(io)
+    println(io, "![]($image_path)")
+end
