@@ -388,6 +388,11 @@ end
 
 # Select the "best" rendering MIME for markdown output!
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Dict{MIME, Any}, page, doc; kwargs...)
+
+    settings_ind = findfirst(x -> x isa MarkdownVitepress, doc.user.format)
+    settings = doc.user.format[settings_ind]
+    md_output_path = settings.md_output_path
+
     filename = String(rand('a':'z', 7))
     if haskey(d, MIME"text/markdown"())
         println(io, d[MIME"text/markdown"()])
@@ -408,35 +413,65 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         end
         println(io, image_text)
     elseif haskey(d, MIME"image/png"())
-        write(joinpath(dirname(page.build), "$(filename).png"),
+        write(joinpath(dirname(page.build), md_output_path, "$(filename).png"),
             base64decode(d[MIME"image/png"()]))
         println(io,
             """
     ![]($(filename).png)
     """)
     elseif haskey(d, MIME"image/webp"())
-        write(joinpath(dirname(page.build), "$(filename).webp"),
+        write(joinpath(dirname(page.build), md_output_path, "$(filename).webp"),
             base64decode(d[MIME"image/webp"()]))
         println(io,
             """
     ![]($(filename).webp)
     """)
     elseif haskey(d, MIME"image/jpeg"())
-        write(joinpath(dirname(page.build), "$(filename).jpeg"),
+        write(joinpath(dirname(page.build), md_output_path, "$(filename).jpeg"),
             base64decode(d[MIME"image/jpeg"()]))
         println(io,
             """
     ![]($(filename).jpeg)
     """)
+    elseif haskey(d, MIME"image/png+lightdark"())
+        fig_light, fig_dark, backend = d[MIME"image/png+lightdark"()]
+        write(joinpath(dirname(page.build), md_output_path, "$(filename)_light.png"), fig_light)
+        write(joinpath(dirname(page.build), md_output_path, "$(filename)_dark.png"), fig_dark)
+        println(io,
+            """
+            ![]($(filename)_light.png){.light-only}
+            ![]($(filename)_dark.png){.dark-only}
+            """
+        )
+    elseif haskey(d, MIME"image/jpeg+lightdark"())
+        fig_light, fig_dark, backend = d[MIME"image/jpeg+lightdark"()]
+        Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_light.jpeg"), fig_light)
+        Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_dark.jpeg"), fig_dark)
+        println(io,
+            """
+            ![]($(filename)_light.jpeg){.light-only}
+            ![]($(filename)_dark.jpeg){.dark-only}
+            """
+        )
+    elseif haskey(d, MIME"image/svg+xml+lightdark"())
+        fig_light, fig_dark, backend = d[MIME"image/svg+lightdark"()]
+        Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_light.svg"), fig_light)
+        Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_dark.svg"), fig_dark)
+        println(io,
+            """
+            <img src = "$(filename)_light.svg" style=".light-only"></img>
+            <img src = "$(filename)_dark.svg" style=".dark-only"></img>
+            """
+        )
     elseif haskey(d, MIME"image/gif"())
-        write(joinpath(dirname(page.build), "$(filename).gif"),
+        write(joinpath(dirname(page.build), md_output_path, "$(filename).gif"),
             base64decode(d[MIME"image/gif"()]))
         println(io,
             """
     ![]($(filename).gif)
     """)
     elseif haskey(d, MIME"video/mp4"())
-        write(joinpath(dirname(page.build), "$(filename).gif"),
+        write(joinpath(dirname(page.build), md_output_path, "$(filename).gif"),
             base64decode(d[MIME"image/gif"()]))
         println(io,
             """
@@ -466,7 +501,7 @@ render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, str::Abstr
 # the rest of the build, and so we just leave them in place and print a blank line in their place.
 render(io::IO, ::MIME"text/plain", n::Documenter.MarkdownAST.Node, node::Documenter.MetaNode, page, doc; kwargs...) = println(io, "\n")
 # In the original AST, SetupNodes were just mapped to empty Markdown.MD() objects.
-render(io, mime, node::MarkdownAST.Node, ::Documenter.SetupNode, page, doc; kwargs...) = nothing
+render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, ::Documenter.SetupNode, page, doc; kwargs...) = nothing
 
 
 # Raw nodes are used to insert raw HTML into the output. We just print it as is.
