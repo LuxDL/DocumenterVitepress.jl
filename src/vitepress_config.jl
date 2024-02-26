@@ -10,11 +10,12 @@ function modify_config_file(doc, settings, deploy_decision)
         if !isdir(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"))
             cp(joinpath(dirname(@__DIR__), "docs", "src", ".vitepress", "theme"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"); follow_symlinks = true)
         end
-        cp(joinpath(@__DIR__, "docs", "src", ".vitepress", "config.mts"), vitepress_config_file)
+        cp(joinpath(dirname(@__DIR__), "docs", "src", ".vitepress", "config.mts"), vitepress_config_file)
+        cp(joinpath(dirname(@__DIR__), "docs", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
     end
 
     config = read(vitepress_config_file, String)
-    replacers = Vector{Pair{String, String}}()
+    replacers = Vector{Pair{<: AbstractString, <: AbstractString}}()
 
 
     # # Vitepress base path
@@ -69,13 +70,13 @@ function pagelist2str(doc, page::String)
     else
         elements[idx].text[1]
     end
-    return "{ text: '$name', link: '/$(splitext(page)[1])', $(sidebar_items(doc, page)) }"
+    return "{ text: '$name', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$name', link: '/$(splitext(page)[1])', $(sidebar_items(doc, page)) }"
+    return "{ text: '$name', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
