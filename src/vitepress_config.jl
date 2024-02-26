@@ -10,7 +10,8 @@ function modify_config_file(doc, settings, deploy_decision)
         if !isdir(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"))
             cp(joinpath(dirname(@__DIR__), "docs", "src", ".vitepress", "theme"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"); follow_symlinks = true)
         end
-        cp(joinpath(@__DIR__, "docs", "src", ".vitepress", "config.mts"), vitepress_config_file)
+        cp(joinpath(dirname(@__DIR__), "docs", "src", ".vitepress", "config.mts"), vitepress_config_file)
+        cp(joinpath(dirname(@__DIR__), "docs", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
     end
 
     config = read(vitepress_config_file, String)
