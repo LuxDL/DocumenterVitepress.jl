@@ -33,9 +33,11 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     "*Required*: The full URL of the repository to which the documentation will be deployed."
     repo::String
     "*Required*: The name of the development branch, like `master` or `main`."
-    devbranch::String
+    devbranch::String = Documenter.git_remote_head_branch("MarkdownVitepress(devbranch = ...)", Documenter.currentdir())
     "*Required*: The URL path to the development site, like `dev` or `dev-branch`."
-    devurl::String # TODO: hopefully, remove this!
+    devurl::String = "dev"
+    "A description of the website as a String."
+    description::String = "Documentation for $(splitdir(repo)[end])"
     """Determines whether to build the Vitepress site or only emit markdown files.  Defaults to `true`, i.e., building the full Vitepress site."""
     build_vitepress::Bool = true
     "Determines whether to run `npm install` before building the Vitepress site.  Defaults to `true`."

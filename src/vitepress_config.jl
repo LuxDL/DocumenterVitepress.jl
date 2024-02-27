@@ -50,6 +50,34 @@ function modify_config_file(doc, settings, deploy_decision)
     # # Title
     push!(replacers, "title: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "title: '$(doc.user.sitename)'")
 
+    # # Edit link
+    push!(replacers, "editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "editLink: { pattern: \"$(settings.repo)$(endswith(settings.repo, "/") ? "" : "/")edit/$(settings.devbranch)/docs/src/:path\" }")
+    
+    # # Github repo
+    push!(replacers, """{ icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }""" => """{ icon: 'github', link: '$(settings.repo)' }""")
+
+    # # Logo
+
+    if occursin("logo:", config)
+        if  isfile(joinpath(doc.user.build, settings.md_output_path, "assets", "logo.png"))
+            push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "logo: { src: '/logo.png', width:2 24, height: 24}")
+        else
+            @warn "DocumenterVitepress: No logo.png file found in `docs/src/assets`.  Skipping logo replacement."
+            push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'," => "")
+        end
+    end
+
+    # # Favicon
+
+    if occursin("rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'", config)
+        if  isfile(joinpath(doc.user.build, settings.md_output_path, "assets", "favicon.ico"))
+            push!(replacers, "rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'" => "rel: 'icon', href: '/favicon.ico'")
+        else
+            @warn "DocumenterVitepress: No favicon.ico file found in `docs/src/assets`.  Skipping favicon replacement."
+            push!(replacers, "head: [['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }]]," => "")
+        end
+    end
+
     # Finally, run all the replacers and write the new config file
    
     new_config = replace(config, replacers...)
