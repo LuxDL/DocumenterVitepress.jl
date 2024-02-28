@@ -28,4 +28,10 @@ In order to locally develop, run `npm run docs:dev` in another terminal.  This w
 
 ## Finalization
 
-Finally, if deploying, we move files around such that the only thing deployed is the rendered webpage.
+Finally, if deploying, we move files around such that the only thing deployed is the rendered webpage.  
+
+This means that the contents of `build/.documenter` are deleted, and the contents of `build/final_site` are moved into `build` proper.  This allows the complete site to be committed directly.
+
+!!! warning
+    This will probably not work if using a custom, non-detectable deployment configuration!
+

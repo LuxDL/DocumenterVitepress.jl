@@ -85,6 +85,7 @@ render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, elemen
 where `Eltype` is the type of the `element` field of the `node` object which you care about.
 """
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
+    Main.@exfiltrate
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
     copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
