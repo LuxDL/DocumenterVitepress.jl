@@ -1,4 +1,28 @@
 
+"""
+    modify_config_file(doc, settings, deploy_decision)
+
+Modifies the config file located at `\\\$builddir/\\\$md_output_path/.vitepress/config.mts` to include attributes determined at runtime.
+
+In general, the config file will contain various strings like `REPLACE_ME_DOCUMENTER_VITEPRESS` which this function will replace with content.
+
+## Replaced config items
+
+Currently, this function replaces the following config items:
+- Vitepress base path (`base`)
+- Vitepress output path (`outDir`)
+- Navbar
+- Sidebar
+- Title
+- Edit link
+- Github repo link
+- Logo
+- Favicon
+
+## Adding new config hooks
+
+Simply add more elements to the `replacers` array within this function.
+"""
 function modify_config_file(doc, settings, deploy_decision)
 
     # Main.@infiltrate
@@ -15,7 +39,7 @@ function modify_config_file(doc, settings, deploy_decision)
     end
 
     config = read(vitepress_config_file, String)
-    replacers = Vector{Pair{<: AbstractString, <: AbstractString}}()
+    replacers = Vector{Pair{<: Union{AbstractString, Regex}, <: AbstractString}}()
 
 
     # # Vitepress base path
