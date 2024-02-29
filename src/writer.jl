@@ -430,7 +430,7 @@ function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc
     # as browsers seem to need to have the xmlns attribute set in the <svg> tag if you
     # want to include it with <img>. However, setting that attribute is up to the code
     # creating the SVG image.
-    image_text = d[MIME"image/svg+xml"()]
+    image_text = element
     # Additionally, Vitepress complains about the XML version and encoding string below,
     # so we just remove this bad hombre!
     bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
@@ -626,10 +626,20 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     print(io, " {#$id}")
     println(io)
 end
+# Thematic breaks
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, thematic::MarkdownAST.ThematicBreak, page, doc; kwargs...)
+    println(io); println(io)
+    println(io, "---")
+    println(io)
+end
 # Admonitions
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, admonition::MarkdownAST.Admonition, page, doc; kwargs...)
     # Main.@infiltrate
-    println(io, "\n::: $(admonition.category) $(admonition.title)")
+    category = admonition.category
+    if category == "note"
+        category = "tip"
+    end
+    println(io, "\n::: $(category) $(admonition.title)")
     render(io, mime, node, node.children, page, doc; kwargs...)
     println(io, "\n:::")
 end
