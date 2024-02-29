@@ -33,9 +33,11 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     "*Required*: The full URL of the repository to which the documentation will be deployed."
     repo::String
     "*Required*: The name of the development branch, like `master` or `main`."
-    devbranch::String
+    devbranch::String = Documenter.git_remote_head_branch("MarkdownVitepress(devbranch = ...)", Documenter.currentdir())
     "*Required*: The URL path to the development site, like `dev` or `dev-branch`."
-    devurl::String # TODO: hopefully, remove this!
+    devurl::String = "dev"
+    "A description of the website as a String."
+    description::String = "Documentation for $(splitdir(repo)[end])"
     """Determines whether to build the Vitepress site or only emit markdown files.  Defaults to `true`, i.e., building the full Vitepress site."""
     build_vitepress::Bool = true
     "Determines whether to run `npm install` before building the Vitepress site.  Defaults to `true`."
@@ -83,6 +85,7 @@ render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, elemen
 where `Eltype` is the type of the `element` field of the `node` object which you care about.
 """
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
+    # Main.@exfiltrate
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
     copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
@@ -114,6 +117,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
         end
     end
+
+    mkpath(joinpath(builddir, "final_site"))
 
     # We manually obtain the Documenter deploy configuration,
     # so we can use it to set Vitepress's settings.
@@ -157,7 +162,9 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 rm(joinpath(dirname(builddir), "package-lock.json"))
             end
         end
-        touch(joinpath(builddir, "final_site", ".nojekyll"))
+        # This is only useful if placed in the root of the `docs` folder, and we don't 
+        # have any names which conflict with Jekyll (beginning with _ or .) in any case.
+        # touch(joinpath(builddir, "final_site", ".nojekyll"))
 
         # Clean up afterwards
         clean_md_output = isnothing(settings.clean_md_output) ? deploy_decision.all_ok : settings.clean_md_output
@@ -289,7 +296,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, i
     for (object, _, page, mod, cat) in index.elements
         page = mdext(page)
         url = string("#", Documenter.slugify(object))
-        println(io, "- [`", object.binding, "`](", url, ")")
+        println(io, "- [`", object.binding, "`](", replace(url, " " => "%20"), ")")
     end
     return println(io)
 end
@@ -299,7 +306,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
         path = mdext(path)
         header = anchor.object
         url = string(path, Documenter.anchor_fragment(anchor))
-        link = Markdown.Link(anchor.id, url)
+        link = Markdown.Link(anchor.id, replace(url, " " => "%20"))
         level = anchor.order
         print(io, "    "^(level - 1), "- ")
         linkfix = ".md#"
@@ -314,7 +321,7 @@ end
 
 function intelligent_language(lang::String)
     if lang == "ansi"
-        "julia"
+        "julia /julia>/"
     elseif lang == "documenter-ansi"
         "ansi"
     else
@@ -383,69 +390,151 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 
 # Select the "best" rendering MIME for markdown output!
-function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Dict{MIME, Any}, page, doc; kwargs...)
-    filename = String(rand('a':'z', 7))
-    if haskey(d, MIME"text/markdown"())
-        println(io, d[MIME"text/markdown"()])
-    elseif haskey(d, MIME"text/html"())
-        println(io, d[MIME"text/html"()])
-    elseif haskey(d, MIME"image/svg+xml"())
-        # NOTE: It seems that we can't simply save the SVG images as a file and include them
-        # as browsers seem to need to have the xmlns attribute set in the <svg> tag if you
-        # want to include it with <img>. However, setting that attribute is up to the code
-        # creating the SVG image.
-        image_text = d[MIME"image/svg+xml"()]
-        # Additionally, Vitepress complains about the XML version and encoding string below,
-        # so we just remove this bad hombre!
-        bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
-        location = findfirst(bad_hombre_string, lowercase(image_text))    
-        if !isnothing(location)
-            image_text = replace(image_text, image_text[location] => "")
-        end
-        println(io, image_text)
-    elseif haskey(d, MIME"image/png"())
-        write(joinpath(dirname(page.build), "$(filename).png"),
-            base64decode(d[MIME"image/png"()]))
-        println(io,
-            """
-    ![]($(filename).png)
-    """)
-    elseif haskey(d, MIME"image/webp"())
-        write(joinpath(dirname(page.build), "$(filename).webp"),
-            base64decode(d[MIME"image/webp"()]))
-        println(io,
-            """
-    ![]($(filename).webp)
-    """)
-    elseif haskey(d, MIME"image/jpeg"())
-        write(joinpath(dirname(page.build), "$(filename).jpeg"),
-            base64decode(d[MIME"image/jpeg"()]))
-        println(io,
-            """
-    ![]($(filename).jpeg)
-    """)
-    elseif haskey(d, MIME"image/gif"())
-        write(joinpath(dirname(page.build), "$(filename).gif"),
-            base64decode(d[MIME"image/gif"()]))
-        println(io,
-            """
-    ![]($(filename).gif)
-    """)
-    elseif haskey(d, MIME"video/mp4"())
-        write(joinpath(dirname(page.build), "$(filename).gif"),
-            base64decode(d[MIME"image/gif"()]))
-        println(io,
-            """
-    <video src="$filename.mp4" controls="controls" autoplay="autoplay"></video>)
-    """)
-    elseif haskey(d, MIME"text/plain"())
-        text = d[MIME"text/plain"()]
-        out = repr(MIME"text/plain"(), ANSIColoredPrinters.PlainTextPrinter(IOBuffer(text)))
-        render(io, mime, node, Markdown.Code(out), page, doc; kwargs...)
-    else
-        error("this should never happen.")
+
+"""
+    mime_priority(mime::MIME)::Float64
+
+This function returns a priority for a given MIME type, which
+is used to select the best MIME type for rendering a given
+element.
+"""
+function mime_priority end
+mime_priority(::MIME"text/markdown") = 1.0
+mime_priority(::MIME"text/html") = 2.0
+mime_priority(::MIME"image/svg+xml") = 3.0
+mime_priority(::MIME"image/png") = 4.0
+mime_priority(::MIME"image/webp") = 5.0
+mime_priority(::MIME"image/jpeg") = 6.0
+mime_priority(::MIME"image/png+lightdark") = 7.0
+mime_priority(::MIME"image/jpeg+lightdark") = 8.0
+mime_priority(::MIME"image/svg+xml+lightdark") = 9.0
+mime_priority(::MIME"image/gif") = 10.0
+mime_priority(::MIME"video/mp4") = 11.0
+mime_priority(::MIME"text/plain") = 12.0
+mime_priority(::MIME) = Inf
+
+function render_mime(io::IO, mime::MIME, node, element, page, doc; kwargs...)
+    @warn("DocumenterVitepress: Unknown MIME type $mime provided and no alternatives given.  Ignoring render!")
+end
+
+function render_mime(io::IO, mime::MIME"text/markdown", node, element, page, doc; kwargs...)
+    println(io, element)
+end
+
+function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kwargs...)
+    println(io, element)
+end
+
+function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; kwargs...)
+    # NOTE: It seems that we can't simply save the SVG images as a file and include them
+    # as browsers seem to need to have the xmlns attribute set in the <svg> tag if you
+    # want to include it with <img>. However, setting that attribute is up to the code
+    # creating the SVG image.
+    image_text = element
+    # Additionally, Vitepress complains about the XML version and encoding string below,
+    # so we just remove this bad hombre!
+    bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
+    location = findfirst(bad_hombre_string, lowercase(image_text))    
+    if !isnothing(location)
+        image_text = replace(image_text, image_text[location] => "")
     end
-    return nothing
+    println(io, image_text)
+end
+
+function render_mime(io::IO, mime::MIME"image/png", node, element, page, doc; kwargs...)
+    filename = String(rand('a':'z', 7))
+    write(joinpath(dirname(page.build), md_output_path, "$(filename).png"),
+        base64decode(element))
+    println(io, "![]($(filename).png)")
+end
+
+function render_mime(io::IO, mime::MIME"image/webp", node, element, page, doc; kwargs...)
+    filename = String(rand('a':'z', 7))
+    write(joinpath(dirname(page.build), md_output_path, "$(filename).webp"),
+        base64decode(element))
+    println(io, "![]($(filename).webp)")
+end
+
+function render_mime(io::IO, mime::MIME"image/jpeg", node, element, page, doc; kwargs...)
+    filename = String(rand('a':'z', 7))
+    write(joinpath(dirname(page.build), md_output_path, "$(filename).jpeg"),
+        base64decode(element))
+    println(io, "![]($(filename).jpeg)")
+end
+
+function render_mime(io::IO, mime::MIME"image/png+lightdark", node, element, page, doc; kwargs...)
+    fig_light, fig_dark, backend = element
+    filename = String(rand('a':'z', 7))
+    write(joinpath(dirname(page.build), md_output_path, "$(filename)_light.png"), fig_light)
+    write(joinpath(dirname(page.build), md_output_path, "$(filename)_dark.png"), fig_dark)
+    println(io,
+        """
+        ![]($(filename)_light.png){.light-only}
+        ![]($(filename)_dark.png){.dark-only}
+        """
+    )
+end
+
+function render_mime(io::IO, mime::MIME"image/jpeg+lightdark", node, element, page, doc; kwargs...)
+    fig_light, fig_dark, backend = element
+    filename = String(rand('a':'z', 7))
+    Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_light.jpeg"), fig_light)
+    Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_dark.jpeg"), fig_dark)
+    println(io,
+        """
+        ![]($(filename)_light.jpeg){.light-only}
+        ![]($(filename)_dark.jpeg){.dark-only}
+        """
+    )
+end
+
+function render_mime(io::IO, mime::MIME"image/svg+xml+lightdark", node, element, page, doc; kwargs...)
+    fig_light, fig_dark, backend = element
+    filename = String(rand('a':'z', 7))
+    Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_light.svg"), fig_light)
+    Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_dark.svg"), fig_dark)
+    println(io,
+        """
+        <img src = "$(filename)_light.svg" style=".light-only"></img>
+        <img src = "$(filename)_dark.svg" style=".dark-only"></img>
+        """
+    )
+end
+
+function render_mime(io::IO, mime::MIME"image/gif", node, element, page, doc; kwargs...)
+    filename = String(rand('a':'z', 7))
+    write(joinpath(dirname(page.build), md_output_path, "$(filename).gif"),
+        base64decode(element))
+    println(io, "![]($(filename).gif)")
+end
+
+function render_mime(io::IO, mime::MIME"video/mp4", node, element, page, doc; kwargs...)
+    filename = String(rand('a':'z', 7))
+    write(joinpath(dirname(page.build), md_output_path, "$(filename).mp4"),
+        base64decode(element))
+    println(io, "<video src='$filename.mp4' controls='controls' autoplay='autoplay'></video>")
+end
+
+function render_mime(io::IO, mime::MIME"text/plain", node, element, page, doc; kwargs...)
+    return render(io, mime, node, Markdown.Code(element), page, doc; kwargs...)
+end
+
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Dict{MIME, Any}, page, doc; kwargs...)
+
+    settings_ind = findfirst(x -> x isa MarkdownVitepress, doc.user.format)
+    settings = doc.user.format[settings_ind]
+    md_output_path = settings.md_output_path
+
+    available_mimes = keys(d)
+    if isempty(available_mimes)
+        return nothing
+    end
+    # Sort the available mimes by priority
+    sorted_mimes = sort(collect(available_mimes), by = mime_priority)
+    # Select the best MIME type for rendering
+    best_mime = sorted_mimes[1]
+    # Render the best MIME type
+    render_mime(io, best_mime, node, d[best_mime], page, doc; kwargs...)
 end
 
 ## Basic Nodes. AKA: any other content that hasn't been handled yet.
@@ -462,7 +551,7 @@ render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, str::Abstr
 # the rest of the build, and so we just leave them in place and print a blank line in their place.
 render(io::IO, ::MIME"text/plain", n::Documenter.MarkdownAST.Node, node::Documenter.MetaNode, page, doc; kwargs...) = println(io, "\n")
 # In the original AST, SetupNodes were just mapped to empty Markdown.MD() objects.
-render(io, mime, node::MarkdownAST.Node, ::Documenter.SetupNode, page, doc; kwargs...) = nothing
+render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, ::Documenter.SetupNode, page, doc; kwargs...) = nothing
 
 
 # Raw nodes are used to insert raw HTML into the output. We just print it as is.
@@ -509,12 +598,14 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # appropriately.
     print(io, "[")
     render(io, mime, node, node.children, page, doc; prenewline = false, kwargs...)
-    print(io, "]($(link.destination))")
+    print(io, "]($(replace(link.destination, " " => "%20")))")
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
     info = code.info
-    if info == "julia-repl"
+    if info ∈ ("julia-repl", "@doctest", "@repl")
+        info = "julia /julia>/"
+    elseif info ∈ ("@example", )
         info = "julia"
     end
     render(io, mime, node, Markdown.Code(info, code.code), page, doc; kwargs...)
@@ -532,13 +623,23 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io)
     print(io, "#"^(heading.element.level), " ")
     render(io, mime, node, heading.children, page, doc; kwargs...)
-    print(io, " {#$id}")
+    print(io, " {#$(replace(id, " " => "-"))}")
+    println(io)
+end
+# Thematic breaks
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, thematic::MarkdownAST.ThematicBreak, page, doc; kwargs...)
+    println(io); println(io)
+    println(io, "---")
     println(io)
 end
 # Admonitions
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, admonition::MarkdownAST.Admonition, page, doc; kwargs...)
     # Main.@infiltrate
-    println(io, "\n::: $(admonition.category) $(admonition.title)")
+    category = admonition.category
+    if category == "note" # Julia markdown says note, but Vitepress says tip
+        category = "tip"
+    end
+    println(io, "\n::: $(category) $(admonition.title)")
     render(io, mime, node, node.children, page, doc; kwargs...)
     println(io, "\n:::")
 end
@@ -683,4 +784,12 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")
+end
+
+# Documenter.jl local images
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::Documenter.LocalImage, page, doc; kwargs...)
+    # Main.@infiltrate
+    image_path = relpath(joinpath(doc.user.build, image.path), dirname(page.build))
+    println(io)
+    println(io, "![]($image_path)")
 end

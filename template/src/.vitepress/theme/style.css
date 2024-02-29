@@ -168,15 +168,3 @@ mjx-container > svg {
   --vp-c-sponsor: #91dd33;
   --vitest-c-sponsor-hover: #e51370;
 }
-
-/**
- * Change images from light to dark theme
- * -------------------------------------------------------------------------- */
-
- :root:not(.dark) .dark-only {
-  display: none;
-}
-
-:root:is(.dark) .light-only {
-  display: none;
-}

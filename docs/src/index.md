@@ -8,7 +8,7 @@ hero:
   text: "Document your code"
   tagline: A Markdown backend designed to work with VitePress and Documenter.jl
   image:
-    src: /logo_dark.png
+    src: /logo.png
     alt: DocumenterVitepress
   actions:
     - theme: brand
@@ -19,7 +19,8 @@ hero:
       link: https://github.com/LuxDL/DocumenterVitepress.jl
     - theme: alt
       text: API Examples
-      link: /api-examples
+      link: /api
+      
 
 features:
   - icon: <img width="64" height="64" src="https://img.icons8.com/arcade/64/markdown.png" alt="markdown"/>
@@ -48,8 +49,10 @@ It is meant to be used in conjunction with the `vitepress` Node.js package, whic
 
 <h2> Basic usage </h2>
 
-If you copy the contents of the `docs/` directory and the `.github/Documenter.yml` file to your repo, you should be good to go and edit docs as usual! 
+If you copy the contents of the `template/` directory into your `docs/` and the `.github/Documenter.yml` file to your repo, you should be good to go and edit docs as usual! 
 
-Just remember to edit the navbar in `docs/src/.vitepress/config.mts`.
+Just remember to edit the navbar in `docs/src/.vitepress/config.mts`, if you want it to be different from the sidebar.
+
+To install a logo or favicon, you can put `logo.png` and `favicon.ico` in `docs/src/assets`, and they will be automatically detected.
 
 </div>

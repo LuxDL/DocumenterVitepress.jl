@@ -3,16 +3,17 @@ import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
 import { versions } from '../composables/versions'
+import { transformerMetaWordHighlight } from '@shikijs/transformers';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
   title: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
-  description: "A VitePress Site",
+  description: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
   lastUpdated: true,
   cleanUrls: true,
   outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
-  head: [['link', { rel: 'icon', href: '/public/favicon.ico' }]],
+  head: [['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }]],
   
   markdown: {
     math: true,
@@ -23,12 +24,15 @@ export default defineConfig({
     },
     theme: {
       light: "github-light",
-      dark: "github-dark"}
+      dark: "github-dark"
+    },
+    codeTransformers: [ transformerMetaWordHighlight(), ],
+
   },
   themeConfig: {
     outline: 'deep',
     // https://vitepress.dev/reference/default-theme-config
-    logo: { src: '/logo_dark.png', width: 24, height: 24 },
+    logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     search: {
       provider: 'local',
       options: {
@@ -44,17 +48,14 @@ export default defineConfig({
       { text: 'versions',
       items: versions},
     ],
-
     sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // this should also be a composable
-    editLink: {
-      pattern: 'https://github.com/LuxDL/DocumenterVitepress.jl/edit/master/docs/src/:path' // TODO: replace this in makedocs!
-    },
+    editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/LuxDL/DocumenterVitepress.jl' }
+      { icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }
     ],
     footer: {
-      message: 'Made with <a href="https://documenter.juliadocs.org/stable/" target="_blank"><strong>Documenter.jl</strong></a> & <a href="https://vitepress.dev" target="_blank"><strong>VitePress</strong></a> <br>',
-      copyright: `© Copyright ${new Date().getUTCFullYear()}. Released under the MIT License.`
+      message: 'Made with <a href="https://documenter.juliadocs.org/stable/" target="_blank"><strong>Documenter.jl</strong></a>, <a href="https://vitepress.dev" target="_blank"><strong>VitePress</strong></a> and <a href="https://luxdl.github.io/DocumenterVitepress.jl/stable" target="_blank"><strong>DocumenterVitepress.jl</strong></a> <br>',
+      copyright: `© Copyright ${new Date().getUTCFullYear()}.`
     }
   }
 })
