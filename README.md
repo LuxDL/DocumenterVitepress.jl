@@ -1,4 +1,9 @@
 # DocumenterVitepress.jl
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl/dev)
+[![CI Documenter](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml/badge.svg)](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml)
+
+<img src="https://luxdl.github.io/DocumenterVitepress.jl/stable/logo.png" align="right" style="padding-left:10px;" width="180"/>
 
 > [!TIP]
 > Visit at https://luxdl.github.io/DocumenterVitepress.jl/dev
@@ -28,9 +33,12 @@ makedocs(;
 ```
 and enjoy the fruits of your labour!
 
-To get a fully customizable build, run `DocumenterVitepress.generate_template("/path/to/YourPackage/docs", "YourPackage")` to populate all of the files which Vitepress requires.
+Or even better, start from scratch with a generated template.
 
-> [!IMPORTANT]  
+> [!TIP]
+> To get a fully customizable build, run `DocumenterVitepress.generate_template("/path/to/YourPackage/docs", "YourPackage")` to populate all of the files which Vitepress requires.
+
+> [!CAUTION]  
 > If you are deploying from a custom URL, like `geo.makie.org`, 
 > please provide the entire URL to the `deploy_url = "geo.makie.org"` keyword argument 
 > of `MarkdownVitepress`!  
