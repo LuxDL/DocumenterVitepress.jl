@@ -16,9 +16,8 @@ pkg> add DocumenterVitepress
 ## Usage
 
 To enable the backend:
-1. Add the `template/src/.vitepress` folder from this repository to your own,
-2. Import the package in `make.jl`,
-3. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so:
+1. Import the package in `make.jl`,
+2. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so:
 
 ```julia
 using Documenter
@@ -28,6 +27,8 @@ makedocs(;
     )
 ```
 and enjoy the fruits of your labour!
+
+To get a fully customizable build, run `DocumenterVitepress.generate_template("/path/to/YourPackage/docs", "YourPackage")` to populate all of the files which Vitepress requires.
 
 > [!IMPORTANT]  
 > If you are deploying from a custom URL, like `geo.makie.org`, 
