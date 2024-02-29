@@ -438,7 +438,7 @@ function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc
     if !isnothing(location)
         image_text = replace(image_text, image_text[location] => "")
     end
-    println(io, image_text)
+    println(io, "<img src=\"data:image/svg+xml;\"" * base64encode(image_text) * "\"/>")
 end
 
 function render_mime(io::IO, mime::MIME"image/png", node, element, page, doc; kwargs...)
