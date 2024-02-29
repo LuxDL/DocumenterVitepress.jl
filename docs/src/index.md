@@ -8,7 +8,7 @@ hero:
   text: "Document your code"
   tagline: A Markdown backend designed to work with VitePress and Documenter.jl
   image:
-    src: /logo_dark.png
+    src: /logo.png
     alt: DocumenterVitepress
   actions:
     - theme: brand
