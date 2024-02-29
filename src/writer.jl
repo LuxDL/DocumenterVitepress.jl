@@ -296,7 +296,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, i
     for (object, _, page, mod, cat) in index.elements
         page = mdext(page)
         url = string("#", Documenter.slugify(object))
-        println(io, "- [`", object.binding, "`](", url, ")")
+        println(io, "- [`", object.binding, "`](", replace(url, " " => "%20"), ")")
     end
     return println(io)
 end
@@ -306,7 +306,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
         path = mdext(path)
         header = anchor.object
         url = string(path, Documenter.anchor_fragment(anchor))
-        link = Markdown.Link(anchor.id, url)
+        link = Markdown.Link(anchor.id, replace(url, " " => "%20"))
         level = anchor.order
         print(io, "    "^(level - 1), "- ")
         linkfix = ".md#"
@@ -598,7 +598,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # appropriately.
     print(io, "[")
     render(io, mime, node, node.children, page, doc; prenewline = false, kwargs...)
-    print(io, "]($(link.destination))")
+    print(io, "]($(replace(link.destination, " " => "%20")))")
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
@@ -623,7 +623,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io)
     print(io, "#"^(heading.element.level), " ")
     render(io, mime, node, heading.children, page, doc; kwargs...)
-    print(io, " {#$id}")
+    print(io, " {#$(replace(id, " " => "-"))}")
     println(io)
 end
 # Thematic breaks
@@ -636,7 +636,7 @@ end
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, admonition::MarkdownAST.Admonition, page, doc; kwargs...)
     # Main.@infiltrate
     category = admonition.category
-    if category == "note"
+    if category == "note" # Julia markdown says note, but Vitepress says tip
         category = "tip"
     end
     println(io, "\n::: $(category) $(admonition.title)")
