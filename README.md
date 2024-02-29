@@ -1,7 +1,7 @@
 # DocumenterVitepress.jl
 
 > [!TIP]
-> Visit at https://luxdl.github.io/DocumenterVitepress.jl/
+> Visit at https://luxdl.github.io/DocumenterVitepress.jl/dev
 
 This package provides a Markdown / MkDocs backend to [Documenter.jl](https://documenter.juliadocs.org/stable/).
 
