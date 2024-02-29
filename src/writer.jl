@@ -321,7 +321,7 @@ end
 
 function intelligent_language(lang::String)
     if lang == "ansi"
-        "julia"
+        "julia /julia>/"
     elseif lang == "documenter-ansi"
         "ansi"
     else
@@ -603,7 +603,9 @@ end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
     info = code.info
-    if info == "julia-repl"
+    if info ∈ ("julia-repl", "@doctest", "@repl")
+        info = "julia /julia>/"
+    elseif info ∈ ("@example", )
         info = "julia"
     end
     render(io, mime, node, Markdown.Code(info, code.code), page, doc; kwargs...)
