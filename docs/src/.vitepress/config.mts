@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
+import { transformerMetaWordHighlight } from '@shikijs/transformers';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -22,7 +23,10 @@ export default defineConfig({
     },
     theme: {
       light: "github-light",
-      dark: "github-dark"}
+      dark: "github-dark"
+    },
+    codeTransformers: [ transformerMetaWordHighlight(), ],
+
   },
   themeConfig: {
     outline: 'deep',

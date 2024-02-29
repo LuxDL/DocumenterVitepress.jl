@@ -12,6 +12,7 @@
     "docs:preview": "vitepress preview build/.documenter"
   },
   "dependencies": {
+    "@shikijs/transformers": "^1.1.7",
     "markdown-it-footnote": "^4.0.0"
   }
 }
