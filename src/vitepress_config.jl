@@ -1,4 +1,28 @@
 
+"""
+    modify_config_file(doc, settings, deploy_decision)
+
+Modifies the config file located at `\\\$builddir/\\\$md_output_path/.vitepress/config.mts` to include attributes determined at runtime.
+
+In general, the config file will contain various strings like `REPLACE_ME_DOCUMENTER_VITEPRESS` which this function will replace with content.
+
+## Replaced config items
+
+Currently, this function replaces the following config items:
+- Vitepress base path (`base`)
+- Vitepress output path (`outDir`)
+- Navbar
+- Sidebar
+- Title
+- Edit link
+- Github repo link
+- Logo
+- Favicon
+
+## Adding new config hooks
+
+Simply add more elements to the `replacers` array within this function.
+"""
 function modify_config_file(doc, settings, deploy_decision)
 
     # Main.@infiltrate
@@ -8,14 +32,21 @@ function modify_config_file(doc, settings, deploy_decision)
         mkpath(splitdir(vitepress_config_file)[1])
         @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file.  Substituting in the default file."
         if !isdir(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"))
-            cp(joinpath(dirname(@__DIR__), "docs", "src", ".vitepress", "theme"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"); follow_symlinks = true)
+            cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"); follow_symlinks = true)
         end
-        cp(joinpath(dirname(@__DIR__), "docs", "src", ".vitepress", "config.mts"), vitepress_config_file)
-        cp(joinpath(dirname(@__DIR__), "docs", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
+        if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"))
+            cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "index.ts"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"))
+        end
+        if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"))
+            cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "style.css"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"))
+        end
+        cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "config.mts"), vitepress_config_file)
+        # We don't need the below line since there are no default components, though we might want to add them in the future!
+        # cp(joinpath(dirname(@__DIR__), "template", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
     end
 
     config = read(vitepress_config_file, String)
-    replacers = Vector{Pair{<: AbstractString, <: AbstractString}}()
+    replacers = Vector{Pair{<: Union{AbstractString, Regex}, <: AbstractString}}()
 
 
     # # Vitepress base path
@@ -50,6 +81,35 @@ function modify_config_file(doc, settings, deploy_decision)
     # # Title
     push!(replacers, "title: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "title: '$(doc.user.sitename)'")
 
+    # # Edit link
+    push!(replacers, "editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "editLink: { pattern: \"$(settings.repo)$(endswith(settings.repo, "/") ? "" : "/")edit/$(settings.devbranch)/docs/src/:path\" }")
+    
+    # # Github repo
+    full_repo = startswith(settings.repo, r"https?:\/\/") ? settings.repo : "https://" * settings.repo
+    push!(replacers, """{ icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }""" => """{ icon: 'github', link: '$full_repo' }""")
+
+    # # Logo
+
+    if occursin("logo:", config)
+        if  isfile(joinpath(doc.user.build, settings.md_output_path, "public", "logo.png"))
+            push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "logo: { src: '/logo.png', width: 24, height: 24}")
+        else
+            @warn "DocumenterVitepress: No logo.png file found in `docs/src/assets`.  Skipping logo replacement."
+            push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'," => "")
+        end
+    end
+
+    # # Favicon
+
+    if occursin("rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'", config)
+        if  isfile(joinpath(doc.user.build, settings.md_output_path, "public", "favicon.ico"))
+            push!(replacers, "rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'" => "rel: 'icon', href: '/favicon.ico'")
+        else
+            @warn "DocumenterVitepress: No favicon.ico file found in `docs/src/assets`.  Skipping favicon replacement."
+            push!(replacers, "head: [['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }]]," => "")
+        end
+    end
+
     # Finally, run all the replacers and write the new config file
    
     new_config = replace(config, replacers...)
@@ -72,6 +132,8 @@ function pagelist2str(doc, page::String)
     end
     return "{ text: '$name', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
+
+pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
 
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page

@@ -33,9 +33,11 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     "*Required*: The full URL of the repository to which the documentation will be deployed."
     repo::String
     "*Required*: The name of the development branch, like `master` or `main`."
-    devbranch::String
+    devbranch::String = Documenter.git_remote_head_branch("MarkdownVitepress(devbranch = ...)", Documenter.currentdir())
     "*Required*: The URL path to the development site, like `dev` or `dev-branch`."
-    devurl::String # TODO: hopefully, remove this!
+    devurl::String = "dev"
+    "A description of the website as a String."
+    description::String = "Documentation for $(splitdir(repo)[end])"
     """Determines whether to build the Vitepress site or only emit markdown files.  Defaults to `true`, i.e., building the full Vitepress site."""
     build_vitepress::Bool = true
     "Determines whether to run `npm install` before building the Vitepress site.  Defaults to `true`."
@@ -83,6 +85,7 @@ render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, elemen
 where `Eltype` is the type of the `element` field of the `node` object which you care about.
 """
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
+    # Main.@exfiltrate
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
     copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
@@ -293,7 +296,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, i
     for (object, _, page, mod, cat) in index.elements
         page = mdext(page)
         url = string("#", Documenter.slugify(object))
-        println(io, "- [`", object.binding, "`](", url, ")")
+        println(io, "- [`", object.binding, "`](", replace(url, " " => "%20"), ")")
     end
     return println(io)
 end
@@ -303,7 +306,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
         path = mdext(path)
         header = anchor.object
         url = string(path, Documenter.anchor_fragment(anchor))
-        link = Markdown.Link(anchor.id, url)
+        link = Markdown.Link(anchor.id, replace(url, " " => "%20"))
         level = anchor.order
         print(io, "    "^(level - 1), "- ")
         linkfix = ".md#"
@@ -318,7 +321,7 @@ end
 
 function intelligent_language(lang::String)
     if lang == "ansi"
-        "julia"
+        "julia /julia>/"
     elseif lang == "documenter-ansi"
         "ansi"
     else
@@ -427,7 +430,7 @@ function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc
     # as browsers seem to need to have the xmlns attribute set in the <svg> tag if you
     # want to include it with <img>. However, setting that attribute is up to the code
     # creating the SVG image.
-    image_text = d[MIME"image/svg+xml"()]
+    image_text = element
     # Additionally, Vitepress complains about the XML version and encoding string below,
     # so we just remove this bad hombre!
     bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
@@ -595,12 +598,14 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # appropriately.
     print(io, "[")
     render(io, mime, node, node.children, page, doc; prenewline = false, kwargs...)
-    print(io, "]($(link.destination))")
+    print(io, "]($(replace(link.destination, " " => "%20")))")
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
     info = code.info
-    if info == "julia-repl"
+    if info ∈ ("julia-repl", "@doctest", "@repl")
+        info = "julia /julia>/"
+    elseif info ∈ ("@example", )
         info = "julia"
     end
     render(io, mime, node, Markdown.Code(info, code.code), page, doc; kwargs...)
@@ -618,13 +623,23 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io)
     print(io, "#"^(heading.element.level), " ")
     render(io, mime, node, heading.children, page, doc; kwargs...)
-    print(io, " {#$id}")
+    print(io, " {#$(replace(id, " " => "-"))}")
+    println(io)
+end
+# Thematic breaks
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, thematic::MarkdownAST.ThematicBreak, page, doc; kwargs...)
+    println(io); println(io)
+    println(io, "---")
     println(io)
 end
 # Admonitions
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, admonition::MarkdownAST.Admonition, page, doc; kwargs...)
     # Main.@infiltrate
-    println(io, "\n::: $(admonition.category) $(admonition.title)")
+    category = admonition.category
+    if category == "note" # Julia markdown says note, but Vitepress says tip
+        category = "tip"
+    end
+    println(io, "\n::: $(category) $(admonition.title)")
     render(io, mime, node, node.children, page, doc; kwargs...)
     println(io, "\n:::")
 end

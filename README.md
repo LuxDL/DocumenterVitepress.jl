@@ -16,7 +16,7 @@ pkg> add DocumenterVitepress
 ## Usage
 
 To enable the backend:
-1. Add the `docs/src/.vitepress` folder from this repository to your own,
+1. Add the `template/src/.vitepress` folder from this repository to your own,
 2. Import the package in `make.jl`,
 3. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so:
 

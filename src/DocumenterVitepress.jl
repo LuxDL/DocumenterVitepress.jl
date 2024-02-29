@@ -26,4 +26,48 @@ Selectors.order(::Type{MarkdownFormat}) = 0.0
 Selectors.matcher(::Type{MarkdownFormat}, fmt, _) = isa(fmt, MarkdownVitepress)
 Selectors.runner(::Type{MarkdownFormat}, fmt, doc) = render(doc, fmt)
 
+"""
+    generate_template(target_directory::String, package = "YourPackage")
+
+Copies template files from `DocumenterVitepress.jl` to a target directory, replacing 
+"YourPackage" with the specified package name in `package`. 
+
+`target` should be the directory of your package's documentation, and not its root!
+
+Skips existing files and only updates new ones.
+
+## Arguments
+- `target_directory`: Destination for template files.
+- `package`: Name to replace "YourPackage" with, defaulting to "YourPackage".
+
+## Example
+```julia
+generate_template(".julia/dev/MyPackage/docs", "MyPackage")
+```
+"""
+function generate_template(target::String, package = "YourPackage")
+    # This is the `template` directory in the source tree of DocumenterVitepress.jl
+    template_dir = joinpath(dirname(@__DIR__), "template")
+    # Iterate through each file in `template_dir`
+    for (root, dirs, files) in walkdir(template_dir)
+        # Determine the relative path of the current directory
+        path = relpath(root, template_dir)
+        # Create a path to the equivalent directory in `target`
+        target_path = mkpath(joinpath(target, path))
+        # Iterate through each file in this repo!
+        for file in files
+            # Check if the file already exists in the target directory
+            if isfile(joinpath(target, path, file)) 
+                @debug "File $(joinpath(path, file)) already exists!"
+                continue
+            # If the file does not exist, we have to copy it in!
+            else 
+                contents = read(joinpath(root, file), String)
+                new_contents = replace(contents, "YourPackage" => package)
+                write(joinpath(target_path, file), new_contents)
+            end
+        end
+    end
+end
+
 end
