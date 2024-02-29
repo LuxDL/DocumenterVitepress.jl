@@ -34,6 +34,12 @@ function modify_config_file(doc, settings, deploy_decision)
         if !isdir(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"))
             cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"); follow_symlinks = true)
         end
+        if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"))
+            cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "index.ts"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"))
+        end
+        if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"))
+            cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "style.css"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"))
+        end
         cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "config.mts"), vitepress_config_file)
         # We don't need the below line since there are no default components, though we might want to add them in the future!
         # cp(joinpath(dirname(@__DIR__), "template", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
