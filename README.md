@@ -36,7 +36,13 @@ and enjoy the fruits of your labour!
 Or even better, start from scratch with a generated template.
 
 > [!TIP]
-> To get a fully customizable build, run `DocumenterVitepress.generate_template("/path/to/YourPackage/docs", "YourPackage")` to populate all of the files which Vitepress requires.
+> To get a fully customizable build, run 
+> ```julia 
+> DocumenterVitepress.generate_template("/path/to/YourPackage/docs", "YourPackage")
+> ```
+> to populate all of the files which Vitepress requires.
+
+And keep an eye for custom domains.
 
 > [!CAUTION]  
 > If you are deploying from a custom URL, like `geo.makie.org`, 
@@ -45,7 +51,7 @@ Or even better, start from scratch with a generated template.
 > 
 > Otherwise, the documentation will not render correctly.
 
-# Run locally
+## Run locally
 
 Because this is based on the Vitepress static site generator, you have to use NodeJS to view this site locally:
 
