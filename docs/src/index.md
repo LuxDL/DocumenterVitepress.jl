@@ -19,7 +19,8 @@ hero:
       link: https://github.com/LuxDL/DocumenterVitepress.jl
     - theme: alt
       text: API Examples
-      link: /api-examples
+      link: /api
+      
 
 features:
   - icon: <img width="64" height="64" src="https://img.icons8.com/arcade/64/markdown.png" alt="markdown"/>
