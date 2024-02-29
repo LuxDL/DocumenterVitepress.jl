@@ -85,7 +85,8 @@ function modify_config_file(doc, settings, deploy_decision)
     push!(replacers, "editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "editLink: { pattern: \"$(settings.repo)$(endswith(settings.repo, "/") ? "" : "/")edit/$(settings.devbranch)/docs/src/:path\" }")
     
     # # Github repo
-    push!(replacers, """{ icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }""" => """{ icon: 'github', link: '$(settings.repo)' }""")
+    full_repo = startswith(settings.repo, r"https?:\/\/") ? settings.repo : "https://" * settings.repo
+    push!(replacers, """{ icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }""" => """{ icon: 'github', link: '$full_repo' }""")
 
     # # Logo
 
