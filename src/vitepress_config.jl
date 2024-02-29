@@ -27,6 +27,7 @@ function modify_config_file(doc, settings, deploy_decision)
 
     # Main.@infiltrate
     # Read in the config file, 
+    mkpath(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"))
     vitepress_config_file = joinpath(doc.user.build, settings.md_output_path, ".vitepress", "config.mts")
     if !isfile(vitepress_config_file)
         mkpath(splitdir(vitepress_config_file)[1])
