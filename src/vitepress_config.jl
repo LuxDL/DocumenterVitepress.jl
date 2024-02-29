@@ -32,16 +32,13 @@ function modify_config_file(doc, settings, deploy_decision)
     if !isfile(vitepress_config_file)
         mkpath(splitdir(vitepress_config_file)[1])
         @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file.  Substituting in the default file."
-        if !isdir(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"))
-            cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"); follow_symlinks = true)
-        end
         if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"))
-            cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "index.ts"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"))
+            write(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"), read(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "index.ts"), String))
         end
         if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"))
-            cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "style.css"), joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"))
+            write(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"), read(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "style.css"), String))
         end
-        cp(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "config.mts"), vitepress_config_file)
+        write(vitepress_config_file, read(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "config.mts"), String))
         # We don't need the below line since there are no default components, though we might want to add them in the future!
         # cp(joinpath(dirname(@__DIR__), "template", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
     end
