@@ -20,8 +20,9 @@ makedocs(;
         "Getting started" => "getting_started.md",
         "api.md",
         "Examples" => [
-            "Code example" => "code_example.md",
-            "Markdown example" => "markdown-examples.md",
+            "Code examples" => "code_example.md",
+            "Markdown examples" => "markdown-examples.md",
+            "MIME output examples" => "mime_examples.md"
         ],
         "Developer documentation" => "render_pipeline.md",
     ]

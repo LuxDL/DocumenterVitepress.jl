@@ -30,6 +30,15 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
     monospace;
 }
 
+.mono {
+  /* 
+  Disable contextual alternates (kind of like ligatures but different) in monospace, 
+  which turns `/>` to an up arrow and `|>` (the Julia pipe symbol) to an up arrow as well.  
+  This is pretty bad for Julia folks reading even though copy+paste retains the same text.
+  */
+  font-feature-settings: 'calt' 0;
+}
+
 /* Colors */
 
 :root {

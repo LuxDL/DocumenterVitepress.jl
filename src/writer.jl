@@ -1,7 +1,7 @@
 import Documenter: Documenter, Builder, Expanders, MarkdownAST
 
 import ANSIColoredPrinters
-using Base64: base64decode
+using Base64: base64decode, base64encode
 
 # import Markdown as Markdown
 import Markdown
@@ -391,6 +391,10 @@ end
 
 # Select the "best" rendering MIME for markdown output!
 
+# NOTE: Documenter only supports the mime types in here:
+# https://github.com/JuliaDocs/Documenter.jl/blob/ea353add145560aae2d550ed4d9b133d36fc229c/src/utilities/utilities.jl#L619-L630
+# so make sure that you are aware of that!  Something like a video would need a PR to Documenter to be supported/returned.
+
 """
     mime_priority(mime::MIME)::Float64
 
@@ -410,7 +414,10 @@ mime_priority(::MIME"image/jpeg+lightdark") = 8.0
 mime_priority(::MIME"image/svg+xml+lightdark") = 9.0
 mime_priority(::MIME"image/gif") = 10.0
 mime_priority(::MIME"video/mp4") = 11.0
-mime_priority(::MIME"text/plain") = 12.0
+mime_priority(::MIME"text/html") = 12.0
+mime_priority(::MIME"text/latex") = 13.0
+mime_priority(::MIME"text/markdown") = 14.0
+mime_priority(::MIME"text/plain") = 15.0
 mime_priority(::MIME) = Inf
 
 function render_mime(io::IO, mime::MIME, node, element, page, doc; kwargs...)
@@ -435,34 +442,34 @@ function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc
     # so we just remove this bad hombre!
     bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
     location = findfirst(bad_hombre_string, lowercase(image_text))    
-    if !isnothing(location)
+    if !isnothing(location) # couldn't figure out how to do this in one line - maybe regex?  A question for later though.
         image_text = replace(image_text, image_text[location] => "")
     end
-    println(io, image_text)
+    println(io, "<img src=\"data:image/svg+xml;base64," * base64encode(image_text) * "\"/>")
 end
 
-function render_mime(io::IO, mime::MIME"image/png", node, element, page, doc; kwargs...)
+function render_mime(io::IO, mime::MIME"image/png", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
     write(joinpath(dirname(page.build), md_output_path, "$(filename).png"),
         base64decode(element))
     println(io, "![]($(filename).png)")
 end
 
-function render_mime(io::IO, mime::MIME"image/webp", node, element, page, doc; kwargs...)
+function render_mime(io::IO, mime::MIME"image/webp", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
     write(joinpath(dirname(page.build), md_output_path, "$(filename).webp"),
         base64decode(element))
     println(io, "![]($(filename).webp)")
 end
 
-function render_mime(io::IO, mime::MIME"image/jpeg", node, element, page, doc; kwargs...)
+function render_mime(io::IO, mime::MIME"image/jpeg", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
     write(joinpath(dirname(page.build), md_output_path, "$(filename).jpeg"),
         base64decode(element))
     println(io, "![]($(filename).jpeg)")
 end
 
-function render_mime(io::IO, mime::MIME"image/png+lightdark", node, element, page, doc; kwargs...)
+function render_mime(io::IO, mime::MIME"image/png+lightdark", node, element, page, doc; md_output_path, kwargs...)
     fig_light, fig_dark, backend = element
     filename = String(rand('a':'z', 7))
     write(joinpath(dirname(page.build), md_output_path, "$(filename)_light.png"), fig_light)
@@ -475,7 +482,7 @@ function render_mime(io::IO, mime::MIME"image/png+lightdark", node, element, pag
     )
 end
 
-function render_mime(io::IO, mime::MIME"image/jpeg+lightdark", node, element, page, doc; kwargs...)
+function render_mime(io::IO, mime::MIME"image/jpeg+lightdark", node, element, page, doc; md_output_path, kwargs...)
     fig_light, fig_dark, backend = element
     filename = String(rand('a':'z', 7))
     Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_light.jpeg"), fig_light)
@@ -488,7 +495,7 @@ function render_mime(io::IO, mime::MIME"image/jpeg+lightdark", node, element, pa
     )
 end
 
-function render_mime(io::IO, mime::MIME"image/svg+xml+lightdark", node, element, page, doc; kwargs...)
+function render_mime(io::IO, mime::MIME"image/svg+xml+lightdark", node, element, page, doc; md_output_path, kwargs...)
     fig_light, fig_dark, backend = element
     filename = String(rand('a':'z', 7))
     Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_light.svg"), fig_light)
@@ -501,14 +508,14 @@ function render_mime(io::IO, mime::MIME"image/svg+xml+lightdark", node, element,
     )
 end
 
-function render_mime(io::IO, mime::MIME"image/gif", node, element, page, doc; kwargs...)
+function render_mime(io::IO, mime::MIME"image/gif", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
     write(joinpath(dirname(page.build), md_output_path, "$(filename).gif"),
         base64decode(element))
     println(io, "![]($(filename).gif)")
 end
 
-function render_mime(io::IO, mime::MIME"video/mp4", node, element, page, doc; kwargs...)
+function render_mime(io::IO, mime::MIME"video/mp4", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
     write(joinpath(dirname(page.build), md_output_path, "$(filename).mp4"),
         base64decode(element))
@@ -534,7 +541,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # Select the best MIME type for rendering
     best_mime = sorted_mimes[1]
     # Render the best MIME type
-    render_mime(io, best_mime, node, d[best_mime], page, doc; kwargs...)
+    render_mime(io, best_mime, node, d[best_mime], page, doc; md_output_path, kwargs...)
 end
 
 ## Basic Nodes. AKA: any other content that hasn't been handled yet.
