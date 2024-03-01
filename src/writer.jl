@@ -1,7 +1,7 @@
 import Documenter: Documenter, Builder, Expanders, MarkdownAST
 
 import ANSIColoredPrinters
-using Base64: base64decode
+using Base64: base64decode, base64encode
 
 # import Markdown as Markdown
 import Markdown
