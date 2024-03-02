@@ -60,7 +60,8 @@ function modify_config_file(doc, settings, deploy_decision)
     deploy_abspath = if isnothing(settings.deploy_url) 
         "/" * splitdir(settings.repo)[2] 
         else
-            s = splitdir(settings.deploy_url)[2]
+            s_path = startswith(settings.deploy_url, r"http[s?]:\/\/") ? splitpath(settings.deploy_url)[2:end] : splitpath(settings.deploy_url)
+            s = length(s_path) > 1 ? joinpath(s_path) : "" # ignore custom URL here
             isempty(s) ? "/" : "/$(s)"
         end
    
