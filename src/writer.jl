@@ -400,11 +400,13 @@ end
 
 This function returns a priority for a given MIME type, which
 is used to select the best MIME type for rendering a given
-element.
+element.  Priority is in ascending order, i.e., 1 has more priority than 0.
 """
 function mime_priority end
+mime_priority(::MIME"text/plain") = 0.0
 mime_priority(::MIME"text/markdown") = 1.0
 mime_priority(::MIME"text/html") = 2.0
+mime_priority(::MIME"text/latex") = 2.5
 mime_priority(::MIME"image/svg+xml") = 3.0
 mime_priority(::MIME"image/png") = 4.0
 mime_priority(::MIME"image/webp") = 5.0
@@ -414,10 +416,7 @@ mime_priority(::MIME"image/jpeg+lightdark") = 8.0
 mime_priority(::MIME"image/svg+xml+lightdark") = 9.0
 mime_priority(::MIME"image/gif") = 10.0
 mime_priority(::MIME"video/mp4") = 11.0
-mime_priority(::MIME"text/html") = 12.0
-mime_priority(::MIME"text/latex") = 13.0
-mime_priority(::MIME"text/markdown") = 14.0
-mime_priority(::MIME"text/plain") = 15.0
+
 mime_priority(::MIME) = Inf
 
 function render_mime(io::IO, mime::MIME, node, element, page, doc; kwargs...)
