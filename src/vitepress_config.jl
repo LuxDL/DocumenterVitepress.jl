@@ -64,8 +64,10 @@ function modify_config_file(doc, settings, deploy_decision)
             s = length(s_path) > 1 ? joinpath(s_path) : "" # ignore custom URL here
             isempty(s) ? "/" : "/$(s)"
         end
+
+    base_str = deploy_abspath == "/" ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
    
-    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "base: '$(deploy_abspath)/$(deploy_relpath)'")
+    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
 
     # # Vitepress output path
     push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../final_site'")
