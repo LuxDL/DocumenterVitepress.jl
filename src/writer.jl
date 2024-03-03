@@ -542,7 +542,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # Sort the available mimes by priority
     sorted_mimes = sort(collect(available_mimes), by = mime_priority)
     # Select the best MIME type for rendering
-    best_mime = sorted_mimes[1]
+    best_mime = sorted_mimes[end]
     # Render the best MIME type
     render_mime(io, best_mime, node, d[best_mime], page, doc; md_output_path, kwargs...)
 end
