@@ -453,21 +453,21 @@ end
 
 function render_mime(io::IO, mime::MIME"image/png", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
-    write(joinpath(dirname(page.build), md_output_path, "$(filename).png"),
+    write(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename).png"),
         base64decode(element))
     println(io, "![]($(filename).png)")
 end
 
 function render_mime(io::IO, mime::MIME"image/webp", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
-    write(joinpath(dirname(page.build), md_output_path, "$(filename).webp"),
+    write(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename).webp"),
         base64decode(element))
     println(io, "![]($(filename).webp)")
 end
 
 function render_mime(io::IO, mime::MIME"image/jpeg", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
-    write(joinpath(dirname(page.build), md_output_path, "$(filename).jpeg"),
+    write(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename).jpeg"),
         base64decode(element))
     println(io, "![]($(filename).jpeg)")
 end
@@ -475,8 +475,8 @@ end
 function render_mime(io::IO, mime::MIME"image/png+lightdark", node, element, page, doc; md_output_path, kwargs...)
     fig_light, fig_dark, backend = element
     filename = String(rand('a':'z', 7))
-    write(joinpath(dirname(page.build), md_output_path, "$(filename)_light.png"), fig_light)
-    write(joinpath(dirname(page.build), md_output_path, "$(filename)_dark.png"), fig_dark)
+    write(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename)_light.png"), fig_light)
+    write(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename)_dark.png"), fig_dark)
     println(io,
         """
         ![]($(filename)_light.png){.light-only}
@@ -488,8 +488,8 @@ end
 function render_mime(io::IO, mime::MIME"image/jpeg+lightdark", node, element, page, doc; md_output_path, kwargs...)
     fig_light, fig_dark, backend = element
     filename = String(rand('a':'z', 7))
-    Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_light.jpeg"), fig_light)
-    Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_dark.jpeg"), fig_dark)
+    Main.Makie.save(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename)_light.jpeg"), fig_light)
+    Main.Makie.save(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename)_dark.jpeg"), fig_dark)
     println(io,
         """
         ![]($(filename)_light.jpeg){.light-only}
@@ -501,8 +501,8 @@ end
 function render_mime(io::IO, mime::MIME"image/svg+xml+lightdark", node, element, page, doc; md_output_path, kwargs...)
     fig_light, fig_dark, backend = element
     filename = String(rand('a':'z', 7))
-    Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_light.svg"), fig_light)
-    Main.Makie.save(joinpath(dirname(page.build), md_output_path, "$(filename)_dark.svg"), fig_dark)
+    Main.Makie.save(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename)_light.svg"), fig_light)
+    Main.Makie.save(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename)_dark.svg"), fig_dark)
     println(io,
         """
         <img src = "$(filename)_light.svg" style=".light-only"></img>
@@ -513,14 +513,14 @@ end
 
 function render_mime(io::IO, mime::MIME"image/gif", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
-    write(joinpath(dirname(page.build), md_output_path, "$(filename).gif"),
+    write(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename).gif"),
         base64decode(element))
     println(io, "![]($(filename).gif)")
 end
 
 function render_mime(io::IO, mime::MIME"video/mp4", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
-    write(joinpath(dirname(page.build), md_output_path, "$(filename).mp4"),
+    write(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename).mp4"),
         base64decode(element))
     println(io, "<video src='$filename.mp4' controls='controls' autoplay='autoplay'></video>")
 end
