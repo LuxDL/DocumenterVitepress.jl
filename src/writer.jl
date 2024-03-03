@@ -149,7 +149,11 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
 
             cd(dirname(builddir)) do
-                if settings.install_npm || should_remove_package_json 
+                if settings.install_npm || should_remove_package_json
+                    if !isfile(joinpath(dirname(builddir), "package.json"))
+                        cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
+                        should_remove_package_json == true
+                    end
                     run(`$(npm) install`)
                 end
                 run(`$(npm) run docs:build`)
