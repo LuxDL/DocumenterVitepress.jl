@@ -111,13 +111,13 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         favicon_files = contains.(last.(splitdir.(files)), "favicon")
         if any(logo_files)
             for file in files[logo_files]
-                file_relpath = relpath(joinpath(builddir, settings.md_output_path, "assets")
+                file_relpath = relpath(joinpath(builddir, settings.md_output_path, "assets"))
                 cp(joinpath(builddir, settings.md_output_path, "assets", file_relpath), joinpath(builddir, settings.md_output_path, "public", file_relpath))
             end
         end 
         if any(favicon_files)
             for file in files[favicon_files]
-                file_relpath = relpath(joinpath(builddir, settings.md_output_path, "assets")
+                file_relpath = relpath(joinpath(builddir, settings.md_output_path, "assets"))
                 cp(joinpath(builddir, settings.md_output_path, "assets", file_relpath), joinpath(builddir, settings.md_output_path, "public", file_relpath))
             end
         end
