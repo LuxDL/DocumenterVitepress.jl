@@ -16,6 +16,11 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
 
 /* Fonts */
 
+@font-face {
+    font-family: JuliaMono-Regular;
+    src: url("https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-Regular.woff2");
+}
+
  :root {
   /* Typography */
   --vp-font-family-base: "Barlow", "Inter var experimental", "Inter var",
@@ -23,8 +28,7 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
     Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
 
   /* Code Snippet font */
-  --vp-font-family-mono: Inter, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+  --vp-font-family-mono: JuliaMono-Regular, monospace;
 
 }
 
