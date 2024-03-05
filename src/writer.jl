@@ -105,7 +105,22 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
     if isdir(joinpath(builddir, settings.md_output_path, "assets")) && !isdir(joinpath(builddir, settings.md_output_path, "public"))
-        mv(joinpath(builddir, settings.md_output_path, "assets"), joinpath(builddir, settings.md_output_path, "public"))
+        mkpath(joinpath(builddir, settings.md_output_path, "public"))
+        files = readdir(joinpath(builddir, settings.md_output_path, "assets"); join = true)
+        logo_files = contains.(last.(splitdir.(files)), "logo")
+        favicon_files = contains.(last.(splitdir.(files)), "favicon")
+        if any(logo_files)
+            for file in files[logo_files]
+                file_relpath = relpath(joinpath(builddir, settings.md_output_path, "assets")
+                cp(joinpath(builddir, settings.md_output_path, "assets", file_relpath), joinpath(builddir, settings.md_output_path, "public", file_relpath))
+            end
+        end 
+        if any(favicon_files)
+            for file in files[favicon_files]
+                file_relpath = relpath(joinpath(builddir, settings.md_output_path, "assets")
+                cp(joinpath(builddir, settings.md_output_path, "assets", file_relpath), joinpath(builddir, settings.md_output_path, "public", file_relpath))
+            end
+        end
     end
     # Main.@infiltrate
     # Iterate over the pages, render each page separately
