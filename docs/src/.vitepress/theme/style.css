@@ -39,6 +39,12 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
   This is pretty bad for Julia folks reading even though copy+paste retains the same text.
   */
   font-feature-settings: 'calt' 0;
+  pre {
+    font-family: JuliaMono-Light;
+};
+code {
+    font-family: JuliaMono-Light;
+    };
 }
 
 /* Colors */
