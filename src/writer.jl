@@ -87,7 +87,7 @@ where `Eltype` is the type of the `element` field of the `node` object which you
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
     # Main.@exfiltrate
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
-    copy_assets(doc, settings.md_output_path)
+    # copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
     mime = MIME"text/plain"() # TODO: why?
     builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
