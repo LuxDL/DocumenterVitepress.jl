@@ -1,6 +1,3 @@
-@import url(https://fonts.googleapis.com/css?family=Space+Mono:regular,italic,700,700italic);
-@import url(https://fonts.googleapis.com/css?family=Space+Grotesk:regular,italic,700,700italic);
-
 /* Customize default theme styling by overriding CSS variables:
 https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
  */
@@ -19,6 +16,11 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
 
 /* Fonts */
 
+@font-face {
+    font-family: JuliaMono-Regular;
+    src: url("https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-Regular.woff2");
+}
+
  :root {
   /* Typography */
   --vp-font-family-base: "Barlow", "Inter var experimental", "Inter var",
@@ -26,8 +28,7 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
     Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
 
   /* Code Snippet font */
-  --vp-font-family-mono: "Space Mono", Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+  --vp-font-family-mono: JuliaMono-Regular, monospace;
 
 }
 
@@ -38,6 +39,12 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
   This is pretty bad for Julia folks reading even though copy+paste retains the same text.
   */
   font-feature-settings: 'calt' 0;
+  pre {
+    font-family: JuliaMono-Light;
+};
+code {
+    font-family: JuliaMono-Light;
+    };
 }
 
 /* Colors */

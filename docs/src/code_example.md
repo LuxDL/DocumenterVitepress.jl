@@ -28,3 +28,14 @@ for color in 0:15
     color % 8 == 7 && println()
 end
 ````
+
+## Font
+
+This package uses the JuliaMono font by default, but you can override this in CSS.  
+
+This is what some common symbols look like:
+
+```julia
+] [ = $ ; ( @ { " ) ? . } ⊽ ⊼ ⊻ ⊋ ⊊ ⊉ ⊈ ⊇ ⊆ ≥ ≤ ≢ ≡ ≠ ≉ ≈ ∪ ∩ ∜ ∛ √ ∘ ∌
+|> /> ^ % ` ∈ 
+```
