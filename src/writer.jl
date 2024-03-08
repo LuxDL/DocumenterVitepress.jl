@@ -87,7 +87,7 @@ where `Eltype` is the type of the `element` field of the `node` object which you
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
     # Main.@exfiltrate
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
-    copy_assets(doc, settings.md_output_path)
+    # copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
     mime = MIME"text/plain"() # TODO: why?
     builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
@@ -105,7 +105,22 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
     if isdir(joinpath(builddir, settings.md_output_path, "assets")) && !isdir(joinpath(builddir, settings.md_output_path, "public"))
-        mv(joinpath(builddir, settings.md_output_path, "assets"), joinpath(builddir, settings.md_output_path, "public"))
+        mkpath(joinpath(builddir, settings.md_output_path, "public"))
+        files = readdir(joinpath(builddir, settings.md_output_path, "assets"); join = true)
+        logo_files = contains.(last.(splitdir.(files)), "logo")
+        favicon_files = contains.(last.(splitdir.(files)), "favicon")
+        if any(logo_files)
+            for file in files[logo_files]
+                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
+                cp(joinpath(builddir, settings.md_output_path, "assets", file_relpath), joinpath(builddir, settings.md_output_path, "public", file_relpath))
+            end
+        end 
+        if any(favicon_files)
+            for file in files[favicon_files]
+                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
+                cp(joinpath(builddir, settings.md_output_path, "assets", file_relpath), joinpath(builddir, settings.md_output_path, "public", file_relpath))
+            end
+        end
     end
     # Main.@infiltrate
     # Iterate over the pages, render each page separately
