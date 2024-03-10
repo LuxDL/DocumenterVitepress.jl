@@ -232,8 +232,16 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                                 <!DOCTYPE html>
                                 <meta charset="utf-8">
                                 <title>Redirecting to ../$name</title>
-                                <meta http-equiv="refresh" content="0; URL=../$name">
+                                <!DOCTYPE html>
+                                <script>
+                                    // <meta http-equiv="refresh" content="0; URL=../$name"> but keeps fragments
+                                    const url = new URL(window.location.href);
+                                    window.location.replace(url.origin + url.pathname.slice(0,-1) + url.search + url.hash);
+                                </script>
                                 <link rel="canonical" href="../$name">""")
+                                # This uses a relative canonical link which is bad form, but
+                                # oh well. We don't have access to the full URL until deploy
+                                # time.
                             end
                         end
                     end
