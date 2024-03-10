@@ -230,9 +230,6 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                             open(joinpath(dir, "index.html"), "w") do io
                                 write(io, """
                                 <!DOCTYPE html>
-                                <meta charset="utf-8">
-                                <title>Redirecting to ../$name</title>
-                                <!DOCTYPE html>
                                 <script>
                                     // <meta http-equiv="refresh" content="0; URL=../$name"> but keeps fragments
                                     const url = new URL(window.location.href);
