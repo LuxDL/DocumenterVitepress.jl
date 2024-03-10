@@ -231,7 +231,6 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                                 write(io, """
                                 <!DOCTYPE html>
                                 <script>
-                                    // <meta http-equiv="refresh" content="0; URL=../$name"> but keeps fragments
                                     const url = new URL(window.location.href);
                                     window.location.replace(url.origin + url.pathname.slice(0,-1) + url.search + url.hash);
                                 </script>
@@ -239,6 +238,10 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                                 # This uses a relative canonical link which is bad form, but
                                 # oh well. We don't have access to the full URL until deploy
                                 # time.
+                                #
+                                # The script is equivalent to
+                                # `<meta http-equiv="refresh" content="0; URL=../$name">`
+                                # but keeps fragments
                             end
                         end
                     end
