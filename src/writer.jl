@@ -216,7 +216,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
 
         if settings.redirect_trailing_slash
-            @info "DocumenterVitepress: inserting 200 redirects from https://example.com/page/ to https://example.com/page because `redirect_trailing_slash` is true."
+            @info "DocumenterVitepress: inserting javascript 200 redirects from https://example.com/page/ to https://example.com/page because `redirect_trailing_slash` is true."
             for (root, dirs, files) in walkdir(builddir)
                 for file in files
                     name, ext = splitext(file)
