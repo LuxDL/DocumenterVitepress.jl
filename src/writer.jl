@@ -224,6 +224,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                         dir = joinpath(root, name)
                         if !isdir(dir)
                             mkdir(dir)
+                            println(((settings.deploy_url, root, name)))
                             url = "https://"*normpath(joinpath(settings.deploy_url, root, name))
                             open(joinpath(dir, "index.html"), "w") do io
                                 write(io, """
