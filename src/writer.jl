@@ -234,6 +234,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                                     const u = new URL(window.location.href);
                                     window.location.replace(u.origin + u.pathname.slice(0,-1) + u.search + u.hash);
                                 </script>
+                                <a href="..$name">Redirecting to ..$name</a>
+                                <meta http-equiv="refresh" content="0; URL=../$name">
                                 <link rel="canonical" href="../$name">""")
                                 # This uses a relative canonical link which is bad form, but
                                 # oh well. We don't have access to the full URL until deploy
