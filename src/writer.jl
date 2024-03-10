@@ -237,13 +237,16 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                                 <a href="..$name">Redirecting to ..$name</a>
                                 <meta http-equiv="refresh" content="0; URL=../$name">
                                 <link rel="canonical" href="../$name">""")
+                                # The script is equivalent to
+                                # `<meta http-equiv="refresh" content="0; URL=../$name">`
+                                # but keeps fragments. If Javascript fails for whatever
+                                # reason, the meta http-equiv will proc, dropping fragments
+                                # If that, too fails, there's an ordinary, human readable
+                                # relative link.
+                                #
                                 # This uses a relative canonical link which is bad form, but
                                 # oh well. We don't have access to the full URL until deploy
                                 # time.
-                                #
-                                # The script is equivalent to
-                                # `<meta http-equiv="refresh" content="0; URL=../$name">`
-                                # but keeps fragments
                             end
                         end
                     end
