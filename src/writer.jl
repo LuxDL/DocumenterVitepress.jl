@@ -231,9 +231,9 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                                 write(io, """
                                 <!DOCTYPE html>
                                 <meta charset="utf-8">
-                                <title>Redirecting to $url</title>
-                                <meta http-equiv="refresh" content="0; URL=$url">
-                                <link rel="canonical" href="$url">""")
+                                <title>Redirecting to ../$name</title>
+                                <meta http-equiv="refresh" content="0; URL=../$name">
+                                <link rel="canonical" href="../$name">""")
                             end
                         end
                     end
