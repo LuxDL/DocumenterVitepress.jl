@@ -231,8 +231,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                                 write(io, """
                                 <!DOCTYPE html>
                                 <script>
-                                    const url = new URL(window.location.href);
-                                    window.location.replace(url.origin + url.pathname.slice(0,-1) + url.search + url.hash);
+                                    const u = new URL(window.location.href);
+                                    window.location.replace(u.origin + u.pathname.slice(0,-1) + u.search + u.hash);
                                 </script>
                                 <link rel="canonical" href="../$name">""")
                                 # This uses a relative canonical link which is bad form, but
