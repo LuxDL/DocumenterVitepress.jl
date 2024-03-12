@@ -58,7 +58,7 @@ function modify_config_file(doc, settings, deploy_decision)
     folder = deploy_decision.subfolder
     deploy_relpath = "$(folder)$(isempty(folder) ? "" : "/")"
     deploy_abspath = if isnothing(settings.deploy_url) 
-        "/" * join(splitpath(settings.repo)[(end-1):end], "/", "")  # Get the last two identifiers of the repo path, i.e., `$user/$repo`.
+        "/" * splitpath(settings.repo)[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
         else
             s_path = startswith(settings.deploy_url, r"http[s?]:\/\/") ? splitpath(settings.deploy_url)[2:end] : splitpath(settings.deploy_url)
             s = length(s_path) > 1 ? joinpath(s_path) : "" # ignore custom URL here
