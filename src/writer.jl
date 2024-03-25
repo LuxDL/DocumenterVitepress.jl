@@ -58,6 +58,8 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     - `nothing`: **Default**. Automatically determine whether to deploy the documentation.
     - `Documenter.DeployDecision`: Override the automatic decision and deploy based on the passed config.
     It might be useful to use the latter if DocumenterVitepress fails to deploy automatically.
+    You can pass a manually constructed `Documenter.DeployDecision` struct, or the output of 
+    `Documenter.deploy_folder(Documenter.auto_detect_deploy_system(); repo, devbranch, devurl, push_preview)`.
     """
     deploy_decision::Union{Nothing, Documenter.DeployDecision} = nothing
 end
