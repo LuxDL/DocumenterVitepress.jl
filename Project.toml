@@ -1,7 +1,7 @@
 name = "DocumenterVitepress"
 uuid = "4710194d-e776-4893-9690-8d956a29c365"
 authors = ["Lazaro Alonso <lazarus.alon@gmail.com>", "Anshul Singhvi <as6208@columbia.edu>"]
-version = "0.0.12"
+version = "0.0.13"
 
 [deps]
 ANSIColoredPrinters = "a4c015fc-c6ff-483c-b24f-f7ea428134e9"
