@@ -20,7 +20,7 @@
     href="https://lux.csail.mit.edu/"
     target="_blank"
   >
-    <img width="32" height="32" src="https://lux.csail.mit.edu/lux-logo-dark.svg" />
+    <img width="32" height="32" src="https://raw.githubusercontent.com/LuxDL/Lux.jl/main/assets/lux-logo-dark.svg" />
     <span>
       <p class="extra-info">Deep Learning</p>
       <p class="heading">Lux.jl</p>
