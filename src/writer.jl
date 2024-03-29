@@ -52,6 +52,16 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     - `false`: Does not remove the contents of `md_output_path` after the Vitepress site is built.
     """
     clean_md_output::Union{Nothing, Bool} = nothing
+    """
+    DeployDecision from Documenter.jl. This is used to determine whether to deploy the documentation or not.
+    Options are:
+    - `nothing`: **Default**. Automatically determine whether to deploy the documentation.
+    - `Documenter.DeployDecision`: Override the automatic decision and deploy based on the passed config.
+    It might be useful to use the latter if DocumenterVitepress fails to deploy automatically.
+    You can pass a manually constructed `Documenter.DeployDecision` struct, or the output of 
+    `Documenter.deploy_folder(Documenter.auto_detect_deploy_system(); repo, devbranch, devurl, push_preview)`.
+    """
+    deploy_decision::Union{Nothing, Documenter.DeployDecision} = nothing
 end
 
 # return the same file with the extension changed to .md
@@ -137,15 +147,19 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
     # We manually obtain the Documenter deploy configuration,
     # so we can use it to set Vitepress's settings.
-    # TODO: make it so that the user does not have to provide a repo url!
-    deploy_config = Documenter.auto_detect_deploy_system()
-    deploy_decision = Documenter.deploy_folder(
-        deploy_config;
-        repo = settings.repo, # this must be the full URL!
-        devbranch = settings.devbranch,
-        devurl = settings.devurl,
-        push_preview=true,
-    )
+    if settings.deploy_decision === nothing
+        # TODO: make it so that the user does not have to provide a repo url!
+        deploy_config = Documenter.auto_detect_deploy_system()
+        deploy_decision = Documenter.deploy_folder(
+            deploy_config;
+            repo = settings.repo, # this must be the full URL!
+            devbranch = settings.devbranch,
+            devurl = settings.devurl,
+            push_preview=true,
+        )
+    else
+        deploy_decision = settings.deploy_decision
+    end
     
     # from `vitepress_config.jl`
     modify_config_file(doc, settings, deploy_decision)
