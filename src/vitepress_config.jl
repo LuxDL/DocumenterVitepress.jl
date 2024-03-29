@@ -86,7 +86,7 @@ function modify_config_file(doc, settings, deploy_decision)
     push!(replacers, "description: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "description: '$(replace(settings.description, "'" => "\\'"))'")
 
     # # Edit link
-    push!(replacers, "editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "editLink: { pattern: \"$(settings.repo)$(endswith(settings.repo, "/") ? "" : "/")edit/$(settings.devbranch)/docs/src/:path\" }")
+    push!(replacers, "editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "editLink: { pattern: \"https://$(settings.repo)$(endswith(settings.repo, "/") ? "" : "/")edit/$(settings.devbranch)/docs/src/:path\" }")
     
     # # Github repo
     full_repo = startswith(settings.repo, r"https?:\/\/") ? settings.repo : "https://" * settings.repo
