@@ -172,8 +172,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         try
             if !isfile(joinpath(dirname(builddir), "package.json"))
                 @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
-                cp(joinpath(dirname(@__DIR__), "docs", "package.json"), joinpath(dirname(builddir), "package.json"))
-                cp(joinpath(dirname(@__DIR__), "docs", "package-lock.json"), joinpath(dirname(builddir), "package-lock.json"))
+                cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
                 should_remove_package_json = true
             end
 
@@ -181,7 +180,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 if settings.install_npm || should_remove_package_json
                     if !isfile(joinpath(dirname(builddir), "package.json"))
                         cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                        should_remove_package_json == true
+                        should_remove_package_json = true
                     end
                     run(`$(npm) install`)
                 end
