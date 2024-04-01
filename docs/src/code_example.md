@@ -19,7 +19,7 @@ And a simple task:
 printstyled("this is my color"; color = :red)
 ````
 
-A more colorful example for [documenter](https://documenter.juliadocs.org/stable/showcase/#Raw-ANSI-code-output):
+A more colorful example from [documenter](https://documenter.juliadocs.org/stable/showcase/#Raw-ANSI-code-output):
 
 ````@ansi
 for color in 0:15
@@ -41,7 +41,7 @@ This is what some common symbols look like:
 ```
 
 ## Eval example
-From [Julia's documentation](https://docs.julialang.org/en/v1/).
+From [Julia's documentation](https://docs.julialang.org/en/v1/) landing page.
 
 ```@eval
 io = IOBuffer()
