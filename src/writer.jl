@@ -585,6 +585,11 @@ end
 
 render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, str::AbstractString, page, doc; kwargs...) = print(io, str)
 
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, evalnode::Documenter.MarkdownAST.Node{Nothing}, page, doc; kwargs...)
+    return render(io, mime, node, evalnode.children, page, doc; kwargs...)
+
+end
+
 # Metadata Nodes get dropped from the final output for every format but are needed throughout
 # the rest of the build, and so we just leave them in place and print a blank line in their place.
 render(io::IO, ::MIME"text/plain", n::Documenter.MarkdownAST.Node, node::Documenter.MetaNode, page, doc; kwargs...) = println(io, "\n")
@@ -609,6 +614,12 @@ end
 # Plain text
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
     print(io, text.text)
+end
+# Heading
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Heading, page, doc; kwargs...)
+    print(io, "\n# ")
+    render(io, mime, node, node.children, page, doc; kwargs...)
+    print(io, "\n")
 end
 # Bold text (strong)
 # These are wrapper elements - so the wrapper doesn't actually contain any text, the current node's children do.
