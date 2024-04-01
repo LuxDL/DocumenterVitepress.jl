@@ -348,7 +348,6 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, evalnode::Documenter.EvalNode, page, doc; kwargs...)
-    @show typeof(evalnode.result)
     return evalnode.result === nothing ? nothing : render(io, mime, node, evalnode.result, page, doc; kwargs...)
 end
 
