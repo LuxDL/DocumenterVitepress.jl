@@ -234,6 +234,38 @@ Don't type anything after the last double dollar sign, and make sure there are n
 
 Here is the link for the paper of Babushka[^1]
 
+## Escaping characters
+
+The following example:
+
+```md
+< `less` and `greater` > than, and the backtick \`.
+```
+outputs:
+
+< `less` and `greater` > than, and the backtick \`.
+
+And also, this <was> an <issue> before.
+
+Let's see if this one works:
+
+````
+```
+sshflags=`-i <keyfile>`
+```
+````
+it does,
+```
+sshflags=`-i <keyfile>`
+```
+but within inline text it does not. Ideas for the escaping sequence?
+
+This is the expected sequence by vitepress:
+
+````
+<code> sshflags= `` `-i <keyfile> ` `` </code>
+````
+
 
 ## More
 

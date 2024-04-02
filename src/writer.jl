@@ -1,4 +1,5 @@
 import Documenter: Documenter, Builder, Expanders, MarkdownAST
+import Documenter.DOM: escapehtml
 
 import ANSIColoredPrinters
 using Base64: base64decode, base64encode
@@ -617,7 +618,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Plain text
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
-    print(io, text.text)
+    print(io, escapehtml(text.text))
 end
 # Heading
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Heading, page, doc; kwargs...)
