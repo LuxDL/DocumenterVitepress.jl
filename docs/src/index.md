@@ -38,7 +38,7 @@ features:
 ---
 ```
 
-
+```@raw html
 <p style="margin-bottom:2cm"></p>
 
 <div class="vp-doc" style="width:80%; margin:auto">
@@ -58,3 +58,4 @@ Just remember to edit the navbar in `docs/src/.vitepress/config.mts`, if you wan
 To install a logo or favicon, you can put `logo.png` and `favicon.ico` in `docs/src/assets`, and they will be automatically detected.
 
 </div>
+```
