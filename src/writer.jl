@@ -405,7 +405,7 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
                 end
             end
         end
-        return [Markdown.Code(mcb.language, String(take!(io)))]
+        return [Markdown.Code(intelligent_language(mcb.language), String(take!(io)))]
     end
 end
 
