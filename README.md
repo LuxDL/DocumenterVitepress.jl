@@ -58,7 +58,7 @@ Because this is based on the Vitepress static site generator, you have to use No
 ## Install npm dependencies
 
 ```shell
-docs > npm i
+docs> npm i
 ```
 
 ## run docs locally
@@ -66,7 +66,7 @@ docs > npm i
 ```shell
 docs> npm run docs:dev 
 ```
-and edit your `make.jl` file to add `build_vitepress = false` as a keyword argument to the `MarkdownVitepress` config, in order to save time.  If you keep this running, perhaps in a separate Terminal window, it will automatically rebuild whenever you run `make.jl`.
+and edit your `make.jl` file to add `build_vitepress = false` as a keyword argument to the `MarkdownVitepress` config, to save time.  If you keep this running, perhaps in a separate Terminal window, it will automatically rebuild whenever you run `make.jl`.
 
 ***
 
