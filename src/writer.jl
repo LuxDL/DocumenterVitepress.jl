@@ -655,6 +655,16 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
+    Main.@infiltrate
+    if startswith(code.info, "@")
+        @warn """
+        DocumenterVitepress: un-expanded `$(code.info)` block encountered on page $(page.source).
+        The first few lines of code in this node are:
+        ```
+        $(join(Iterators.take(split(code.code, '\n'), 6), "\n")
+        ```
+        """
+    end
     info = intelligent_language(code.info)
     render(io, mime, node, Markdown.Code(info, code.code), page, doc; kwargs...)
 end
