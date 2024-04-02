@@ -352,16 +352,20 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 
 function intelligent_language(lang::String)
-    if lang == "ansi"
-        "julia /julia>/"
-    elseif lang == "documenter-ansi"
+    if lang == "documenter-ansi"
         "ansi"
+    elseif lang ∈ ("ansi", "julia-repl", "@doctest", "@repl")
+        "julia /julia>/"
+    elseif lang ∈ ("@example",)
+        "julia"
     else
         lang
     end
 end
 
-function join_multiblock(mcb::Documenter.MultiCodeBlock)
+function join_multiblock(node::Documenter.MarkdownAST.Node)
+    @assert node.element isa Documenter.MultiCodeBlock 
+    mcb = node.element
     if mcb.language == "ansi"
         # Return a vector of Markdown code blocks
         # where each block is a single line of the output or input.
@@ -369,9 +373,10 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
         # and whenever the language changes, we
         # start a new code block and push the old one to the array!
         codes = Markdown.Code[]
-        current_language = first(mcb.content).language
+        current_language = mcb.language
         current_string = ""
-        for thing in mcb.content
+        code_blocks = mcb.content
+        for thing in code_blocks
             # reset the buffer and push the old code block
             if thing.language != current_language
                 # Remove this if statement if you want to 
@@ -391,10 +396,9 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
         push!(codes, Markdown.Code(intelligent_language(current_language), current_string))
         return codes
 
-    end
-    # else
+    else
         io = IOBuffer()
-        for (i, thing) in enumerate(mcb.content)
+        for (i, thing) in enumerate((n.element::MarkdownAST.CodeBlock for n in node.children))
             print(io, thing.code)
             if i != length(mcb.content)
                 println(io)
@@ -403,12 +407,12 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
                 end
             end
         end
-        return Markdown.Code(mcb.language, String(take!(io)))
-    # end
+        return [Markdown.Code(intelligent_language(mcb.language), String(take!(io)))]
+    end
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc; kwargs...)
-    return render(io, mime, node, join_multiblock(mcb), page, doc; kwargs...)
+    return render(io, mime, node, join_multiblock(node), page, doc; kwargs...)
 end
 
 
@@ -651,12 +655,16 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
-    info = code.info
-    if info ∈ ("julia-repl", "@doctest", "@repl")
-        info = "julia /julia>/"
-    elseif info ∈ ("@example", )
-        info = "julia"
+    if startswith(code.info, "@")
+        @warn """
+        DocumenterVitepress: un-expanded `$(code.info)` block encountered on page $(page.source).
+        The first few lines of code in this node are:
+        ```
+        $(join(Iterators.take(split(code.code, '\n'), 6), "\n"))
+        ```
+        """
     end
+    info = intelligent_language(code.info)
     render(io, mime, node, Markdown.Code(info, code.code), page, doc; kwargs...)
 end
 # Inline code
