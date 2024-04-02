@@ -352,10 +352,12 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 
 function intelligent_language(lang::String)
-    if lang == "ansi"
-        "julia /julia>/"
-    elseif lang == "documenter-ansi"
+    if lang == "documenter-ansi"
         "ansi"
+    elseif lang ∈ ("ansi", "julia-repl", "@doctest", "@repl")
+        "julia /julia>/"
+    elseif lang ∈ ("@example",)
+        "julia"
     else
         lang
     end
@@ -653,12 +655,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
-    info = code.info
-    if info ∈ ("julia-repl", "@doctest", "@repl")
-        info = "julia /julia>/"
-    elseif info ∈ ("@example", )
-        info = "julia"
-    end
+    info = intelligent_language(code.info)
     render(io, mime, node, Markdown.Code(info, code.code), page, doc; kwargs...)
 end
 # Inline code
