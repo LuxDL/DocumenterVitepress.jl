@@ -260,7 +260,11 @@ sshflags=`-i <keyfile>`
 ```
 but within inline text it does not. Ideas for the escaping sequence?
 
-`sshflags=&#96;-i <keyfile>&#96;`
+This is the expected sequence by vitepress:
+
+````
+<code> sshflags= `` `-i <keyfile> ` `` </code>
+````
 
 
 ## More
