@@ -655,7 +655,6 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
-    Main.@infiltrate
     if startswith(code.info, "@")
         @warn """
         DocumenterVitepress: un-expanded `$(code.info)` block encountered on page $(page.source).
