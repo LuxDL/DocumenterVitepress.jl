@@ -73,3 +73,11 @@ Markdown.parse("""
     The documentation is also available in PDF format: [$file]($url).
 """)
 ```
+
+## REPL example
+
+```@repl
+a = 1
+b = 2
+a + b
+```
