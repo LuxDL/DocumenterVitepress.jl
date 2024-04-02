@@ -53,16 +53,29 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     """
     clean_md_output::Union{Nothing, Bool} = nothing
     """
-    Whether insert 200 redirects from https://example.com/page/ to https://example.com/page.
+    Whether to insert 200 redirects from https://example.com/page/ to https://example.com/page.
 
     Defaults to `false`. This is useful for transitioning from Documenter.jl which uses
     trailing slashes for its canonical urls by default.
     """
     redirect_trailing_slash::Bool = false
-
+    """
+    `DeployDecision` from Documenter.jl. This is used to determine whether to deploy the documentation or not.
+    Options are:
+    - `nothing`: **Default**. Automatically determine whether to deploy the documentation.
+    - `Documenter.DeployDecision`: Override the automatic decision and deploy based on the passed config.
+    It might be useful to use the latter if DocumenterVitepress fails to deploy automatically.
+    You can pass a manually constructed `Documenter.DeployDecision` struct, or the output of 
+    `Documenter.deploy_folder(Documenter.auto_detect_deploy_system(); repo, devbranch, devurl, push_preview)`.
+    """
+    deploy_decision::Union{Nothing, Documenter.DeployDecision} = nothing
+    # This inner constructor serves only to 
     function MarkdownVitepress(args...)
         args[10] && !args[6] && throw(ArgumentError(
-            "redirect_trailing_slash can only be true if build_vitepress is also true because redirects are insterted after the site is built"
+            """
+            MarkdownVitepress: `redirect_trailing_slash` can only be `true` if `build_vitepress` is also `true`, 
+            because redirects are insterted after the site is built.
+            """
         ))
         new(args...)
     end
@@ -151,16 +164,20 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
     # We manually obtain the Documenter deploy configuration,
     # so we can use it to set Vitepress's settings.
-    # TODO: make it so that the user does not have to provide a repo url!
-    deploy_config = Documenter.auto_detect_deploy_system()
-    deploy_decision = Documenter.deploy_folder(
-        deploy_config;
-        repo = settings.repo, # this must be the full URL!
-        devbranch = settings.devbranch,
-        devurl = settings.devurl,
-        push_preview=true,
-    )
-
+    if isnothing(settings.deploy_decision)
+        # TODO: make it so that the user does not have to provide a repo url!
+        deploy_config = Documenter.auto_detect_deploy_system()
+        deploy_decision = Documenter.deploy_folder(
+            deploy_config;
+            repo = settings.repo, # this must be the full URL!
+            devbranch = settings.devbranch,
+            devurl = settings.devurl,
+            push_preview=true,
+        )
+    else
+        deploy_decision = settings.deploy_decision
+    end
+    
     # from `vitepress_config.jl`
     modify_config_file(doc, settings, deploy_decision)
 
@@ -172,8 +189,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         try
             if !isfile(joinpath(dirname(builddir), "package.json"))
                 @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
-                cp(joinpath(dirname(@__DIR__), "docs", "package.json"), joinpath(dirname(builddir), "package.json"))
-                cp(joinpath(dirname(@__DIR__), "docs", "package-lock.json"), joinpath(dirname(builddir), "package-lock.json"))
+                cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
                 should_remove_package_json = true
             end
 
@@ -181,7 +197,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 if settings.install_npm || should_remove_package_json
                     if !isfile(joinpath(dirname(builddir), "package.json"))
                         cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                        should_remove_package_json == true
+                        should_remove_package_json = true
                     end
                     run(`$(npm) install`)
                 end
@@ -624,6 +640,11 @@ end
 
 render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, str::AbstractString, page, doc; kwargs...) = print(io, str)
 
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, evalnode::Documenter.MarkdownAST.Node{Nothing}, page, doc; kwargs...)
+    return render(io, mime, node, evalnode.children, page, doc; kwargs...)
+
+end
+
 # Metadata Nodes get dropped from the final output for every format but are needed throughout
 # the rest of the build, and so we just leave them in place and print a blank line in their place.
 render(io::IO, ::MIME"text/plain", n::Documenter.MarkdownAST.Node, node::Documenter.MetaNode, page, doc; kwargs...) = println(io, "\n")
@@ -648,6 +669,12 @@ end
 # Plain text
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
     print(io, text.text)
+end
+# Heading
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Heading, page, doc; kwargs...)
+    print(io, "\n# ")
+    render(io, mime, node, node.children, page, doc; kwargs...)
+    print(io, "\n")
 end
 # Bold text (strong)
 # These are wrapper elements - so the wrapper doesn't actually contain any text, the current node's children do.
