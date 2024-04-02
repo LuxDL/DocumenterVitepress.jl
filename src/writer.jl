@@ -361,7 +361,7 @@ function intelligent_language(lang::String)
     end
 end
 
-function join_multiblock(mcb::Documenter.MultiCodeBlock)
+function join_multiblock(node::Documenter.MarkdownAST.Node)
     if mcb.language == "ansi"
         # Return a vector of Markdown code blocks
         # where each block is a single line of the output or input.
@@ -369,9 +369,9 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
         # and whenever the language changes, we
         # start a new code block and push the old one to the array!
         codes = Markdown.Code[]
-        current_language = first(mcb.content).language
+        current_language = first(node.children).language
         current_string = ""
-        for thing in mcb.content
+        for thing in (n.element::MarkdownAST.CodeBlock for n in node.children)
             # reset the buffer and push the old code block
             if thing.language != current_language
                 # Remove this if statement if you want to 
@@ -394,7 +394,7 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
     end
     # else
         io = IOBuffer()
-        for (i, thing) in enumerate(mcb.content)
+        for (i, thing) in enumerate((n.element::MarkdownAST.CodeBlock for n in node.children))
             print(io, thing.code)
             if i != length(mcb.content)
                 println(io)
@@ -403,12 +403,12 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
                 end
             end
         end
-        return Markdown.Code(mcb.language, String(take!(io)))
+        return [Markdown.Code(mcb.language, String(take!(io)))]
     # end
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc; kwargs...)
-    return render(io, mime, node, join_multiblock(mcb), page, doc; kwargs...)
+    return render(io, mime, node, join_multiblock(node), page, doc; kwargs...)
 end
 
 
