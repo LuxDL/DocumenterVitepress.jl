@@ -661,7 +661,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         DocumenterVitepress: un-expanded `$(code.info)` block encountered on page $(page.source).
         The first few lines of code in this node are:
         ```
-        $(join(Iterators.take(split(code.code, '\n'), 6), "\n")
+        $(join(Iterators.take(split(code.code, '\n'), 6), "\n"))
         ```
         """
     end
