@@ -17,6 +17,6 @@ export default {
   enhanceApp({ app }) {
     enhanceAppWithTabs(app)
     // register your custom global components
-    app.component('AsideTrustees')
+    app.component('aside-trustees', AsideTrustees)
   }
 } satisfies Theme
