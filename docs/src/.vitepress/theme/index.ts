@@ -11,11 +11,12 @@ export default {
   extends: DefaultTheme,
   Layout() {
     return h(DefaultTheme.Layout, null, {
-      // 'home-hero-info-after': () => h(HomeTrustees),
       'aside-ads-before': () => h(AsideTrustees),
     })
   },
-  enhanceApp({ app, router, siteData }) {
+  enhanceApp({ app }) {
     enhanceAppWithTabs(app)
+    // register your custom global components
+    app.component('AsideTrustees')
   }
 } satisfies Theme
