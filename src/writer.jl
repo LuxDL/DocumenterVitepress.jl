@@ -399,11 +399,12 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
 
     else
         io = IOBuffer()
-        for (i, thing) in enumerate((n.element::MarkdownAST.CodeBlock for n in node.children))
+        codeblocks = [n.element::MarkdownAST.CodeBlock for n in node.children]
+        for (i, thing) in enumerate(codeblocks)
             print(io, thing.code)
-            if i != length(mcb.content)
-                println(io)
-                if findnext(x -> x.language == mcb.language, mcb.content, i + 1) == i + 1
+            if i != length(codeblocks)
+              !isempty(thing.code) && println(io)
+                if findnext(x -> x.info == mcb.language, codeblocks, i + 1) == i + 1
                     println(io)
                 end
             end
