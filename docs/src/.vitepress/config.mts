@@ -28,6 +28,9 @@ export default defineConfig({
     codeTransformers: [ transformerMetaWordHighlight(), ],
 
   },
+  optimizeDeps: {
+    exclude: [/^index\.md.*\.lean\.js$/]
+  },
   themeConfig: {
     outline: 'deep',
     // https://vitepress.dev/reference/default-theme-config
