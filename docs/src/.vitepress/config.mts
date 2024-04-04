@@ -25,12 +25,6 @@ export default defineConfig({
       dark: "github-dark"
     },
     codeTransformers: [ transformerMetaWordHighlight(), ],
-
-  },
-  vite: {
-    optimizeDeps: {
-      exclude: ['**/index.md', '**/*.js']
-    }
   },
   themeConfig: {
     outline: 'deep',
