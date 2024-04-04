@@ -29,7 +29,7 @@ export default defineConfig({
 
   },
   optimizeDeps: {
-    exclude: [/^index\.md.*\.lean\.js$/]
+    exclude: ['**/index.md', '**/*.js']
   },
   themeConfig: {
     outline: 'deep',
