@@ -28,8 +28,10 @@ export default defineConfig({
     codeTransformers: [ transformerMetaWordHighlight(), ],
 
   },
-  optimizeDeps: {
-    exclude: ['**/index.md', '**/*.js']
+  vite: {
+    optimizeDeps: {
+      exclude: ['**/index.md', '**/*.js']
+    }
   },
   themeConfig: {
     outline: 'deep',
