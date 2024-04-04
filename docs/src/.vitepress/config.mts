@@ -2,13 +2,12 @@ import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
-import { transformerMetaWordHighlight } from '@shikijs/transformers';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
-  title: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
-  description: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+  title: 'DocumenterVitepress',
+  description: 'Document your code',
   lastUpdated: true,
   cleanUrls: true,
   outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
@@ -24,12 +23,11 @@ export default defineConfig({
       light: "github-light",
       dark: "github-dark"
     },
-    codeTransformers: [ transformerMetaWordHighlight(), ],
   },
   themeConfig: {
     outline: 'deep',
     // https://vitepress.dev/reference/default-theme-config
-    logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+    logo: { src: '/logo.png', width: 24, height: 24 },
     search: {
       provider: 'local',
       options: {
@@ -44,7 +42,13 @@ export default defineConfig({
       { text: 'API', link: '/api' }
     ],
 
-    sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+    sidebar: [
+      { text: 'Home', link: '/' },
+      { text: 'Getting Started', link: '/getting_started' },
+      { text: 'Markdown', link: '/markdown-examples' },
+      { text: 'Code', link: '/code_example' },
+      { text: 'API', link: '/api' }
+      ],
     editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     socialLinks: [
       { icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }
