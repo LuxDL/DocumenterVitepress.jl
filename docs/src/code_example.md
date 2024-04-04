@@ -75,9 +75,34 @@ Markdown.parse("""
 ```
 
 ## REPL example
+````
+```@repl
+a = 1;
+b = 2; # hide
+a + b
+```
+````
+
+produces
 
 ```@repl
-a = 1
-b = 2
+a = 1;
+b = 2; # hide
+a + b
+```
+
+````
+```@repl
+a = 1;
+b = 2;
+a + b
+```
+````
+
+produces
+
+```@repl
+a = 1;
+b = 2;
 a + b
 ```
