@@ -15,37 +15,37 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
 }
 
 /* Fonts */
-
+/* 
 @font-face {
     font-family: JuliaMono-Regular;
     src: url("https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-Regular.woff2");
-}
+} */
 
  :root {
   /* Typography */
-  --vp-font-family-base: "Barlow", "Inter var experimental", "Inter var",
+  --vp-font-family-base: "Inter", "Inter var experimental", "Inter var",
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
     Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
 
   /* Code Snippet font */
-  --vp-font-family-mono: JuliaMono-Regular, monospace;
+  --vp-font-family-mono: "Fira Code", monospace;
 
 }
 
-.mono {
+/* .mono { */
   /* 
   Disable contextual alternates (kind of like ligatures but different) in monospace, 
   which turns `/>` to an up arrow and `|>` (the Julia pipe symbol) to an up arrow as well.  
   This is pretty bad for Julia folks reading even though copy+paste retains the same text.
   */
-  font-feature-settings: 'calt' 0;
-  pre {
+  /* font-feature-settings: 'calt' 0; */
+  /* pre {
     font-family: JuliaMono-Light;
 };
 code {
     font-family: JuliaMono-Light;
-    };
-}
+    }; */
+/* } */
 
 /* Colors */
 
