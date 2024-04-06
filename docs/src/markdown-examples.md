@@ -6,35 +6,129 @@ This page demonstrates some of the built-in markdown extensions provided by Vite
 
 VitePress provides Syntax Highlighting powered by [Shiki](https://github.com/shikijs/shiki), with additional features like line-highlighting:
 
+### Line Highlight
+
 **Input**
 
-Examples from [BeautifulAlgorithms.jl](https://github.com/mossr/BeautifulAlgorithms.jl/)
+Code snippets from [gnuplot-examples](https://lazarusa.github.io/gnuplot-examples/).
 
 ````
 ```julia
-using Statistics, LinearAlgebra
-function gradient_descent(𝒟train, φ, ∇loss; η=0.1, T=100)
-    𝐰 = zeros(length(φ(𝒟train[1][1])))
-    for t in 1:T
-        𝐰 = 𝐰 .- η*mean(∇loss(x, y, 𝐰, φ) for (x,y) ∈ 𝒟train) # ‎[!code highlight]
-    end
-    return 𝐰
-end
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code highlight]
 ```
 ````
 
 **Output**
 
 ```julia
-using Statistics, LinearAlgebra
-function gradient_descent(𝒟train, φ, ∇loss; η=0.1, T=100)
-    𝐰 = zeros(length(φ(𝒟train[1][1])))
-    for t in 1:T
-        𝐰 = 𝐰 .- η*mean(∇loss(x, y, 𝐰, φ) for (x,y) ∈ 𝒟train) # [!code highlight]
-    end
-    return 𝐰
-end
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code highlight]
 ```
+
+### Highlight multiple lines
+
+**Input**
+
+````
+```julia
+# ‎[!code highlight:3]
+# up to 3 in order to highlight the previous 2 lines
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code highlight]
+```
+````
+
+**Output**
+
+```julia
+# [!code highlight:3]
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code highlight]
+```
+Note the combination with `[!code highlight]`.
+
+### Focus a line
+
+**Input**
+````
+```julia
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code focus]
+```
+````
+
+**Output**
+```julia
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code focus]
+```
+
+### Focus multiple lines
+
+**Input**
+````
+```julia
+# ‎[!code focus:3]
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code focus] # ‎[!code highlight]
+```
+````
+
+**Output**
+```julia
+# [!code focus:3]
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code focus] # [!code highlight]
+```
+Note the combination with `[!code focus]` and `[!code highlight]`.
+
+### Added and removed lines
+
+**Input**
+````
+```julia
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid" # ‎ [!code --]
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code ++] # ‎[!code focus]
+```
+````
+
+**Output**
+```julia
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid" # [!code --]
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code ++] # [!code focus]
+```
+Note the combination with `[!code focus]`.
 
 ### Code groups
 
@@ -42,17 +136,18 @@ end
 ````
 ::: code-group
 
-```julia [neural network]
-using LinearAlgebra
-ReLU(z) = max(z, 0)
-function neural_network(x, 𝐕, 𝐰, φ, g=ReLU)
-    𝐡 = map(𝐯ⱼ -> g(𝐯ⱼ ⋅ φ(x)), 𝐕)
-    𝐰 ⋅ 𝐡
-end
+```julia [one line]
+using Gnuplot
+t = 0:0.001:1
+@gp t sin.(10π*t) "w l tit 'sin' lc 'gray'"
 ```
 
-```julia [one-liner]
-neural_network(x, 𝐕, 𝐰, φ, g) = 𝐰 ⋅ map(𝐯ⱼ -> g(𝐯ⱼ ⋅ φ(x)), 𝐕)
+```julia [two lines]
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'"
 ```
 
 :::
@@ -61,51 +156,22 @@ neural_network(x, 𝐕, 𝐰, φ, g) = 𝐰 ⋅ map(𝐯ⱼ -> g(𝐯ⱼ ⋅ φ(
 
 ::: code-group
 
-```julia [neural network]
-using LinearAlgebra
-ReLU(z) = max(z, 0)
-function neural_network(x, 𝐕, 𝐰, φ, g=ReLU)
-    𝐡 = map(𝐯ⱼ -> g(𝐯ⱼ ⋅ φ(x)), 𝐕)
-    𝐰 ⋅ 𝐡
-end
+```julia [one line]
+using Gnuplot
+t = 0:0.001:1
+@gp t sin.(10π*t) "w l tit 'sin' lc 'gray'"
 ```
 
-```julia [one-liner]
-neural_network(x, 𝐕, 𝐰, φ, g) = 𝐰 ⋅ map(𝐯ⱼ -> g(𝐯ⱼ ⋅ φ(x)), 𝐕)
+```julia [two lines]
+using Gnuplot
+x = -2π:0.001:2π
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
+@gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'"
 ```
 
 :::
 
-### Code focus
-**Input**
-````
-```julia
-using LinearAlgebra
-function stochastic_gradient_descent(𝒟train, φ, ∇loss; η=0.1, T=100)
-    𝐰 = zeros(length(φ(𝒟train[1][1])))
-    for t in 1:T
-        for (x, y) ∈ 𝒟train
-            𝐰 = 𝐰 .- η*∇loss(x, y, 𝐰, φ) # ‎[!code focus]
-        end
-    end
-    return 𝐰
-end
-```
-````
-
-**Output**
-```julia
-using LinearAlgebra
-function stochastic_gradient_descent(𝒟train, φ, ∇loss; η=0.1, T=100)
-    𝐰 = zeros(length(φ(𝒟train[1][1])))
-    for t in 1:T
-        for (x, y) ∈ 𝒟train
-            𝐰 = 𝐰 .- η*∇loss(x, y, 𝐰, φ) # [!code focus]
-        end
-    end
-    return 𝐰
-end
-```
 
 ### Lists
 
@@ -324,7 +390,7 @@ d content 2
 
 
 ## GitHub-flavored Alerts
-See: https://vitepress.dev/guide/markdown#github-flavored-alerts
+See [github-flavored-alerts](https://vitepress.dev/guide/markdown#github-flavored-alerts)
 
 **Input**
 ````
@@ -338,7 +404,7 @@ See: https://vitepress.dev/guide/markdown#github-flavored-alerts
 > Critical content.
 
 ## Tables
-See: https://vitepress.dev/guide/markdown#github-style-tables
+See [github-style-tables](https://vitepress.dev/guide/markdown#github-style-tables)
 
 **Input**
 ````
