@@ -63,7 +63,7 @@ A more colorful example from [documenter](https://documenter.juliadocs.org/stabl
 for color in 0:15
     print("\e[38;5;$color;48;5;$(color)m  ")
     print("\e[49m", lpad(color, 3), " ")
-    color % 8 == 7 && println()
+    color % 8 == 7 && println() # ‎[!code highlight]
 end
 ```
 ````
@@ -73,7 +73,7 @@ end
 for color in 0:15
     print("\e[38;5;$color;48;5;$(color)m  ")
     print("\e[49m", lpad(color, 3), " ")
-    color % 8 == 7 && println()
+    color % 8 == 7 && println() # [!code highlight]
 end
 ```
 
@@ -153,7 +153,7 @@ Markdown.parse("""
 ````
 ```@repl
 a = 1;
-b = 2; # hide
+b = 2;
 a + b
 ```
 ````
@@ -162,15 +162,16 @@ a + b
 
 ```@repl
 a = 1;
-b = 2; # hide
+b = 2;
 a + b
 ```
+
 **Input**
 
 ````
 ```@repl
 a = 1;
-b = 2;
+b = 2; # [!code focus] # hide
 a + b
 ```
 ````
@@ -179,7 +180,7 @@ a + b
 
 ```@repl
 a = 1;
-b = 2;
+b = 2; # hide
 a + b
 ```
 

@@ -11,12 +11,12 @@ VitePress provides Syntax Highlighting powered by [Shiki](https://github.com/shi
 Examples from [BeautifulAlgorithms.jl](https://github.com/mossr/BeautifulAlgorithms.jl/)
 
 ````
-```julia{5}
+```julia
 using Statistics, LinearAlgebra
 function gradient_descent(𝒟train, φ, ∇loss; η=0.1, T=100)
     𝐰 = zeros(length(φ(𝒟train[1][1])))
     for t in 1:T
-        𝐰 = 𝐰 .- η*mean(∇loss(x, y, 𝐰, φ) for (x,y) ∈ 𝒟train)
+        𝐰 = 𝐰 .- η*mean(∇loss(x, y, 𝐰, φ) for (x,y) ∈ 𝒟train) # ‎[!code highlight]
     end
     return 𝐰
 end
@@ -25,12 +25,12 @@ end
 
 **Output**
 
-```julia{5}
+```julia
 using Statistics, LinearAlgebra
 function gradient_descent(𝒟train, φ, ∇loss; η=0.1, T=100)
     𝐰 = zeros(length(φ(𝒟train[1][1])))
     for t in 1:T
-        𝐰 = 𝐰 .- η*mean(∇loss(x, y, 𝐰, φ) for (x,y) ∈ 𝒟train)
+        𝐰 = 𝐰 .- η*mean(∇loss(x, y, 𝐰, φ) for (x,y) ∈ 𝒟train) # [!code highlight]
     end
     return 𝐰
 end
