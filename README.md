@@ -1,12 +1,12 @@
 # DocumenterVitepress.jl
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl/dev)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl/stable/)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl/dev/)
 [![CI Documenter](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml/badge.svg)](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml)
 
 <img src="https://luxdl.github.io/DocumenterVitepress.jl/stable/logo.png" align="right" style="padding-left:10px;" width="180"/>
 
 > [!TIP]
-> Visit at https://luxdl.github.io/DocumenterVitepress.jl/dev
+> Visit at https://luxdl.github.io/DocumenterVitepress.jl/dev/
 
 This package provides a Markdown / MkDocs backend to [Documenter.jl](https://documenter.juliadocs.org/stable/).
 
