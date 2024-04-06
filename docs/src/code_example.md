@@ -1,5 +1,6 @@
-# Julia code example
+# Julia code examples
 
+## @example
 The `Julia` code used here is done using the following packages versions:
 
 ````@example version
@@ -13,7 +14,7 @@ And a simple task:
 2 + 2
 ````
 
-## ANSI example
+## @ansi
 
 ````@ansi
 printstyled("this is my color"; color = :red)
@@ -40,7 +41,7 @@ This is what some common symbols look like:
 |> /> ^ % ` ∈ 
 ```
 
-## Eval example
+## @eval
 From [Julia's documentation](https://docs.julialang.org/en/v1/) landing page.
 
 ```@eval
@@ -74,7 +75,7 @@ Markdown.parse("""
 """)
 ```
 
-## REPL example
+## @repl
 ````
 ```@repl
 a = 1;
@@ -105,4 +106,12 @@ produces
 a = 1;
 b = 2;
 a + b
+```
+
+## @doctest
+
+```@doctest
+julia> 1 + 1
+2
+
 ```
