@@ -355,10 +355,8 @@ end
 function intelligent_language(lang::String)
     if lang == "documenter-ansi"
         "ansi"
-    elseif lang ∈ ("ansi", "julia-repl", "@doctest", "@repl")
-        "julia /julia>/"
-    elseif lang ∈ ("@example",)
-        "julia"
+    elseif lang ∈ ("ansi", "julia-repl", "@repl", "@example", "@doctest")
+        "julia" # /julia>/ TODO: implement this highlighting for the `julia-repl` and `@doctest` languages.
     else
         lang
     end
