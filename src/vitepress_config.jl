@@ -130,6 +130,9 @@ function modify_config_file(doc, settings, deploy_decision)
 
 end
 
+function _get_raw_text(element)
+end
+
 function pagelist2str(doc, page::String)
     # If no name is given, find the first header in the page, 
     # and use that as the name.
@@ -138,7 +141,7 @@ function pagelist2str(doc, page::String)
     name = if isnothing(idx)
         splitext(page)[1]
     else
-        elements[idx].text[1]
+        elements[idx].text
     end
     return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
