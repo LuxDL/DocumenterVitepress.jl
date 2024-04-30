@@ -680,7 +680,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io)
     print(io, "#"^(heading.element.level), " ")
     render(io, mime, node, heading.children, page, doc; kwargs...)
-    print(io, " {#$(replace(id, " " => "-"))}")
+    print(io, " {#$(replace(id, " " => "-"))}") # potentially use MarkdownAST.mdflatten here?
     println(io)
 end
 # Thematic breaks
