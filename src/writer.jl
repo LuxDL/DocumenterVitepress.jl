@@ -178,14 +178,20 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
 
             cd(dirname(builddir)) do
-                if settings.install_npm || should_remove_package_json
-                    if !isfile(joinpath(dirname(builddir), "package.json"))
-                        cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                        should_remove_package_json = true
+                # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
+                # when interpolating the `npm` command.  
+                # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
+                # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
+                node(; adjust_PATH = true, adjust_LIBPATH = true) do _
+                    if settings.install_npm || should_remove_package_json
+                        if !isfile(joinpath(dirname(builddir), "package.json"))
+                            cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
+                            should_remove_package_json = true
+                        end
+                        run(`$(npm) install`)
                     end
-                    run(`$(npm) install`)
+                    run(`$(npm) run docs:build`)
                 end
-                run(`$(npm) run docs:build`)
             end
         catch e
             rethrow(e)
