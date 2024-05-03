@@ -7,7 +7,7 @@ import DocumenterVitepress as DV
 # TODO: 
 # - List style (rendered vs unrendered)
 # - Loose vs tight lists
-function DV.render(io::IO, mime::MIME"text/plain", node, bibliography::DocumenterCitation.BibliographyNode, page, doc; kwargs...)
+function DV.render(io::IO, mime::MIME"text/plain", node, bibliography::DocumenterCitations.BibliographyNode, page, doc; kwargs...)
 
     println(io)
     println(io, "***")
