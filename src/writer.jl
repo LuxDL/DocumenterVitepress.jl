@@ -9,8 +9,8 @@ import Markdown
 """
     MarkdownVitepress(; repo, devbranch, devurl, kwargs...)
 
-This is the main entry point for the Vitepress Markdown writer.  
-    
+This is the main entry point for the Vitepress Markdown writer.
+
 It is a config which can be passed to the `format` keyword argument in `Documenter.makedocs`, and causes it to emit a Vitepress site.
 
 !!! tip "Quick start"
@@ -46,7 +46,7 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     """The path to which the Markdown files will be output.  Defaults to `\$build/.documenter`."""
     md_output_path::String = ".documenter"
     """
-    Determines whether to clean up the Markdown assets after build, i.e., whether to remove the contents of `md_output_path` after the Vitepress site is built.  
+    Determines whether to clean up the Markdown assets after build, i.e., whether to remove the contents of `md_output_path` after the Vitepress site is built.
     Options are:
     - `nothing`: **Default**.  Only remove the contents of `md_output_path` if the documentation will deploy, to save space.
     - `true`: Removes the contents of `md_output_path` after the Vitepress site is built.
@@ -54,7 +54,14 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     """
     clean_md_output::Union{Nothing, Bool} = nothing
     """
-    DeployDecision from Documenter.jl. This is used to determine whether to deploy the documentation or not.
+    Whether to insert 200 redirects from https://example.com/page/ to https://example.com/page.
+
+    Defaults to `false`. This is useful for transitioning from Documenter.jl which uses
+    trailing slashes for its canonical urls by default.
+    """
+    redirect_trailing_slash::Bool = false
+    """
+    `DeployDecision` from Documenter.jl. This is used to determine whether to deploy the documentation or not.
     Options are:
     - `nothing`: **Default**. Automatically determine whether to deploy the documentation.
     - `Documenter.DeployDecision`: Override the automatic decision and deploy based on the passed config.
@@ -63,6 +70,16 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     `Documenter.deploy_folder(Documenter.auto_detect_deploy_system(); repo, devbranch, devurl, push_preview)`.
     """
     deploy_decision::Union{Nothing, Documenter.DeployDecision} = nothing
+    # This inner constructor serves only to 
+    function MarkdownVitepress(args...)
+        args[10] && !args[6] && throw(ArgumentError(
+            """
+            MarkdownVitepress: `redirect_trailing_slash` can only be `true` if `build_vitepress` is also `true`, 
+            because redirects are insterted after the site is built.
+            """
+        ))
+        new(args...)
+    end
 end
 
 # return the same file with the extension changed to .md
@@ -77,13 +94,13 @@ This function takes the filename `file`, and returns a file path in the `mdfolde
 function docpath(file, builddir, mdfolder)
     path = relpath(file, builddir)
     filename = mdext(path)
-    return joinpath(builddir, mdfolder, filename) 
+    return joinpath(builddir, mdfolder, filename)
 end
 
 """
     render(args...)
 
-This is the main entry point and recursive function to render a Documenter document to 
+This is the main entry point and recursive function to render a Documenter document to
 Markdown in the Vitepress flavour.  It is called by `Documenter.build` and should not be
 called directly.
 
@@ -125,7 +142,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
                 cp(joinpath(builddir, settings.md_output_path, "assets", file_relpath), joinpath(builddir, settings.md_output_path, "public", file_relpath))
             end
-        end 
+        end
         if any(favicon_files)
             for file in files[favicon_files]
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
@@ -148,7 +165,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
     # We manually obtain the Documenter deploy configuration,
     # so we can use it to set Vitepress's settings.
-    if settings.deploy_decision === nothing
+    if isnothing(settings.deploy_decision)
         # TODO: make it so that the user does not have to provide a repo url!
         deploy_config = Documenter.auto_detect_deploy_system()
         deploy_decision = Documenter.deploy_folder(
@@ -201,7 +218,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 rm(joinpath(dirname(builddir), "package-lock.json"))
             end
         end
-        # This is only useful if placed in the root of the `docs` folder, and we don't 
+        # This is only useful if placed in the root of the `docs` folder, and we don't
         # have any names which conflict with Jekyll (beginning with _ or .) in any case.
         # touch(joinpath(builddir, "final_site", ".nojekyll"))
 
@@ -221,6 +238,44 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
         end
 
+        if settings.redirect_trailing_slash
+            @info "DocumenterVitepress: inserting javascript 200 redirects from https://example.com/page/ to https://example.com/page because `redirect_trailing_slash` is true."
+            for (root, dirs, files) in walkdir(builddir)
+                for file in files
+                    name, ext = splitext(file)
+                    if ext === ".html" && name ∉ ("404", "index")
+                        dir = joinpath(root, name)
+                        if !isdir(dir)
+                            mkdir(dir)
+                            println(((settings.deploy_url, root, builddir, name)))
+                            url = "https://"*normpath(joinpath(settings.deploy_url, relpath(root, builddir), name))
+                            println(url)
+                            open(joinpath(dir, "index.html"), "w") do io
+                                write(io, """
+                                <!DOCTYPE html>
+                                <script>
+                                    const u = new URL(window.location.href);
+                                    window.location.replace(u.origin + u.pathname.slice(0,-1) + u.search + u.hash);
+                                </script>
+                                <a href="..$name">Redirecting to ..$name</a>
+                                <meta http-equiv="refresh" content="0; URL=../$name">
+                                <link rel="canonical" href="../$name">""")
+                                # The script is equivalent to
+                                # `<meta http-equiv="refresh" content="0; URL=../$name">`
+                                # but keeps fragments. If Javascript fails for whatever
+                                # reason, the meta http-equiv will proc, dropping fragments
+                                # If that, too fails, there's an ordinary, human readable
+                                # relative link.
+                                #
+                                # This uses a relative canonical link which is bad form, but
+                                # oh well. We don't have access to the full URL until deploy
+                                # time.
+                            end
+                        end
+                    end
+                end
+            end
+        end
     else
         @info """
             DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
@@ -316,7 +371,7 @@ function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.
         if url !== nothing
             # This is how Documenter does it:
             # push!(ret.nodes, a[".docs-sourcelink", :target=>"_blank", :href=>url]("source"))
-            # so clearly we should be inserting some form of HTML tag here, 
+            # so clearly we should be inserting some form of HTML tag here,
             # and defining its rendering in CSS?
             # TODO: switch to Documenter style here
             println(io, "\n", "[source]($url)", "\n")
@@ -384,9 +439,9 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
         for thing in code_blocks
             # reset the buffer and push the old code block
             if thing.language != current_language
-                # Remove this if statement if you want to 
+                # Remove this if statement if you want to
                 # include empty code blocks in the output.
-                if isempty(thing.code) 
+                if isempty(thing.code)
                     current_string *= "\n\n"
                     continue
                 end
@@ -482,7 +537,7 @@ function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc
     # Additionally, Vitepress complains about the XML version and encoding string below,
     # so we just remove this bad hombre!
     bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
-    location = findfirst(bad_hombre_string, lowercase(image_text))    
+    location = findfirst(bad_hombre_string, lowercase(image_text))
     if !isnothing(location) # couldn't figure out how to do this in one line - maybe regex?  A question for later though.
         image_text = replace(image_text, image_text[location] => "")
     end
@@ -727,7 +782,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # Main.@infiltrate
     print(io, "\$", math.math, "\$")
 end
-# Display math 
+# Display math
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.DisplayMath, page, doc; kwargs...)
     # Main.@infiltrate
     println(io)
@@ -771,7 +826,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         end
     end
     # We create this IOBuffer in order to render to it.
-    iob = IOBuffer() 
+    iob = IOBuffer()
     # This will eventually hold the rendered table cells as Strings.
     cell_strings = Vector{Vector{String}}()
     current_row_vec = String[]
