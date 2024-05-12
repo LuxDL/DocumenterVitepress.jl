@@ -24,7 +24,7 @@ makedocs(;
             "Markdown examples" => "markdown-examples.md",
             "MIME output examples" => "mime_examples.md"
         ],
-        "Developer documentation" => "render_pipeline.md",
+        "Developers' documentation" => "render_pipeline.md",
     ]
 )
 
