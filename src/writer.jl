@@ -1,4 +1,5 @@
 import Documenter: Documenter, Builder, Expanders, MarkdownAST
+import Documenter.DOM: escapehtml
 
 import ANSIColoredPrinters
 using Base64: base64decode, base64encode
@@ -177,14 +178,20 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
 
             cd(dirname(builddir)) do
-                if settings.install_npm || should_remove_package_json
-                    if !isfile(joinpath(dirname(builddir), "package.json"))
-                        cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                        should_remove_package_json = true
+                # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
+                # when interpolating the `npm` command.  
+                # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
+                # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
+                node(; adjust_PATH = true, adjust_LIBPATH = true) do _
+                    if settings.install_npm || should_remove_package_json
+                        if !isfile(joinpath(dirname(builddir), "package.json"))
+                            cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
+                            should_remove_package_json = true
+                        end
+                        run(`$(npm) install`)
                     end
-                    run(`$(npm) install`)
+                    run(`$(npm) run env -- vitepress build $(joinpath(builddir, settings.md_output_path))`)
                 end
-                run(`$(npm) run env -- vitepress build $(joinpath(builddir, settings.md_output_path))`)
             end
         catch e
             rethrow(e)
@@ -352,16 +359,18 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 
 function intelligent_language(lang::String)
-    if lang == "ansi"
-        "julia /julia>/"
-    elseif lang == "documenter-ansi"
+    if lang == "documenter-ansi"
         "ansi"
+    elseif lang ∈ ("ansi", "julia-repl", "@repl", "@example", "@doctest")
+        "julia" # /julia>/ TODO: implement this highlighting for the `julia-repl` and `@doctest` languages.
     else
         lang
     end
 end
 
-function join_multiblock(mcb::Documenter.MultiCodeBlock)
+function join_multiblock(node::Documenter.MarkdownAST.Node)
+    @assert node.element isa Documenter.MultiCodeBlock 
+    mcb = node.element
     if mcb.language == "ansi"
         # Return a vector of Markdown code blocks
         # where each block is a single line of the output or input.
@@ -369,9 +378,10 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
         # and whenever the language changes, we
         # start a new code block and push the old one to the array!
         codes = Markdown.Code[]
-        current_language = first(mcb.content).language
+        current_language = mcb.language
         current_string = ""
-        for thing in mcb.content
+        code_blocks = mcb.content
+        for thing in code_blocks
             # reset the buffer and push the old code block
             if thing.language != current_language
                 # Remove this if statement if you want to 
@@ -391,24 +401,24 @@ function join_multiblock(mcb::Documenter.MultiCodeBlock)
         push!(codes, Markdown.Code(intelligent_language(current_language), current_string))
         return codes
 
-    end
-    # else
+    else
         io = IOBuffer()
-        for (i, thing) in enumerate(mcb.content)
+        codeblocks = [n.element::MarkdownAST.CodeBlock for n in node.children]
+        for (i, thing) in enumerate(codeblocks)
             print(io, thing.code)
-            if i != length(mcb.content)
-                println(io)
-                if findnext(x -> x.language == mcb.language, mcb.content, i + 1) == i + 1
+            if i != length(codeblocks)
+              !isempty(thing.code) && println(io)
+                if findnext(x -> x.info == mcb.language, codeblocks, i + 1) == i + 1
                     println(io)
                 end
             end
         end
-        return Markdown.Code(mcb.language, String(take!(io)))
-    # end
+        return [Markdown.Code(intelligent_language(mcb.language), String(take!(io)))]
+    end
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc; kwargs...)
-    return render(io, mime, node, join_multiblock(mcb), page, doc; kwargs...)
+    return render(io, mime, node, join_multiblock(node), page, doc; kwargs...)
 end
 
 
@@ -613,7 +623,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Plain text
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
-    print(io, text.text)
+    print(io, escapehtml(text.text))
 end
 # Heading
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Heading, page, doc; kwargs...)
@@ -651,12 +661,16 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
-    info = code.info
-    if info ∈ ("julia-repl", "@doctest", "@repl")
-        info = "julia /julia>/"
-    elseif info ∈ ("@example", )
-        info = "julia"
+    if startswith(code.info, "@")
+        @warn """
+        DocumenterVitepress: un-expanded `$(code.info)` block encountered on page $(page.source).
+        The first few lines of code in this node are:
+        ```
+        $(join(Iterators.take(split(code.code, '\n'), 6), "\n"))
+        ```
+        """
     end
+    info = intelligent_language(code.info)
     render(io, mime, node, Markdown.Code(info, code.code), page, doc; kwargs...)
 end
 # Inline code
@@ -688,7 +702,14 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     if category == "note" # Julia markdown says note, but Vitepress says tip
         category = "tip"
     end
-    println(io, "\n::: $(category) $(admonition.title)")
+    title = admonition.title
+    if !(category ∈ ("tip", "warning", "danger", "caution"))
+        if isempty(admonition.title)
+            admonition.title = category
+        end
+        category = "tip"
+    end
+    println(io, "\n::: $(category) $(title)")
     render(io, mime, node, node.children, page, doc; kwargs...)
     println(io, "\n:::")
 end

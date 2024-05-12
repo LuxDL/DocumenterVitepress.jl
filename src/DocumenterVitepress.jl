@@ -9,7 +9,7 @@ module DocumenterVitepress
 using Documenter: Documenter, Selectors
 
 using DocStringExtensions
-using NodeJS_20_jll: npm
+using NodeJS_20_jll: node, npm
 
 const ASSETS = normpath(joinpath(@__DIR__, "..", "assets"))
 

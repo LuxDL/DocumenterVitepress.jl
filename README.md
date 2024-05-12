@@ -1,12 +1,12 @@
 # DocumenterVitepress.jl
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl/dev)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl/stable/)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl/dev/)
 [![CI Documenter](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml/badge.svg)](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml)
 
 <img src="https://luxdl.github.io/DocumenterVitepress.jl/stable/logo.png" align="right" style="padding-left:10px;" width="180"/>
 
 > [!TIP]
-> Visit at https://luxdl.github.io/DocumenterVitepress.jl/dev
+> Visit at https://luxdl.github.io/DocumenterVitepress.jl/dev/
 
 This package provides a Markdown / MkDocs backend to [Documenter.jl](https://documenter.juliadocs.org/stable/).
 
@@ -58,7 +58,7 @@ Because this is based on the Vitepress static site generator, you have to use No
 ## Install npm dependencies
 
 ```shell
-docs > npm i
+docs> npm i
 ```
 
 ## run docs locally
@@ -66,7 +66,7 @@ docs > npm i
 ```shell
 docs> npm run docs:dev 
 ```
-and edit your `make.jl` file to add `build_vitepress = false` as a keyword argument to the `MarkdownVitepress` config, in order to save time.  If you keep this running, perhaps in a separate Terminal window, it will automatically rebuild whenever you run `make.jl`.
+and edit your `make.jl` file to add `build_vitepress = false` as a keyword argument to the `MarkdownVitepress` config, to save time.  If you keep this running, perhaps in a separate Terminal window, it will automatically rebuild whenever you run `make.jl`.
 
 ***
 
