@@ -13,6 +13,7 @@ using NodeJS_20_jll: node, npm
 
 const ASSETS = normpath(joinpath(@__DIR__, "..", "assets"))
 
+include("vitepress_interface.jl")
 include("vitepress_config.jl")
 include("writer.jl")
 include("ANSIBlocks.jl")
