@@ -190,7 +190,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                         end
                         run(`$(npm) install`)
                     end
-                    run(`$(npm) run docs:build`)
+                    run(`$(npm) run env -- vitepress build $(joinpath(builddir, settings.md_output_path))`)
                 end
             end
         catch e
