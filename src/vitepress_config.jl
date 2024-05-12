@@ -134,7 +134,7 @@ function pagelist2str(doc, page::String)
     else
         elements[idx].text[1]
     end
-    return "{ text: '$name', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
@@ -142,14 +142,14 @@ pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$name', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
     name, contents = name_contents
     # This is for nested stuff.  Should work automatically but you never know...
     rendered_contents = pagelist2str.((doc,), contents)
-    return "{ text: '$name', collapsed: false, items: [\n$(join(rendered_contents, ",\n"))]\n }" # TODO: add a link here if the name is the same name as a file?
+    return "{ text: '$(replace(name, "'" => "\\'"))', collapsed: false, items: [\n$(join(rendered_contents, ",\n"))]\n }" # TODO: add a link here if the name is the same name as a file?
 end
 
 function sidebar_items(doc, page::String)
@@ -166,7 +166,7 @@ function sidebar_items(doc, page::String)
 end
 
 function _item_link(page, item)
-    return "{ text: '$item', link: '/$(splitext(page)[1])#$(replace(item, " " => "-"))' }"
+    return "{ text: '$(replace(item, "'" => "\\'"))', link: '/$(splitext(page)[1])#$(replace(item, " " => "-"))' }"
 
 end
 
