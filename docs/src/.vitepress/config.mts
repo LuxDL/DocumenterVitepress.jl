@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
+import { versions } from '../composables/versions'
 import { transformerMetaWordHighlight } from '@shikijs/transformers';
 
 // https://vitepress.dev/reference/site-config
@@ -43,10 +44,11 @@ export default defineConfig({
       { text: 'Getting Started', link: '/getting_started' },
       { text: 'Markdown', link: '/markdown-examples' },
       { text: 'Code', link: '/code_example' },
-      { text: 'API', link: '/api' }
+      { text: 'API', link: '/api' },
+      { text: 'versions',
+      items: versions},
     ],
-
-    sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+    sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // this should also be a composable
     editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     socialLinks: [
       { icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }
