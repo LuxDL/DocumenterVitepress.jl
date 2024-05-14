@@ -1,4 +1,4 @@
-# Uprading docs from Documenter.jl to DocumenterVitepress.jl
+# Upgrading docs from Documenter.jl to DocumenterVitepress.jl
 
 Assuming that your current documentation is based on Documenter.jl, you can upgrade to DocumenterVitepress.jl by following these steps:
 
