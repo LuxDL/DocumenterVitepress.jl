@@ -46,7 +46,7 @@ function modify_config_file(doc, settings, deploy_decision)
         # We don't need the below line since there are no default components, though we might want to add them in the future!
         # cp(joinpath(dirname(@__DIR__), "template", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
     end
-
+    # reset the path to the variable that exists
     vitepress_config_file = joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
 
     config = read(vitepress_config_file, String)
