@@ -102,6 +102,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # Handle the case where the site name has to be set...
     mime = MIME"text/plain"() # TODO: why?
     builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
+    # Main.@infiltrate
+    sourcedir = isabspath(doc.user.source) ? doc.user.source : joinpath(doc.user.root, doc.user.source)
     # First, we check what Documenter has copied for us already:
     current_build_files_or_dirs = readdir(builddir)
     # Then, we create a path to the folder where we will emit the markdown,
@@ -115,7 +117,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     end
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
-    if isdir(joinpath(builddir, settings.md_output_path, "assets")) && !isdir(joinpath(builddir, settings.md_output_path, "public"))
+    if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
         mkpath(joinpath(builddir, settings.md_output_path, "public"))
         files = readdir(joinpath(builddir, settings.md_output_path, "assets"); join = true)
         logo_files = contains.(last.(splitdir.(files)), "logo")
@@ -123,13 +125,13 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         if any(logo_files)
             for file in files[logo_files]
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
-                cp(joinpath(builddir, settings.md_output_path, "assets", file_relpath), joinpath(builddir, settings.md_output_path, "public", file_relpath))
+                cp(file, joinpath(builddir, settings.md_output_path, "public", file_relpath))
             end
         end 
         if any(favicon_files)
             for file in files[favicon_files]
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
-                cp(joinpath(builddir, settings.md_output_path, "assets", file_relpath), joinpath(builddir, settings.md_output_path, "public", file_relpath))
+                cp(file, joinpath(builddir, settings.md_output_path, "public", file_relpath))
             end
         end
     end

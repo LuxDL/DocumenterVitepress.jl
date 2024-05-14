@@ -27,21 +27,27 @@ function modify_config_file(doc, settings, deploy_decision)
 
     # Main.@infiltrate
     # Read in the config file, 
-    mkpath(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"))
-    vitepress_config_file = joinpath(doc.user.build, settings.md_output_path, ".vitepress", "config.mts")
+
+    builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
+    sourcedir = isabspath(doc.user.source) ? doc.user.source : joinpath(doc.user.root, doc.user.source)
+
+    mkpath(joinpath(builddir, settings.md_output_path, ".vitepress", "theme"))
+    vitepress_config_file = joinpath(sourcedir, ".vitepress", "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
     if !isfile(vitepress_config_file)
         mkpath(splitdir(vitepress_config_file)[1])
         @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file.  Substituting in the default file."
-        if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"))
+        if !isfile(joinpath(sourcedir, ".vitepress", "theme", "index.ts")) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
             write(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"), read(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "index.ts"), String))
         end
-        if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"))
+        if !isfile(joinpath(sourcedir, ".vitepress", "theme", "style.css")) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
             write(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"), read(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "style.css"), String))
         end
         write(vitepress_config_file, read(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "config.mts"), String))
         # We don't need the below line since there are no default components, though we might want to add them in the future!
         # cp(joinpath(dirname(@__DIR__), "template", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
     end
+
+    vitepress_config_file = joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
 
     config = read(vitepress_config_file, String)
     replacers = Vector{Pair{<: Union{AbstractString, Regex}, <: AbstractString}}()
