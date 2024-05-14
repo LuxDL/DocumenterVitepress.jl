@@ -97,7 +97,7 @@ deploydocs(;
 DocumenterVitepress.generate_template("/path/to/YourPackage/docs", "YourPackage.jl")
 ```
 
-4. Finally inorder to see the live preview of your documentation, run the following two bash commands in the docs folder:
+4. Finally in order to see the live preview of your documentation, run the following two bash commands in the docs folder:
 
 ```julia
 npm i
