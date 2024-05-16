@@ -18,7 +18,7 @@ hero:
       text: View on Github
       link: https://github.com/LuxDL/DocumenterVitepress.jl
     - theme: alt
-      text: API Examples
+      text: API
       link: /api
       
 

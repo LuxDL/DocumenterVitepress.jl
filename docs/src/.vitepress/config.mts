@@ -38,14 +38,7 @@ export default defineConfig({
         detailedView: true
       }
     },
-    nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Getting Started', link: '/getting_started' },
-      { text: 'Markdown', link: '/markdown-examples' },
-      { text: 'Code', link: '/code_example' },
-      { text: 'API', link: '/api' }
-    ],
-
+    nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     socialLinks: [
