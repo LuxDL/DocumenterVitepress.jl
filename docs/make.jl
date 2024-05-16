@@ -22,7 +22,9 @@ makedocs(;
         "Examples" => [
             "Code examples" => "code_example.md",
             "Markdown examples" => "markdown-examples.md",
-            "MIME output examples" => "mime_examples.md"
+            "MIME output examples" => "mime_examples.md",
+            "Updating to DocumenterVitepress from Documenter example" => "documenter_to_vitepress_docs_example.md"
+
         ],
         "Developers' documentation" => "render_pipeline.md",
     ]
