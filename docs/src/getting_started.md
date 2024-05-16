@@ -1,5 +1,27 @@
 # Getting started
 
+## Simple method
+
+You can simply add `using DocumenterVitepress` to your `make.jl` file, and replace `format = HTML(...)` in `makedocs` with:
+```julia
+makedocs(...,
+    format = MarkdownVitepress(
+        repo = "<url_to_your_repo>",
+    )
+)
+```
+and that should be it!
+
+The section [Advanced method](@ref) describes how to get more control over your Vitepress build.
+
+### Developing docs locally
+
+In order to develop docs locally, you can add the `clean=false` parameter to `makedocs`, and call `DocumenterVitepress.dev_docs("/path/to/docs/build")` in some other REPL.  This works with LiveServer.jl based approaches as well.
+
+## Advanced method 
+
+If you want to customize your Vitepress build, including CSS etc., you will want to add the necessary Vitepress files to your `docs/src/.vitepress` folder.
+
 As a tutorial, we will go through and explain the folder and files structure used to generate this website. You could use this as a template for your project's documentation.
 
 !!! tip "Quick start"
