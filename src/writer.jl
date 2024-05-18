@@ -63,6 +63,8 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     `Documenter.deploy_folder(Documenter.auto_detect_deploy_system(); repo, devbranch, devurl, push_preview)`.
     """
     deploy_decision::Union{Nothing, Documenter.DeployDecision} = nothing
+    "A list of assets, the same as what is provided to Documenter's HTMLWriter."
+    assets = nothing
 end
 
 # return the same file with the extension changed to .md
@@ -831,7 +833,7 @@ function render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, value::M
 
     `$(value.ref)` which is of type `$(typeof(value.ref))`
     """)
-    println(io, value.ref)
+    print(io, value.ref)
 end
 
 # ### Documenter.jl page links
