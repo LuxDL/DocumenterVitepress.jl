@@ -16,7 +16,7 @@ The section [Advanced method](@ref) describes how to get more control over your 
 
 ### Developing docs locally
 
-In order to develop docs locally, you can add the `clean=false` parameter to `makedocs`, and call `DocumenterVitepress.dev_docs("/path/to/docs/build")` in some other REPL.  This works with LiveServer.jl based approaches as well.
+In order to develop docs locally, you can add the `clean=false` parameter to `makedocs`, and call `DocumenterVitepress.dev_docs("/path/to/docs/build")` in some other REPL.  This works with LiveServer.jl based approaches as well.  Note that the `dev_docs` call cannot be in the file that LiveServer is watching
 
 ## Advanced method 
 
