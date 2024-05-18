@@ -27,6 +27,7 @@ build_docs(builddir::String) = run_vitepress_command(builddir, "build")
 
 function run_vitepress_command(builddir::String, command::String)
     @assert ispath(builddir)
+    builddir = abspath(builddir)
     md_output_path = ".documenter"
     @info "DocumenterVitepress: running `vitepress $command`."
     should_remove_package_json = false
@@ -50,7 +51,7 @@ function run_vitepress_command(builddir::String, command::String)
                     end
                     run(`$(npm) install`)
                 end
-                run(`$(npm) run env -- vitepress $command $(joinpath(builddir, md_output_path))`)
+                run(`$(npm) run env -- vitepress $command $(joinpath(splitpath(builddir)[end], md_output_path))`)
             end
         end
     catch e
