@@ -134,6 +134,9 @@ function modify_config_file(doc, settings, deploy_decision)
 
 end
 
+function _get_raw_text(element)
+end
+
 function pagelist2str(doc, page::String)
     # If no name is given, find the first header in the page, 
     # and use that as the name.
