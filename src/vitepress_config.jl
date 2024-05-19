@@ -141,7 +141,7 @@ function pagelist2str(doc, page::String)
     name = if isnothing(idx)
         splitext(page)[1]
     else
-        elements[idx].text
+        elements[idx].text[1]
     end
     return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
