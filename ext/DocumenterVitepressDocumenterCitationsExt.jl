@@ -3,6 +3,7 @@ module DocumenterVitepressDocumenterCitationsExt
 using DocumenterCitations, DocumenterVitepress
 
 import DocumenterVitepress as DV
+using Documenter: MarkdownAST
 
 # TODO: 
 # - List style (rendered vs unrendered)
@@ -25,17 +26,17 @@ end
 
 function _bibliography_to_list(bib::DocumenterCitations.BibliographyNode)
   # Construct a MarkdownAST.Node containing this list
-  MAST = DV.Documenter.MarkdownAST
-  list = MAST.List(bib.list_style in [:ol, :dl] ? :ordered : :bullet, false)
-  node = MAST.Node(list)
+  list = MarkdownAST.List(bib.list_style in [:ol, :dl] ? :ordered : :bullet, false)
+  node = MarkdownAST.Node(list)
   for item in bib.items
-    newitem = MAST.Node(MAST.Item())
+    newitem = MarkdownAST.Node(MarkdownAST.Item())
     push!(newitem.children, item.reference)
     push!(node.children, newitem)
   end
   node
 end
 
+# Below is the code intended for LaTeXWriter.
 #=
 function Documenter.LaTeXWriter.latex(
     lctx::Documenter.LaTeXWriter.Context,
