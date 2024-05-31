@@ -16,6 +16,7 @@ export default {
     })
   },
   enhanceApp({ app, router, siteData }) {
+    console.log(window.DOCUMENTER_NEWEST)
     enhanceAppWithTabs(app)
   }
 } satisfies Theme

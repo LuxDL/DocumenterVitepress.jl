@@ -24,7 +24,6 @@ bib = CitationBibliography(
     style=:numeric  # default
 )
 
-
 makedocs(; 
     sitename = "DocumenterVitepress", 
     authors = "LuxDL et al.",
@@ -34,7 +33,7 @@ makedocs(;
     format=DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
         devbranch = "master",
-        devurl = "dev";
+        devurl = "dev",
     ),
     draft = false,
     source = "src",
