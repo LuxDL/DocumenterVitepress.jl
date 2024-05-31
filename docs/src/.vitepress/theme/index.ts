@@ -15,7 +15,7 @@ export default {
       'aside-ads-before': () => h(AsideTrustees),
     })
   },
-  enhanceApp({ app, router, siteData }) {
+  async enhanceApp({ app, router, siteData }) {
     console.log(window.DOCUMENTER_NEWEST)
     enhanceAppWithTabs(app)
   }
