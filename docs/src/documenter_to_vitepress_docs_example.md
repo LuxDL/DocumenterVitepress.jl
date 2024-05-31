@@ -1,12 +1,12 @@
 # Upgrading docs from Documenter.jl to DocumenterVitepress.jl
 
- **Assuming that your current documentation is based on Documenter.jl, you can upgrade to DocumenterVitepress.jl by following these steps:**
+**Assuming that your current documentation is based on Documenter.jl, you can upgrade to DocumenterVitepress.jl by following these steps:**
 
 Let us suppose that you are working on a package named `Example.jl` that is part of a GitHub organization named `ExampleOrg`.
 
 Then the very first step here is to update the `make.jl` file to follow the DocumenterVitepress.jl format.
 
-1. Go the the `make.jl` file in your `docs` folder and do the following necessary changes to upgrade to DocumenterVitepress.jl :
+1. Go the the `make.jl` file in your `docs` folder and do the following necessary changes to upgrade to DocumenterVitepress.jl:
 
 :::tabs
 
@@ -55,7 +55,6 @@ using DocumenterVitepress
 
 DocMeta.setdocmeta!(Example, :DocTestSetup, :(using Example); recursive=true)
 
-
 makedocs(;
     modules = [Example],
     repo = Remotes.GitHub("ExampleOrg", "Example.jl"),
@@ -84,7 +83,7 @@ deploydocs(;
 
 :::
 
-2. Next to build new docs from docs/src 
+2. Next to build new docs from docs/src
 ```sh
 $ cd docs
 docs $

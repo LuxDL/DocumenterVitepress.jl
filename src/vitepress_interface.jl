@@ -10,7 +10,7 @@ For now, these assume that the Markdown files generated are in `\$builddir/.docu
 Work is in progress to let the user pass the config object to fix this.
 
 !!! warning
-    This does **NOT** run `makedocs` - you have to do that yourself! 
+    This does **NOT** run `makedocs` - you have to do that yourself!
     Think of it as the second stage of `LiveServer.jl` for DocumenterVitepress specifically.
 """
 dev_docs(builddir::String) = run_vitepress_command(builddir, "dev")
@@ -40,7 +40,7 @@ function run_vitepress_command(builddir::String, command::String)
         # We have to be here, so that the package.json is picked up by npm.
         cd(dirname(builddir)) do
             # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
-            # when interpolating the `npm` command.  
+            # when interpolating the `npm` command.
             # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
             # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
             node(; adjust_PATH = true, adjust_LIBPATH = true) do _
@@ -63,5 +63,3 @@ function run_vitepress_command(builddir::String, command::String)
         end
     end
 end
-
-

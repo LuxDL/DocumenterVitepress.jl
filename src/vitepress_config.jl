@@ -26,7 +26,7 @@ Simply add more elements to the `replacers` array within this function.
 function modify_config_file(doc, settings, deploy_decision)
 
     # Main.@infiltrate
-    # Read in the config file, 
+    # Read in the config file,
 
     builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
     sourcedir = isabspath(doc.user.source) ? doc.user.source : joinpath(doc.user.root, doc.user.source)
@@ -44,7 +44,7 @@ function modify_config_file(doc, settings, deploy_decision)
         if !isfile(joinpath(source_vitepress_dir, "theme", "style.css")) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
             write(joinpath(build_vitepress_dir, "theme", "style.css"), read(joinpath(template_vitepress_dir, "theme", "style.css"), String))
         end
-        # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file, 
+        # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
         # which may not be writable.  However, `write` creates a new file for which Julia must have write permissions.
         write(joinpath(build_vitepress_dir, "config.mts"), read(joinpath(template_vitepress_dir, "config.mts"), String))
         # We don't need the below line since there are no default components, though we might want to add them in the future!
@@ -67,7 +67,7 @@ function modify_config_file(doc, settings, deploy_decision)
     # correct base URL, and then build the VitePress site.
     folder = deploy_decision.subfolder
     deploy_relpath = "$(folder)$(isempty(folder) ? "" : "/")"
-    deploy_abspath = if isnothing(settings.deploy_url) 
+    deploy_abspath = if isnothing(settings.deploy_url)
         "/" * splitpath(settings.repo)[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
         else
             s_path = startswith(settings.deploy_url, r"http[s?]:\/\/") ? splitpath(settings.deploy_url)[2:end] : splitpath(settings.deploy_url)
@@ -76,7 +76,7 @@ function modify_config_file(doc, settings, deploy_decision)
         end
 
     base_str = deploy_abspath == "/" ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
-   
+
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
 
     # # Vitepress output path
@@ -88,7 +88,7 @@ function modify_config_file(doc, settings, deploy_decision)
     sidebar_navbar_string = join(sidebar_navbar_info, ",\n")
     push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: [\n$sidebar_navbar_string\n]\n")
     push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
-   
+
     # # Title
     push!(replacers, "title: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "title: '$(doc.user.sitename)'")
 
@@ -97,7 +97,7 @@ function modify_config_file(doc, settings, deploy_decision)
 
     # # Edit link
     push!(replacers, "editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "editLink: { pattern: \"https://$(settings.repo)$(endswith(settings.repo, "/") ? "" : "/")edit/$(settings.devbranch)/docs/src/:path\" }")
-    
+
     # # Github repo
     full_repo = startswith(settings.repo, r"https?:\/\/") ? settings.repo : "https://" * settings.repo
     push!(replacers, """{ icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }""" => """{ icon: 'github', link: '$full_repo' }""")
@@ -125,12 +125,12 @@ function modify_config_file(doc, settings, deploy_decision)
     end
 
     # Finally, run all the replacers and write the new config file
-   
+
     new_config = replace(config, replacers...)
     write(vitepress_config_file, new_config)
 
-   
-    # 
+
+    #
 
 end
 
@@ -138,7 +138,7 @@ function _get_raw_text(element)
 end
 
 function pagelist2str(doc, page::String)
-    # If no name is given, find the first header in the page, 
+    # If no name is given, find the first header in the page,
     # and use that as the name.
     elements = doc.blueprint.pages[page].elements
     idx = findfirst(x -> x isa Markdown.Header, elements)

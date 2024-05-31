@@ -2,13 +2,13 @@
 
 **Fonts**
 
-This package uses the JuliaMono font by default, but you can override this in CSS.  
+This package uses the JuliaMono font by default, but you can override this in CSS.
 
 This is what some common symbols look like:
 
 ```julia
 ] [ = $ ; ( @ { " ) ? . } ⊽ ⊼ ⊻ ⊋ ⊊ ⊉ ⊈ ⊇ ⊆ ≥ ≤ ≢ ≡ ≠ ≉ ≈ ∪ ∩ ∜ ∛ √ ∘ ∌
-|> /> ^ % ` ∈ 
+|> /> ^ % ` ∈
 ```
 
 ## @example
