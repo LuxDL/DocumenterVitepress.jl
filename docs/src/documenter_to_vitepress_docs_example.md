@@ -106,7 +106,7 @@ pkg> add DocumenterVitepress, Documenter
 julia> include("make.jl")
 ```
 
-6. Finally hit ;  to enter in the shell mode and run:
+6. Finally hit `;` to enter in the shell mode and run:
 
 ```sh
 shell> npm i

@@ -77,19 +77,19 @@ VitePress can be used on its own, or be installed into an existing project. In b
 ::: code-group
 
 ```sh [npm]
-npm add -D vitepress
+$ npm add -D vitepress
 ```
 
 ```sh [pnpm]
-pnpm add -D vitepress
+$ pnpm add -D vitepress
 ```
 
 ```sh [yarn]
-yarn add -D vitepress
+$ yarn add -D vitepress
 ```
 
 ```sh [bun]
-bun add -D vitepress
+$ bun add -D vitepress
 ```
 
 :::
@@ -106,7 +106,7 @@ docs $
 Then, in `docs` start a julia session and activate a new environment.
 
 ```shell
-docs> julia
+docs $ julia
 julia> ]
 pkg> activate .
 ```
@@ -144,7 +144,7 @@ docs/
 Then, run `docs/make.jl`, and in another terminal in the `docs` directory, run:
 
 ```shell
-npm run docs:dev
+docs $ npm run docs:dev
 ```
 
 This will deploy your documentation locally on a webserver.  See [here](https://vitepress.dev/guide/getting-started#up-and-running) to know more.
