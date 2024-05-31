@@ -98,14 +98,14 @@ $ bun add -D vitepress
 
 To start working on your docs do the following steps:
 
-```shell
+```sh
 $ cd docs
 docs $
 ```
 
 Then, in `docs` start a julia session and activate a new environment.
 
-```shell
+```sh
 docs $ julia
 julia> ]
 pkg> activate .
@@ -114,7 +114,7 @@ pkg> activate .
 Add packages as necessary. Here, we will need
 
 
-```shell
+```julia-repl
 pkg> add DocumenterVitepress, Documenter
 ```
 These packages will be used in the `make.jl` file.
@@ -143,7 +143,7 @@ docs/
 
 Then, run `docs/make.jl`, and in another terminal in the `docs` directory, run:
 
-```shell
+```sh
 docs $ npm run docs:dev
 ```
 
