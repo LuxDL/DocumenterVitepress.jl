@@ -18,7 +18,7 @@ using Gnuplot
 x = -2π:0.001:2π
 @gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
 @gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
-@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code highlight]
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code highlight]
 ```
 ````
 
@@ -38,13 +38,13 @@ x = -2π:0.001:2π
 
 ````
 ```julia
-# [!code highlight:3]
+# ‎[!code highlight:3]
 # up to 3 in order to highlight the previous 2 lines
 using Gnuplot
 x = -2π:0.001:2π
 @gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
 @gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
-@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code highlight]
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code highlight]
 ```
 ````
 
@@ -69,7 +69,7 @@ using Gnuplot
 x = -2π:0.001:2π
 @gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
 @gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
-@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code focus]
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code focus]
 ```
 ````
 
@@ -87,12 +87,12 @@ x = -2π:0.001:2π
 **Input**
 ````
 ```julia
-# [!code focus:3]
+# ‎[!code focus:3]
 using Gnuplot
 x = -2π:0.001:2π
 @gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid"
 @gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
-@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code focus] # [!code highlight]
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code focus] # ‎[!code highlight]
 ```
 ````
 
@@ -114,9 +114,9 @@ Note the combination with `[!code focus]` and `[!code highlight]`.
 ```julia
 using Gnuplot
 x = -2π:0.001:2π
-@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid" # [!code --]
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set grid" # ‎ [!code --]
 @gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
-@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # [!code ++] # [!code focus]
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgb '#E69F00'" # ‎[!code ++] # ‎[!code focus]
 ```
 ````
 
@@ -137,9 +137,9 @@ Note the combination with `[!code focus]`.
 ```julia
 using Gnuplot
 x = -2π:0.001:2π
-@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set gridss" # [!code error]
+@gp x sin.(x) "w l t 'sin' lw 2 lc '#56B4E9'" "set gridss" # ‎ [!code error]
 @gp :- xrange = (-2π - 0.3, 2π + 0.3) yrange = (-1.1,1.1)
-@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgba '#E69F00'" # [!code warning]
+@gp :- x cos.(x) "w l t 'cos' lw 2 lc rgba '#E69F00'" # ‎[!code warning]
 ```
 ````
 
