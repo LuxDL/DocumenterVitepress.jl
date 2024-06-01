@@ -685,12 +685,13 @@ end
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, header::Documenter.AnchoredHeader, page, doc; kwargs...)
     anchor = header.anchor
     id = string(Documenter.anchor_label(anchor))
-    # @infiltrate
     heading = first(node.children)
     println(io)
     print(io, "#"^(heading.element.level), " ")
     render(io, mime, node, heading.children, page, doc; kwargs...)
-    print(io, " {#$(replace(id, " " => "-"))}") # potentially use MarkdownAST.mdflatten here?
+    if id != heading # if a custom ID is set, then use it.
+        print(io, " {#$(replace(id, " " => "-"))}") # potentially use MarkdownAST.mdflatten here?
+    end
     println(io)
 end
 # Thematic breaks
