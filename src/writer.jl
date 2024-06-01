@@ -688,8 +688,10 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     heading = first(node.children)
     println(io)
     print(io, "#"^(heading.element.level), " ")
-    render(io, mime, node, heading.children, page, doc; kwargs...)
-    if id != heading # if a custom ID is set, then use it.
+    heading_iob = IOBuffer()
+    render(heading_iob, mime, node, heading.children, page, doc; kwargs...)
+    heading_text = String(take!(heading_iob))
+    if id != heading_text # if a custom ID is set, then use it.
         print(io, " {#$(replace(id, " " => "-"))}") # potentially use MarkdownAST.mdflatten here?
     end
     println(io)
