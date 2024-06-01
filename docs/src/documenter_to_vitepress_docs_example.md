@@ -10,7 +10,7 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
 
    :::tabs
 
-   == For Documenter.jl
+   == From Documenter.jl
 
    a. The `make.jl` file with `Documenter.jl` should look like this:
 
@@ -43,7 +43,7 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
    )
    ```
 
-   == For DocumenterVitepress.jl
+   == to DocumenterVitepress.jl
 
    b. The same `make.jl` file with `DocumenterVitepress.jl` will look like this:
 
