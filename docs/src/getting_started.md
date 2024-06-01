@@ -18,17 +18,17 @@ The section [Advanced method](@ref) describes how to get more control over your 
 
 In order to develop docs locally, you can add the `clean=false` parameter to `makedocs`, and call `DocumenterVitepress.dev_docs("/path/to/docs/build")` in some other REPL.  This works with LiveServer.jl based approaches as well.  Note that the `dev_docs` call cannot be in the file that LiveServer is watching
 
-## Advanced method 
+## Advanced method
 
 If you want to customize your Vitepress build, including CSS etc., you will want to add the necessary Vitepress files to your `docs/src/.vitepress` folder.
 
 As a tutorial, we will go through and explain the folder and files structure used to generate this website. You could use this as a template for your project's documentation.
 
 !!! tip "Quick start"
-    In general, you can copy the `template` folder to your `docs` folder and the `.github/Documenter.yml` action file from [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl) to your repo, and be pretty much good to go and edit docs as usual! 
-    
+    In general, you can copy the `template` folder to your `docs` folder and the `.github/Documenter.yml` action file from [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl) to your repo, and be pretty much good to go and edit docs as usual!
 
-Since we're concerned only with documentation, we'll specifically look at the `docs` folder of your Julia project or package here.  
+
+Since we're concerned only with documentation, we'll specifically look at the `docs` folder of your Julia project or package here.
 
 For more information on how to structure this, see the [Documenter.jl guide](https://documenter.juliadocs.org/stable/man/guide/)!  In this quick start, we will focus solely on how to set up DocumenterVitepress assuming you already have some basic docs (even just an `index.md` will do).
 
@@ -55,7 +55,7 @@ DocumenterVitepress/docs
             └── style.css
 ```
 
-You can ignore the rest of the files which are actually in `DocumenterVitepress/docs/src` for now - those show how to use advanced APIs, like 
+You can ignore the rest of the files which are actually in `DocumenterVitepress/docs/src` for now - those show how to use advanced APIs, like
 
 
 ## VitePress Installation
@@ -68,9 +68,9 @@ docs $
 
 ### Prerequisites
 
-DocumenterVitepress.jl is completely self-contained and installs all of its dependencies (including its own isolated version of `npm`) automatically. 
+DocumenterVitepress.jl is completely self-contained and installs all of its dependencies (including its own isolated version of `npm`) automatically.
 
-However, to view your documentation live when developing locally, you will need to install `npm` and instantiate the 
+However, to view your documentation live when developing locally, you will need to install `npm` and instantiate the
 
 VitePress can be used on its own, or be installed into an existing project. In both cases, you can install it with:
 
@@ -98,15 +98,15 @@ bun add -D vitepress
 
 To start working on your docs do the following steps:
 
-```shell
+```sh
 $ cd docs
 docs $
 ```
 
 Then, in `docs` start a julia session and activate a new environment.
 
-```shell
-docs> julia
+```sh
+docs $ julia
 julia> ]
 pkg> activate .
 ```
@@ -114,8 +114,8 @@ pkg> activate .
 Add packages as necessary. Here, we will need
 
 
-```shell
-pkg>  add DocumenterVitepress, Documenter
+```julia-repl
+pkg> add DocumenterVitepress, Documenter
 ```
 These packages will be used in the `make.jl` file.
 
@@ -143,8 +143,8 @@ docs/
 
 Then, run `docs/make.jl`, and in another terminal in the `docs` directory, run:
 
-```shell
-npm run docs:dev
+```sh
+docs $ npm run docs:dev
 ```
 
 This will deploy your documentation locally on a webserver.  See [here](https://vitepress.dev/guide/getting-started#up-and-running) to know more.

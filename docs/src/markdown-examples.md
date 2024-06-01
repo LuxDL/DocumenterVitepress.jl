@@ -454,6 +454,12 @@ When ``a \ne 0``, there are two solutions to ``ax^2 + bx + c = 0`` and they are
 $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
 
 Don't type anything after the last double dollar sign, and make sure there are no spaces after the opening double dollar sign in the display math!
+
+You can also use fenced code blocks with the `math` tag for equations!
+
+```math
+\nabla^2 \Phi = \rho
+```
 ````
 
 **Output**
@@ -463,6 +469,12 @@ When ``a \ne 0``, there are two solutions to ``ax^2 + bx + c = 0`` and they are
 $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
 
 Don't type anything after the last double dollar sign, and make sure there are no spaces after the opening double dollar sign in the display math!
+
+You can also use fenced code blocks with the `math` tag for equations!
+
+```math
+\nabla^2 \Phi = \rho
+```
 
 ## Footnotes (citation-style)
 

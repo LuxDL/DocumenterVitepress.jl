@@ -8,7 +8,7 @@ Documentation is therefore generated in two "stages".  These are both executed b
 
 First, the Documenter.jl pipeline is run.  It takes as input the concerned Julia modules and Markdown files, and excecutes all doctests and runnable blocks.
 
-From there, Documenter uses a plugin provided to the `format` keyword of `makedocs` to render to some viewable form.  This is where `DocumenterVitepress.jl` steps in, with the [`MarkdownVitepress`](@ref) plugin.  
+From there, Documenter uses a plugin provided to the `format` keyword of `makedocs` to render to some viewable form.  This is where `DocumenterVitepress.jl` steps in, with the [`MarkdownVitepress`](@ref) plugin.
 
 That plugin takes in the Documenter `Document` which is generated once Documenter has parsed, run and expanded all the input Markdown files, and converts it to VitePress-flavoured Markdown, which is saved in `docs/build/.documenter` by default.
 
@@ -28,7 +28,7 @@ In order to locally develop, run `npm run docs:dev` in another terminal.  This w
 
 ## Finalization
 
-Finally, if deploying, we move files around such that the only thing deployed is the rendered webpage.  
+Finally, if deploying, we move files around such that the only thing deployed is the rendered webpage.
 
 This means that the contents of `build/.documenter` are deleted, and the contents of `build/final_site` are moved into `build` proper.  This allows the complete site to be committed directly.
 
