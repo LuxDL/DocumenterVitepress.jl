@@ -145,9 +145,9 @@ function pagelist2str(doc, page::String)
     name = if isnothing(idx)
         splitext(page)[1]
     else
-        elements[idx].text[1]
+        elements[idx].children
     end
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return "{ text: '$(replace(Documenter.MDFlatten.mdflatten(name), "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
@@ -155,7 +155,7 @@ pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return "{ text: '$(replace(Documenter.MDFlatten.mdflatten(name), "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
@@ -179,7 +179,7 @@ function sidebar_items(doc, page::String)
 end
 
 function _item_link(page, item)
-    return "{ text: '$(replace(item, "'" => "\\'"))', link: '/$(splitext(page)[1])#$(replace(item, " " => "-"))' }"
+    return "{ text: '$(replace(Documenter.MDFlatten.mdflatten(item), "'" => "\\'"))', link: '/$(splitext(page)[1])#$(replace(item, " " => "-"))' }"
 
 end
 
