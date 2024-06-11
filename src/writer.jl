@@ -98,7 +98,7 @@ render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, elemen
 where `Eltype` is the type of the `element` field of the `node` object which you care about.
 """
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
-    # Main.@exfiltrate
+    Main.@exfiltrate
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
     # copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
@@ -690,7 +690,8 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     print(io, "#"^(heading.element.level), " ")
     heading_iob = IOBuffer()
     render(heading_iob, mime, node, heading.children, page, doc; kwargs...)
-    heading_text = String(take!(heading_iob))
+    heading_text = rstrip(String(take!(heading_iob)))
+    print(io, heading_text)
     if id != heading_text # if a custom ID is set, then use it.
         print(io, " {#$(replace(id, " " => "-"))}") # potentially use MarkdownAST.mdflatten here?
     end

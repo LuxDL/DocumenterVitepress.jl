@@ -141,13 +141,13 @@ function pagelist2str(doc, page::String)
     # If no name is given, find the first header in the page,
     # and use that as the name.
     elements = doc.blueprint.pages[page].elements
-    idx = findfirst(x -> x isa Markdown.Header, elements)
+    idx = findfirst(x -> x isa MarkdownAST.Heading, elements)
     name = if isnothing(idx)
         splitext(page)[1]
     else
-        elements[idx].children
+        Documenter.MDFlatten.mdflatten(elements[idx])
     end
-    return "{ text: '$(replace(Documenter.MDFlatten.mdflatten(name), "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
@@ -155,7 +155,7 @@ pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$(replace(Documenter.MDFlatten.mdflatten(name), "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
@@ -168,13 +168,13 @@ end
 function sidebar_items(doc, page::String)
     # We look at the page elements, and obtain all level 1 and 2 headers.
     elements = doc.blueprint.pages[page].elements
-    headers = elements[findall(x -> x isa Union{Markdown.Header{1}, Markdown.Header{2}}, elements)]
+    headers = filter(x -> x isa Union{MarkdownAST.Heading{1}, MarkdownAST.Heading{2}}, elements)
     # If nothing is found, move on in life
     if length(headers) ≤ 1
         return ""
     end
     # Otherwise, we return a collapsible tree of headers for each level 1 and 2 header.
-    items = _get_first_or_string.(getproperty.(headers, :text))
+    items = headers
     return "collapsed: true, items: [\n $(join(_item_link.((page,), items), ",\n"))\n]"
 end
 
