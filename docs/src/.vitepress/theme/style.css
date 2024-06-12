@@ -40,9 +40,11 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
   */
   font-feature-settings: 'calt' 0;
   pre {
+    font-feature-settings: 'calt' 0;
     font-family: JuliaMono-Light;
 };
 code {
+    font-feature-settings: 'calt' 0;
     font-family: JuliaMono-Light;
     };
 }
