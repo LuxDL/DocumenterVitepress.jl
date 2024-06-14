@@ -140,8 +140,11 @@ end
 function pagelist2str(doc, page::String)
     # If no name is given, find the first header in the page,
     # and use that as the name.
-    elements = doc.blueprint.pages[page].elements
-    idx = findfirst(x -> x isa MarkdownAST.Heading, elements)
+    elements = collect(doc.blueprint.pages[page].mdast.children)
+    # elements is a vector of Markdown.jl objects,
+    # you can get the MarkdownAST stuff via `page.mdast`.
+    # I f``
+    idx = findfirst(x -> x.element isa Union{MarkdownAST.Heading, Documenter.AnchoredHeader}, elements)
     name = if isnothing(idx)
         splitext(page)[1]
     else
