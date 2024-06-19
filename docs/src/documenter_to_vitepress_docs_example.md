@@ -12,27 +12,28 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
 
    == From Documenter.jl
 
-   a. The `make.jl` file with `Documenter.jl` should look like this:
+   The `make.jl` file with `Documenter.jl` should look like this:
 
    ```julia
    using Example
    using Documenter
 
-   DocMeta.setdocmeta!(test, :DocTestSetup, :(using test); recursive=true)
+   DocMeta.setdocmeta!(Example, :DocTestSetup, :(using Example); recursive=true)
 
    makedocs(;
        modules = [test],
-       authors = "jay-sanjay <landgejay124@gmail.com> and contributors",
+       repo = Remotes.GitHub("ExampleOrg", "Example.jl"),
+       authors = "Jay-sanjay <landgejay124@gmail.com>, and contributors",
        sitename = "Example.jl",
        format = Documenter.HTML(;
-           canonical = "https://jay-sanjay.github.io/Example.jl",
+           canonical = "https://github.com/ExampleOrg/Example.jl",
            edit_link = "main",
            assets = String[],
        ),
-       pages=[
+       pages = [
            "Home" => "index.md",
            "Tutorials" => "tutorials.md",
-           "Api" => "api.md",
+           "API" => "api.md",
            "Contributing" => "contributing.md"
        ],
    )
@@ -45,7 +46,7 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
 
    == to DocumenterVitepress.jl
 
-   b. The same `make.jl` file with `DocumenterVitepress.jl` will look like this:
+   The same `make.jl` file with `DocumenterVitepress.jl` will look like this:
 
    ```julia
    using Example
@@ -60,12 +61,12 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
        authors = "Jay-sanjay <landgejay124@gmail.com>, and contributors",
        sitename = "Example.jl",
        format = DocumenterVitepress.MarkdownVitepress(
-           repo="https://github.com/ExampleOrg/Example.jl",
+           repo = "https://github.com/ExampleOrg/Example.jl",
        ),
        pages = [
            "Home" => "index.md",
            "Tutorials" => "tutorials.md",
-           "Api" => "api.md",
+           "API" => "api.md",
            "Contributing" => "contributing.md"
        ],
    )
@@ -75,18 +76,18 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
        target = "build", # this is where Vitepress stores its output
        devbranch = "main",
        branch = "gh-pages",
-       push_preview = true
+       push_preview = true,
    )
    ```
 
    :::
 
-2. Next to build new docs from docs/src
+2. Next, to build new docs from docs/src,
    ```sh
    $ cd docs
    docs $
    ```
-3. Then, in docs start a julia session and activate a new environment.
+3. Then, in docs/, start a julia session and activate a new environment.
    ```sh
    docs $ julia
    julia> ]
@@ -94,25 +95,26 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
    ```
 4. Add packages as necessary. Here, we will need
 
-   ```julia
+   ```julia-repl
    pkg> add DocumenterVitepress, Documenter
    ```
 
 5. Then run the `make.jl` file to build the documentation.
 
-   ```julia
+   ```julia-repl
    julia> include("make.jl")
    ```
 
-6. Finally hit `;` to enter in the shell mode and run:
+6. Finally, hit `;` to enter the shell mode and run:
 
    ```sh
    shell> npm i
    ```
    The above command shall create a folder named `node_modules` and `package-lock.json` in your docs folder.
 
-7. Next hit 'Backspace' to get back to the julia REPL and run:
-   ```julia
+7. Next, hit 'Backspace' to get back to the Julia REPL and run:
+   ```julia-repl
    juila> DocumenterVitepress.dev_docs("docs/build")
    ```
+
 8. Finally the live preview of your documentation at `hhttp://localhost:5173/Example.jl/` in your browser.
