@@ -21,7 +21,7 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
    DocMeta.setdocmeta!(Example, :DocTestSetup, :(using Example); recursive=true)
 
    makedocs(;
-       modules = [test],
+       modules = [Example],
        repo = Remotes.GitHub("ExampleOrg", "Example.jl"),
        authors = "Jay-sanjay <landgejay124@gmail.com>, and contributors",
        sitename = "Example.jl",
