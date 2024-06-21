@@ -36,7 +36,3 @@ MediaOutput{MIME"image/svg+xml"}("https://upload.wikimedia.org/wikipedia/commons
 ```@example mime-examples
 MediaOutput{MIME"image/gif"}(read(download("https://upload.wikimedia.org/wikipedia/commons/2/2c/Rotating_earth_%28large%29.gif")))
 ```
-
-```@example mime-examples
-MediaOutput{MIME"image/gif"}(read(download("https://upload.wikimedia.org/wikipedia/commons/2/2c/Rotating_earth_%28large%29.gif")))
-```

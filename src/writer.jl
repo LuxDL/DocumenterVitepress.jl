@@ -476,12 +476,12 @@ function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kw
     println(io, element)
 end
 
-function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; kwargs...)
+function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; md_output_path, kwargs...)
     # NOTE: It seems that we can't always simply save the SVG images as a file and include them
     # as browsers seem to need to have the xmlns attribute set in the <svg> tag if you
     # want to include it with <img>. However, setting that attribute is up to the code
     # creating the SVG image.
-    has_xml_namespace = match(r"<svg[^>].*?xmlns\s*=", element)
+    has_xml_namespace = match(r"<svg[^>].*?xmlns\s*=", element) !== nothing
 
     if has_xml_namespace
         filename = String(rand('a':'z', 7))
