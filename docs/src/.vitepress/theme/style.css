@@ -203,11 +203,11 @@ mjx-container > svg {
 @media (min-width: 1440px) {
   .VPSidebar {
     padding-left: 20px !important;
-    width: 240px !important;
+    width: 250px !important;
   }
   .VPNavBar .title {
     padding-left: 10px !important;
-    width: 230px !important;
+    width: 250px !important;
   }
   .VPContent.has-sidebar {
     padding-left: 250px !important;
@@ -215,6 +215,9 @@ mjx-container > svg {
   }
   .VPNavBar .curtain {
     width: 100% !important;
+  }
+  .VPDoc {
+    padding: 32px 0 0 !important;
   }
   /* .VPNavBar .content {
     padding-left: 250px !important;
@@ -224,7 +227,7 @@ mjx-container > svg {
 
 @media (min-width: 960px) {
   .VPDoc {
-    padding: 32px 0 0 !important;
+    padding: 32px 32px 0 0 !important;
   }
   /* .VPNavBar .content {
     padding-left: 250px !important;
@@ -250,12 +253,12 @@ mjx-container > svg {
 
 /* This one does the right menu */
 
-/* .VPDocOutlineItem li {
+.VPDocOutlineItem li {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
   max-width: 200px;
-} */
+}
 
 /* This one does the left menu */
 
