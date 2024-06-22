@@ -227,6 +227,12 @@ mjx-container > svg {
   white-space: nowrap;
 }
 
+@media (max-width: 960px) {
+  .VPDoc {
+    padding-left: 25px !important;  
+  }
+}
+
 /* This one does the left menu */
 
 /* .VPSidebarItem .VPLink p {

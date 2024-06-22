@@ -49,6 +49,12 @@ To restore the default options, copy and paste the `style.css` file into `docs/s
   white-space: nowrap;
 }
 
+@media (max-width: 960px) {
+  .VPDoc {
+    padding-left: 25px !important;  
+  }
+}
+
 ```
 
 ## All available space
