@@ -33,7 +33,7 @@
     href="https://beautiful.makie.org"
     target="_blank"
   >
-    <img width="32" height="32" src="https://beautiful.makie.org/test_alpha_s.png" />
+    <img width="32" height="32" src="https://beautiful.makie.org/dev/test_alpha_s.png" />
     <span>
       <p class="extra-info">Visualize your data</p>
       <p class="heading">BeautifulMakie</p>
