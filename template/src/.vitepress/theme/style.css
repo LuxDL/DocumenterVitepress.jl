@@ -199,7 +199,7 @@ mjx-container > svg {
 }
 
 /* https://bddxg.top/article/note/vitepress优化/一些细节上的优化.html#文档页面调整-加宽 */
-/* docs/.vitepress/theme/global.css */
+
 @media (min-width: 1440px) {
   .VPSidebar {
     padding-left: 20px !important;

@@ -48,6 +48,7 @@ makedocs(;
             "MIME output" => "mime_examples.md",
             "Updating to DocumenterVitepress" => "documenter_to_vitepress_docs_example.md",
             "DocumenterCitations integration" => "citations.md",
+            "CSS Styling" => "style_css.md",
 
         ],
         "Developers' documentation" => [
