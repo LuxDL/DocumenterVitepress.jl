@@ -29,11 +29,11 @@ To restore the default options, copy and paste the `style.css` file into `docs/s
     width: 250px !important;
   }
   .VPNavBar .title {
-    padding-left: 10px !important;
-    width: 250px !important;
+    padding-left: 15px !important;
+    width: 230px !important;
   }
   .VPContent.has-sidebar {
-    padding-left: 255px !important;
+    padding-left: 250px !important;
     padding-right: 5vw !important;
   }
   .VPNavBar .curtain {
@@ -41,6 +41,14 @@ To restore the default options, copy and paste the `style.css` file into `docs/s
   }
   .VPDoc {
     padding: 32px 0 0 !important;
+  }
+  .VPNavBar.has-sidebar .content {
+    padding-left: 250px !important;
+    padding-right: 20px !important;
+  }
+  
+  .VPNavBar .divider {
+    padding-left: 250px !important;
   }
 }
 
@@ -53,14 +61,10 @@ To restore the default options, copy and paste the `style.css` file into `docs/s
   }
 }
 
-
 .VPNavBar {
   padding-right: 0px !important;
 }
-.VPNavBar .container {
-  margin: unset;
-  max-width: unset;
-}
+
 .VPDoc.has-aside .content-container {
   max-width: 100% !important;
 }
@@ -77,6 +81,13 @@ To restore the default options, copy and paste the `style.css` file into `docs/s
   white-space: nowrap;
   max-width: 200px;
 }
+
+.VPNavBar .title {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 ```
 
 ## More
