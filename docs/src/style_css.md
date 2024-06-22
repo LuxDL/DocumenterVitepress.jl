@@ -21,6 +21,41 @@ To restore the default options, copy and paste the `style.css` file into `docs/s
 :::
 
 ```css
+
+.VPDoc.has-aside .content-container {
+  max-width: 100% !important;
+}
+.aside {
+  max-width: 200px !important;
+  padding-left: 0 !important;
+}
+.VPDoc {
+  padding-top: 15px !important;
+  padding-left: 5px !important;
+
+}
+/* This one does the right menu */
+
+.VPDocOutlineItem li {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.VPNavBar .title {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+```
+
+## All available space
+
+The following settings allows your content to fill out all available space on screen.
+
+```css
 /* https://bddxg.top/article/note/vitepress优化/一些细节上的优化.html#文档页面调整-加宽 */
 
 @media (min-width: 1440px) {
