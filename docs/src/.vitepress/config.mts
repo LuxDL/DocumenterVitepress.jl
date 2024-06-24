@@ -13,7 +13,12 @@ export default defineConfig({
   cleanUrls: true,
   outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
   head: [['link', { rel: 'icon', href: '/DocumenterVitepress.jl/dev/favicon.ico' }]],
-  
+  vite: {
+    build: {
+      assetsInlineLimit: 0, // so we can tell whether we have created inlined images or not, we don't let vite inline them
+    }
+  },
+
   markdown: {
     math: true,
     config(md) {

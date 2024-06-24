@@ -476,20 +476,34 @@ function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kw
     println(io, element)
 end
 
-function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; kwargs...)
-    # NOTE: It seems that we can't simply save the SVG images as a file and include them
+function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; md_output_path, kwargs...)
+    # NOTE: It seems that we can't always simply save the SVG images as a file and include them
     # as browsers seem to need to have the xmlns attribute set in the <svg> tag if you
     # want to include it with <img>. However, setting that attribute is up to the code
     # creating the SVG image.
-    image_text = element
-    # Additionally, Vitepress complains about the XML version and encoding string below,
-    # so we just remove this bad hombre!
-    bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
-    location = findfirst(bad_hombre_string, lowercase(image_text))    
-    if !isnothing(location) # couldn't figure out how to do this in one line - maybe regex?  A question for later though.
-        image_text = replace(image_text, image_text[location] => "")
+    has_xml_namespace = match(r"<svg[^>].*?xmlns\s*=", element) !== nothing
+
+    if has_xml_namespace
+        filename = String(rand('a':'z', 7))
+        write(
+            joinpath(
+                doc.user.build,
+                md_output_path,
+                dirname(relpath(page.build, doc.user.build)),
+                "$(filename).svg"
+            ),
+            element
+        )
+        println(io, "![]($(filename).svg)")
+    else
+        # Vitepress complains about the XML version and encoding string when used as an inline svg
+        # so we remove that
+        image_text = replace(
+            element,
+            r"<\?xml.*?>\s*"i => ""
+        )
+        println(io, "<img src=\"data:image/svg+xml;base64," * base64encode(image_text) * "\"/>")
     end
-    println(io, "<img src=\"data:image/svg+xml;base64," * base64encode(image_text) * "\"/>")
 end
 
 function render_mime(io::IO, mime::MIME"image/png", node, element, page, doc; md_output_path, kwargs...)
