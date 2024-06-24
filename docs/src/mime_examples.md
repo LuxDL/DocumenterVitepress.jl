@@ -29,6 +29,18 @@ MediaOutput{MIME"image/png"}(read(joinpath(pathof(DocumenterVitepress) |> dirnam
 MediaOutput{MIME"image/jpeg"}(read(download("https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Felis_silvestris_silvestris.jpg/519px-Felis_silvestris_silvestris.jpg")))
 ```
 
+Vite automatically inlines assets under 4KB by default, if this causes issues with your SVG files you can disable this behavior by adding the following to your vitepress configuration:
+
+::: info config.mts
+
+    vite: {
+        build: {
+            assetsInlineLimit: 0, // so we can tell whether we have created inlined images or not, we don't let vite inline them
+        }
+    },
+
+:::
+
 ```@example mime-examples
 MediaOutput{MIME"image/svg+xml"}("https://upload.wikimedia.org/wikipedia/commons/6/6c/SVG_Simple_Icon.svg" |> download |> read)
 ```
