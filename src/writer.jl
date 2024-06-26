@@ -37,7 +37,8 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     devurl::String = "dev"
     """
     The URL of the repository to which the documentation will be deployed.  
-    This **must** be the full URL, **including `https://`**, like `https://rafaqz.github.io/Rasters.jl` or `https://geo.makie.jl`."
+    This **must** be the full URL, **including `https://`**, like `https://rafaqz.github.io/Rasters.jl` or `https://geo.makie.jl/`.
+    """
     deploy_url::Union{String, Nothing} = nothing
     "A description of the website as a String."
     description::String = "Documentation for $(splitdir(repo)[end])"
