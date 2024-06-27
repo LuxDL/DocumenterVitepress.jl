@@ -114,7 +114,7 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
 
 7. Next, hit 'Backspace' to get back to the Julia REPL and run:
    ```julia-repl
-   juila> DocumenterVitepress.dev_docs("docs/build")
+   juila> DocumenterVitepress.dev_docs("build")
    ```
 
-8. Finally the live preview of your documentation at `hhttp://localhost:5173/Example.jl/` in your browser.
+8. Finally the live preview of your documentation at `http://localhost:5173/Example.jl/` in your browser.
