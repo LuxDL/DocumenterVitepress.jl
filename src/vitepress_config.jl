@@ -128,7 +128,8 @@ function modify_config_file(doc, settings, deploy_decision)
 
     new_config = replace(config, replacers...)
     write(vitepress_config_file, new_config)
-
+    yield()
+    touch(vitepress_config_file)
 
     #
 
