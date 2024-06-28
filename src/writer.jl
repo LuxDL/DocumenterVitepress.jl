@@ -110,11 +110,17 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # Then, we create a path to the folder where we will emit the markdown,
     mkpath(joinpath(builddir, settings.md_output_path))
     # and copy the previous build files to the new location.
-    for file_or_dir in current_build_files_or_dirs
-        src = joinpath(builddir, file_or_dir)
-        dst = joinpath(builddir, settings.md_output_path, file_or_dir)
-        cp(src, dst)
-        rm(src; recursive = true)
+    if settings.md_output_path != "."
+        for file_or_dir in current_build_files_or_dirs
+            src = joinpath(builddir, file_or_dir)
+            dst = joinpath(builddir, settings.md_output_path, file_or_dir)
+            if src != dst
+                cp(src, dst; force = true)
+                rm(src; recursive = true)
+            else
+                println(src, dest)
+            end
+        end
     end
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
@@ -126,13 +132,19 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         if any(logo_files)
             for file in files[logo_files]
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
-                cp(file, joinpath(builddir, settings.md_output_path, "public", file_relpath))
+                file_destpath = joinpath(builddir, settings.md_output_path, "public", file_relpath)
+                if normpath(file) != normpath(file_destpath)
+                    cp(file, file_destpath; force = true)
+                end
             end
         end 
         if any(favicon_files)
             for file in files[favicon_files]
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
-                cp(file, joinpath(builddir, settings.md_output_path, "public", file_relpath))
+                file_destpath = joinpath(builddir, settings.md_output_path, "public", file_relpath)
+                if normpath(file) != normpath(file_destpath)
+                    cp(file, file_destpath; force = true)
+                end
             end
         end
     end
