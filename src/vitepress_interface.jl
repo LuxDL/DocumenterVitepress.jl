@@ -50,7 +50,7 @@ function run_vitepress_command(builddir::String, command::String; md_output_path
                     end
                     run(`$(npm) install`)
                 end
-                run(`$(npm) run env -- vitepress $command $(kwargs) $(joinpath(splitpath(builddir)[end], md_output_path))`)
+                run(`$(npm) run env -- vitepress $command $(joinpath(splitpath(builddir)[end], md_output_path)) $(kwargs)`)
             end
         end
     catch e
