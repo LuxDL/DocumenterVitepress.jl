@@ -13,7 +13,7 @@ Work is in progress to let the user pass the config object to fix this.
     This does **NOT** run `makedocs` - you have to do that yourself!
     Think of it as the second stage of `LiveServer.jl` for DocumenterVitepress specifically.
 """
-dev_docs(builddir::String; md_output_path = ".documenter") = run_vitepress_command(builddir, "dev"; md_output_path)
+dev_docs(builddir::String; md_output_path = ".documenter") = run_vitepress_command(builddir, "dev"; md_output_path, kwargs = `--force`)
 
 """
     build_docs(builddir::String; md_output_path = ".documenter")
@@ -25,7 +25,7 @@ If passing a String, pass the path to the `builddir`, i.e., `\$packagepath/docs/
 build_docs(builddir::String; md_output_path = ".documenter") = run_vitepress_command(builddir, "build"; md_output_path)
 
 
-function run_vitepress_command(builddir::String, command::String; md_output_path = ".documenter")
+function run_vitepress_command(builddir::String, command::String; md_output_path = ".documenter", kwargs = ``)
     @assert ispath(builddir)
     builddir = abspath(builddir)
     @info "DocumenterVitepress: running `vitepress $command`."
@@ -50,7 +50,7 @@ function run_vitepress_command(builddir::String, command::String; md_output_path
                     end
                     run(`$(npm) install`)
                 end
-                run(`$(npm) run env -- vitepress $command $(joinpath(splitpath(builddir)[end], md_output_path))`)
+                run(`$(npm) run env -- vitepress $command $(kwargs) $(joinpath(splitpath(builddir)[end], md_output_path))`)
             end
         end
     catch e
