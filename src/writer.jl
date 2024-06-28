@@ -99,6 +99,23 @@ where `Eltype` is the type of the `element` field of the `node` object which you
 """
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
+
+    # We manually obtain the Documenter deploy configuration,
+    # so we can use it to set Vitepress's settings.
+    if settings.deploy_decision === nothing
+        # TODO: make it so that the user does not have to provide a repo url!
+        deploy_config = Documenter.auto_detect_deploy_system()
+        deploy_decision = Documenter.deploy_folder(
+            deploy_config;
+            repo = settings.repo, # this must be the full URL!
+            devbranch = settings.devbranch,
+            devurl = settings.devurl,
+            push_preview=true,
+        )
+    else
+        deploy_decision = settings.deploy_decision
+    end
+    
     # copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
     mime = MIME"text/plain"() # TODO: why?
@@ -122,6 +139,10 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
         end
     end
+
+    # from `vitepress_config.jl`
+    modify_config_file(doc, settings, deploy_decision)
+
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
     if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
@@ -160,25 +181,9 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     end
 
     mkpath(joinpath(builddir, "final_site"))
-
-    # We manually obtain the Documenter deploy configuration,
-    # so we can use it to set Vitepress's settings.
-    if settings.deploy_decision === nothing
-        # TODO: make it so that the user does not have to provide a repo url!
-        deploy_config = Documenter.auto_detect_deploy_system()
-        deploy_decision = Documenter.deploy_folder(
-            deploy_config;
-            repo = settings.repo, # this must be the full URL!
-            devbranch = settings.devbranch,
-            devurl = settings.devurl,
-            push_preview=true,
-        )
-    else
-        deploy_decision = settings.deploy_decision
+    if isfile(joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts"))
+        touch(joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts"))
     end
-    
-    # from `vitepress_config.jl`
-    modify_config_file(doc, settings, deploy_decision)
 
     # Now that the Markdown files are written, we can build the Vitepress site if required.
     if settings.build_vitepress
