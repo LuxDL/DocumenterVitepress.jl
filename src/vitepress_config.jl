@@ -31,7 +31,7 @@ function modify_config_file(doc, settings, deploy_decision)
     builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
     sourcedir = isabspath(doc.user.source) ? doc.user.source : joinpath(doc.user.root, doc.user.source)
     source_vitepress_dir = joinpath(sourcedir, ".vitepress")
-    build_vitepress_dir = joinpath(builddir, settings.md_output_path, ".vitepress")
+    build_vitepress_dir = normpath(joinpath(builddir, settings.md_output_path, ".vitepress"))
     template_vitepress_dir = joinpath(dirname(@__DIR__), "template", "src", ".vitepress")
     mkpath(joinpath(builddir, settings.md_output_path, ".vitepress", "theme"))
     vitepress_config_file = joinpath(sourcedir, ".vitepress", "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
@@ -128,7 +128,8 @@ function modify_config_file(doc, settings, deploy_decision)
 
     new_config = replace(config, replacers...)
     write(vitepress_config_file, new_config)
-
+    yield()
+    touch(vitepress_config_file)
 
     #
 

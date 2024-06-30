@@ -99,55 +99,6 @@ where `Eltype` is the type of the `element` field of the `node` object which you
 """
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
-    # copy_assets(doc, settings.md_output_path)
-    # Handle the case where the site name has to be set...
-    mime = MIME"text/plain"() # TODO: why?
-    builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
-    # Main.@infiltrate
-    sourcedir = isabspath(doc.user.source) ? doc.user.source : joinpath(doc.user.root, doc.user.source)
-    # First, we check what Documenter has copied for us already:
-    current_build_files_or_dirs = readdir(builddir)
-    # Then, we create a path to the folder where we will emit the markdown,
-    mkpath(joinpath(builddir, settings.md_output_path))
-    # and copy the previous build files to the new location.
-    for file_or_dir in current_build_files_or_dirs
-        src = joinpath(builddir, file_or_dir)
-        dst = joinpath(builddir, settings.md_output_path, file_or_dir)
-        cp(src, dst)
-        rm(src; recursive = true)
-    end
-    # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
-    # so we rename the folder.
-    if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
-        mkpath(joinpath(builddir, settings.md_output_path, "public"))
-        files = readdir(joinpath(builddir, settings.md_output_path, "assets"); join = true)
-        logo_files = contains.(last.(splitdir.(files)), "logo")
-        favicon_files = contains.(last.(splitdir.(files)), "favicon")
-        if any(logo_files)
-            for file in files[logo_files]
-                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
-                cp(file, joinpath(builddir, settings.md_output_path, "public", file_relpath))
-            end
-        end 
-        if any(favicon_files)
-            for file in files[favicon_files]
-                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
-                cp(file, joinpath(builddir, settings.md_output_path, "public", file_relpath))
-            end
-        end
-    end
-    # Main.@infiltrate
-    # Iterate over the pages, render each page separately
-    for (src, page) in doc.blueprint.pages
-        # This is where you can operate on a per-page level.
-        open(docpath(page.build, builddir, settings.md_output_path), "w") do io
-            for node in page.mdast.children
-                render(io, mime, node, page, doc)
-            end
-        end
-    end
-
-    mkpath(joinpath(builddir, "final_site"))
 
     # We manually obtain the Documenter deploy configuration,
     # so we can use it to set Vitepress's settings.
@@ -165,8 +116,74 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         deploy_decision = settings.deploy_decision
     end
     
+    # copy_assets(doc, settings.md_output_path)
+    # Handle the case where the site name has to be set...
+    mime = MIME"text/plain"() # TODO: why?
+    builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
+    # Main.@infiltrate
+    sourcedir = isabspath(doc.user.source) ? doc.user.source : joinpath(doc.user.root, doc.user.source)
+    # First, we check what Documenter has copied for us already:
+    current_build_files_or_dirs = readdir(builddir)
+    # Then, we create a path to the folder where we will emit the markdown,
+    mkpath(joinpath(builddir, settings.md_output_path))
+    # and copy the previous build files to the new location.
+    if settings.md_output_path != "."
+        for file_or_dir in current_build_files_or_dirs
+            src = joinpath(builddir, file_or_dir)
+            dst = joinpath(builddir, settings.md_output_path, file_or_dir)
+            if src != dst
+                cp(src, dst; force = true)
+                rm(src; recursive = true)
+            else
+                println(src, dest)
+            end
+        end
+    end
+
     # from `vitepress_config.jl`
     modify_config_file(doc, settings, deploy_decision)
+
+    # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
+    # so we rename the folder.
+    if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
+        mkpath(joinpath(builddir, settings.md_output_path, "public"))
+        files = readdir(joinpath(builddir, settings.md_output_path, "assets"); join = true)
+        logo_files = contains.(last.(splitdir.(files)), "logo")
+        favicon_files = contains.(last.(splitdir.(files)), "favicon")
+        if any(logo_files)
+            for file in files[logo_files]
+                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
+                file_destpath = joinpath(builddir, settings.md_output_path, "public", file_relpath)
+                if normpath(file) != normpath(file_destpath)
+                    cp(file, file_destpath; force = true)
+                end
+            end
+        end 
+        if any(favicon_files)
+            for file in files[favicon_files]
+                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
+                file_destpath = joinpath(builddir, settings.md_output_path, "public", file_relpath)
+                if normpath(file) != normpath(file_destpath)
+                    cp(file, file_destpath; force = true)
+                end
+            end
+        end
+    end
+    # Main.@infiltrate
+    # Iterate over the pages, render each page separately
+    for (src, page) in doc.blueprint.pages
+        # This is where you can operate on a per-page level.
+        open(docpath(page.build, builddir, settings.md_output_path), "w") do io
+            for node in page.mdast.children
+                render(io, mime, node, page, doc)
+            end
+        end
+    end
+
+    mkpath(joinpath(builddir, "final_site"))
+    if isfile(joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts"))
+        touch(joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts"))
+    end
 
     # Now that the Markdown files are written, we can build the Vitepress site if required.
     if settings.build_vitepress
