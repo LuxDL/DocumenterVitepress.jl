@@ -18,7 +18,8 @@ The section [Advanced method](@ref) describes how to get more control over your 
 
 You can preview your documentation development changes locally, instantly by adding [LiveServer.jl](https://github.com/tlienart/LiveServer.jl) into your `docs` environment and making a few tweaks to your `make.jl` configuration.
 
-> **Note:** As of now, these tweaks **must** be removed from your `make.jl` before you deploy your documentation to whatever deployment service you use or **your deployment will fail**.
+!!! note 
+    As of now, these tweaks **must** be removed from your `make.jl` before you deploy your documentation to whatever deployment service you use or **your deployment will fail**.
 
 Here are the tweaks to add:
 
@@ -40,17 +41,16 @@ In the other session run `DocumenterVitepress.dev_docs("build", md_output_path =
 
 Now, with both these instances running, you can add your changes into your documentation and should see `servedocs` trigger a rebuild and `dev_docs` update as well which then leads to finally your browser being updated in real time.
 
-> **Note:** For some user set-ups, you may see your browser instead direct you to a page mentioning `REPLACE_ME_DOCUMENTER_VITEPRESS` and the output from `dev_docs` mentioning that page as well. 
-> If this happens to you, that is due to `DocumenterVitepress` not picking up `servedocs` changes fast enough (this comes from a quirk of the underlying JS `vitepress` library).
-> To get around this, within your documentation, add a small sleep delay like so:
->
-> ``````julia
-> ```@example
-> sleep(0.1)
-> ```
-> ``````
->
-> Generally, `0.1` seconds should be enough but you may need to adjust that delay timer if you still have the issue.
+!!! note
+    For some user set-ups, you may see your browser instead direct you to a page mentioning `REPLACE_ME_DOCUMENTER_VITEPRESS` and the output from `dev_docs` mentioning that page as well. 
+    If this happens to you, that is due to `DocumenterVitepress` not picking up `servedocs` changes fast enough (this comes from a quirk of the underlying JS `vitepress` library).
+    To get around this, within your documentation, add a small sleep delay like so:
+    ``````julia
+    ```@example
+    sleep(0.1)
+    ```
+    ``````
+    Generally, `0.1` seconds should be enough but you may need to adjust that delay timer if you still have the issue.
 
 ## Advanced method
 
