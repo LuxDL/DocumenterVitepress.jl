@@ -9,10 +9,11 @@ module DocumenterVitepress
 using Documenter: Documenter, Selectors
 
 using DocStringExtensions
-using NodeJS_20_jll: npm
+using NodeJS_20_jll: node, npm
 
 const ASSETS = normpath(joinpath(@__DIR__, "..", "assets"))
 
+include("vitepress_interface.jl")
 include("vitepress_config.jl")
 include("writer.jl")
 include("ANSIBlocks.jl")
@@ -29,8 +30,8 @@ Selectors.runner(::Type{MarkdownFormat}, fmt, doc) = render(doc, fmt)
 """
     generate_template(target_directory::String, package = "YourPackage")
 
-Copies template files from `DocumenterVitepress.jl` to a target directory, replacing 
-"YourPackage" with the specified package name in `package`. 
+Copies template files from `DocumenterVitepress.jl` to a target directory, replacing
+"YourPackage" with the specified package name in `package`.
 
 `target` should be the directory of your package's documentation, and not its root!
 
@@ -57,11 +58,11 @@ function generate_template(target::String, package = "YourPackage")
         # Iterate through each file in this repo!
         for file in files
             # Check if the file already exists in the target directory
-            if isfile(joinpath(target, path, file)) 
+            if isfile(joinpath(target, path, file))
                 @debug "File $(joinpath(path, file)) already exists!"
                 continue
             # If the file does not exist, we have to copy it in!
-            else 
+            else
                 contents = read(joinpath(root, file), String)
                 new_contents = replace(contents, "YourPackage" => package)
                 write(joinpath(target_path, file), new_contents)

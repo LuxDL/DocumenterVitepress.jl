@@ -26,22 +26,32 @@ Simply add more elements to the `replacers` array within this function.
 function modify_config_file(doc, settings, deploy_decision)
 
     # Main.@infiltrate
-    # Read in the config file, 
-    mkpath(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme"))
-    vitepress_config_file = joinpath(doc.user.build, settings.md_output_path, ".vitepress", "config.mts")
+    # Read in the config file,
+
+    builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
+    sourcedir = isabspath(doc.user.source) ? doc.user.source : joinpath(doc.user.root, doc.user.source)
+    source_vitepress_dir = joinpath(sourcedir, ".vitepress")
+    build_vitepress_dir = normpath(joinpath(builddir, settings.md_output_path, ".vitepress"))
+    template_vitepress_dir = joinpath(dirname(@__DIR__), "template", "src", ".vitepress")
+    mkpath(joinpath(builddir, settings.md_output_path, ".vitepress", "theme"))
+    vitepress_config_file = joinpath(sourcedir, ".vitepress", "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
     if !isfile(vitepress_config_file)
         mkpath(splitdir(vitepress_config_file)[1])
         @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file.  Substituting in the default file."
-        if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"))
-            write(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "index.ts"), read(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "index.ts"), String))
+        if !isfile(joinpath(source_vitepress_dir, "theme", "index.ts")) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
+            write(joinpath(build_vitepress_dir, "theme", "index.ts"), read(joinpath(template_vitepress_dir, "theme", "index.ts"), String))
         end
-        if !isfile(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"))
-            write(joinpath(doc.user.build, settings.md_output_path, ".vitepress", "theme", "style.css"), read(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "theme", "style.css"), String))
+        if !isfile(joinpath(source_vitepress_dir, "theme", "style.css")) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
+            write(joinpath(build_vitepress_dir, "theme", "style.css"), read(joinpath(template_vitepress_dir, "theme", "style.css"), String))
         end
-        write(vitepress_config_file, read(joinpath(dirname(@__DIR__), "template", "src", ".vitepress", "config.mts"), String))
+        # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
+        # which may not be writable.  However, `write` creates a new file for which Julia must have write permissions.
+        write(joinpath(build_vitepress_dir, "config.mts"), read(joinpath(template_vitepress_dir, "config.mts"), String))
         # We don't need the below line since there are no default components, though we might want to add them in the future!
         # cp(joinpath(dirname(@__DIR__), "template", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
     end
+    # reset the path to the variable that exists
+    vitepress_config_file = joinpath(build_vitepress_dir, "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
 
     config = read(vitepress_config_file, String)
     replacers = Vector{Pair{<: Union{AbstractString, Regex}, <: AbstractString}}()
@@ -57,7 +67,7 @@ function modify_config_file(doc, settings, deploy_decision)
     # correct base URL, and then build the VitePress site.
     folder = deploy_decision.subfolder
     deploy_relpath = "$(folder)$(isempty(folder) ? "" : "/")"
-    deploy_abspath = if isnothing(settings.deploy_url) 
+    deploy_abspath = if isnothing(settings.deploy_url)
         "/" * splitpath(settings.repo)[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
         else
             s_path = startswith(settings.deploy_url, r"http[s?]:\/\/") ? splitpath(settings.deploy_url)[2:end] : splitpath(settings.deploy_url)
@@ -66,7 +76,7 @@ function modify_config_file(doc, settings, deploy_decision)
         end
 
     base_str = deploy_abspath == "/" ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
-   
+
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
 
     # # Vitepress output path
@@ -78,7 +88,7 @@ function modify_config_file(doc, settings, deploy_decision)
     sidebar_navbar_string = join(sidebar_navbar_info, ",\n")
     push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: [\n$sidebar_navbar_string\n]\n")
     push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
-   
+
     # # Title
     push!(replacers, "title: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "title: '$(doc.user.sitename)'")
 
@@ -87,7 +97,7 @@ function modify_config_file(doc, settings, deploy_decision)
 
     # # Edit link
     push!(replacers, "editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "editLink: { pattern: \"https://$(settings.repo)$(endswith(settings.repo, "/") ? "" : "/")edit/$(settings.devbranch)/docs/src/:path\" }")
-    
+
     # # Github repo
     full_repo = startswith(settings.repo, r"https?:\/\/") ? settings.repo : "https://" * settings.repo
     push!(replacers, """{ icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }""" => """{ icon: 'github', link: '$full_repo' }""")
@@ -115,26 +125,33 @@ function modify_config_file(doc, settings, deploy_decision)
     end
 
     # Finally, run all the replacers and write the new config file
-   
+
     new_config = replace(config, replacers...)
     write(vitepress_config_file, new_config)
+    yield()
+    touch(vitepress_config_file)
 
-   
-    # 
+    #
 
 end
 
+function _get_raw_text(element)
+end
+
 function pagelist2str(doc, page::String)
-    # If no name is given, find the first header in the page, 
+    # If no name is given, find the first header in the page,
     # and use that as the name.
-    elements = doc.blueprint.pages[page].elements
-    idx = findfirst(x -> x isa Markdown.Header, elements)
+    elements = collect(doc.blueprint.pages[page].mdast.children)
+    # elements is a vector of Markdown.jl objects,
+    # you can get the MarkdownAST stuff via `page.mdast`.
+    # I f``
+    idx = findfirst(x -> x.element isa Union{MarkdownAST.Heading, Documenter.AnchoredHeader}, elements)
     name = if isnothing(idx)
         splitext(page)[1]
     else
-        elements[idx].text[1]
+        Documenter.MDFlatten.mdflatten(elements[idx])
     end
-    return "{ text: '$name', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
@@ -142,31 +159,31 @@ pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$name', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
     name, contents = name_contents
     # This is for nested stuff.  Should work automatically but you never know...
     rendered_contents = pagelist2str.((doc,), contents)
-    return "{ text: '$name', collapsed: false, items: [\n$(join(rendered_contents, ",\n"))]\n }" # TODO: add a link here if the name is the same name as a file?
+    return "{ text: '$(replace(name, "'" => "\\'"))', collapsed: false, items: [\n$(join(rendered_contents, ",\n"))]\n }" # TODO: add a link here if the name is the same name as a file?
 end
 
 function sidebar_items(doc, page::String)
     # We look at the page elements, and obtain all level 1 and 2 headers.
     elements = doc.blueprint.pages[page].elements
-    headers = elements[findall(x -> x isa Union{Markdown.Header{1}, Markdown.Header{2}}, elements)]
+    headers = filter(x -> x isa Union{MarkdownAST.Heading{1}, MarkdownAST.Heading{2}}, elements)
     # If nothing is found, move on in life
     if length(headers) ≤ 1
         return ""
     end
     # Otherwise, we return a collapsible tree of headers for each level 1 and 2 header.
-    items = _get_first_or_string.(getproperty.(headers, :text))
+    items = headers
     return "collapsed: true, items: [\n $(join(_item_link.((page,), items), ",\n"))\n]"
 end
 
 function _item_link(page, item)
-    return "{ text: '$item', link: '/$(splitext(page)[1])#$(replace(item, " " => "-"))' }"
+    return "{ text: '$(replace(Documenter.MDFlatten.mdflatten(item), "'" => "\\'"))', link: '/$(splitext(page)[1])#$(replace(item, " " => "-"))' }"
 
 end
 
