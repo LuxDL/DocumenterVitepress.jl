@@ -109,6 +109,12 @@ code {
   }
 }
 
+/* Component: Docstring Custom Block */
+
+.jldocstring {
+    background-color: var(--vp-c-gray-soft);
+}
+
 /* Component: Custom Block */
 
 :root.dark {

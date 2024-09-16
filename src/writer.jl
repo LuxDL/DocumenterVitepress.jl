@@ -316,9 +316,9 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     anchor_id = Documenter.anchor_label(docs.anchor)
     # Docstring header based on the name of the binding and it's category.
     println(io,
-        "<div style='border-width:1px; border-style:solid; border-color:black; padding: 1em; border-radius: 25px;'>")
-    anchor = "<a id='$(anchor_id)' href='#$(anchor_id)'>#</a>"
-    header = "&nbsp;<b><u>$(docs.object.binding)</u></b> &mdash; <i>$(Documenter.doccat(docs.object))</i>."
+        "<div class='jldocstring custom-block'>")
+    anchor = "<p class='custom-block-title'><a id='$(anchor_id)' href='#$(anchor_id)'>#</a>"
+    header = "&nbsp;<b><u>$(docs.object.binding)</u></b> &mdash; <i>$(Documenter.doccat(docs.object))</i></p>"
     println(io, anchor, header, "\n\n")
     # Body. May contain several concatenated docstrings.
     renderdoc(io, mime, node, page, doc; kwargs...)
