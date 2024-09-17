@@ -111,15 +111,12 @@ code {
 
 /* Component: Docstring Custom Block */
 
-.custom-block.jldocstring {
+details.jldocstring.custom-block {
+    border: 1px solid var(--vp-c-gray-2);
     color: var(--vp-c-text-1)
 }
 
-.custom-block.jldocstring {
-    border: 1px solid var(--vp-c-gray-2);
-}
-
-.custom-block.jldocstring summary {
+details.jldocstring.custom-block summary {
     font-weight: 700;
     cursor: pointer;
     user-select: none;
