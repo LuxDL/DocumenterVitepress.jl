@@ -40,10 +40,10 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
   */
   font-feature-settings: 'calt' 0;
   pre {
-    font-family: JuliaMono-Light;
+    font-family: JuliaMono-Regular;
 };
 code {
-    font-family: JuliaMono-Light;
+    font-family: JuliaMono-Regular;
     };
 }
 
@@ -241,3 +241,18 @@ mjx-container > svg {
   white-space: nowrap;
   max-width: 200px;
 } */
+
+
+/* Component: Docstring Custom Block */
+
+.jldocstring.custom-block {
+    border: 1px solid var(--vp-c-gray-2);
+    color: var(--vp-c-text-1)
+}
+
+.jldocstring.custom-block summary {
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    margin: 0 0 8px;
+}

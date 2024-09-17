@@ -315,14 +315,12 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # @infiltrate
     anchor_id = Documenter.anchor_label(docs.anchor)
     # Docstring header based on the name of the binding and it's category.
-    println(io,
-        "<div style='border-width:1px; border-style:solid; border-color:black; padding: 1em; border-radius: 25px;'>")
-    anchor = "<a id='$(anchor_id)' href='#$(anchor_id)'>#</a>"
-    header = "&nbsp;<b><u>$(docs.object.binding)</u></b> &mdash; <i>$(Documenter.doccat(docs.object))</i>."
-    println(io, anchor, header, "\n\n")
+    print(io ,"""<details class='jldocstring custom-block' open>
+    <summary><a id='$(anchor_id)' href='#$(anchor_id)'>#</a> <span class="jlbinding">$(docs.object.binding)</span> &mdash; <span class="jlobjecttype jl$(Documenter.doccat(docs.object))">$(Documenter.doccat(docs.object))</span></summary>\n
+    """)
     # Body. May contain several concatenated docstrings.
     renderdoc(io, mime, node, page, doc; kwargs...)
-    return println(io, "</div>\n<br>")
+    return println(io, "</details>\n")
 end
 
 function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, page, doc; kwargs...)
