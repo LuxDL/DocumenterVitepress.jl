@@ -111,8 +111,14 @@ code {
 
 /* Component: Docstring Custom Block */
 
-.jldocstring {
+.custom-block.jldocstring {
     border: 1px solid var(--vp-c-gray-2);
+}
+
+.custom-block.jldocstring summary {
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
 }
 
 /* Component: Custom Block */
