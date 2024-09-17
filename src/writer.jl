@@ -318,9 +318,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io,
         "<details class='jldocstring custom-block' open>")
     print(io ,"""
-    <summary>
-    ::marker
-    <p class='custom-block-title'><a id='$(anchor_id)' href='#$(anchor_id)'>#</a> <span class="jlbinding">$(docs.object.binding)</span> &mdash; <span class="jlobjecttype">$(Documenter.doccat(docs.object))</span></p>
+    <summary><p class='custom-block-title'><a id='$(anchor_id)' href='#$(anchor_id)'>#</a> <span class="jlbinding">$(docs.object.binding)</span> <Badge type="info" class="jlobjecttype" text="$(Documenter.doccat(docs.object))" /></p>
     </summary>\n\n
     """)
     # Body. May contain several concatenated docstrings.
