@@ -321,9 +321,8 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     <summary>
     ::marker
     <p class='custom-block-title'><a id='$(anchor_id)' href='#$(anchor_id)'>#</a> <b><u>$(docs.object.binding)</u></b> &mdash; <i>$(Documenter.doccat(docs.object))</i>
-    </summary>
+    </summary>\n\n
     """)
-    println(io, anchor, header, "\n\n")
     # Body. May contain several concatenated docstrings.
     renderdoc(io, mime, node, page, doc; kwargs...)
     return println(io, "</details>\n<br>")
