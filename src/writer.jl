@@ -320,7 +320,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     print(io ,"""
     <summary>
     ::marker
-    <p class='custom-block-title'><a id='$(anchor_id)' href='#$(anchor_id)'>#</a> <b><u>$(docs.object.binding)</u></b> &mdash; <i>$(Documenter.doccat(docs.object))</i></p>
+    <p class='custom-block-title'><a id='$(anchor_id)' href='#$(anchor_id)'>#</a> <span class="jlbinding">$(docs.object.binding)</span> &mdash; <span class="jlobjecttype">$(Documenter.doccat(docs.object))</span></p>
     </summary>\n\n
     """)
     # Body. May contain several concatenated docstrings.
