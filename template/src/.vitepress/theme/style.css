@@ -254,4 +254,5 @@ mjx-container > svg {
     font-weight: 700;
     cursor: pointer;
     user-select: none;
+    margin: 0 0 8px;
 }
