@@ -112,6 +112,10 @@ code {
 /* Component: Docstring Custom Block */
 
 .custom-block.jldocstring {
+    color: var(--vp-c-text-1)
+}
+
+.custom-block.jldocstring {
     border: 1px solid var(--vp-c-gray-2);
 }
 
