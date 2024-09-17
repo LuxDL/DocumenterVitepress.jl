@@ -112,7 +112,7 @@ code {
 /* Component: Docstring Custom Block */
 
 .jldocstring {
-    border: 1px solid var(--vp-c-gray-dark-3);
+    border: 1px solid var(--vp-c-gray-2);
 }
 
 /* Component: Custom Block */
