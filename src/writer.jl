@@ -320,7 +320,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     """)
     # Body. May contain several concatenated docstrings.
     renderdoc(io, mime, node, page, doc; kwargs...)
-    return println(io, "</details>\n<br />")
+    return println(io, "</details>\n")
 end
 
 function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, page, doc; kwargs...)
