@@ -109,19 +109,6 @@ code {
   }
 }
 
-/* Component: Docstring Custom Block */
-
-details.jldocstring.custom-block {
-    border: 1px solid var(--vp-c-gray-2);
-    color: var(--vp-c-text-1)
-}
-
-details.jldocstring.custom-block summary {
-    font-weight: 700;
-    cursor: pointer;
-    user-select: none;
-}
-
 /* Component: Custom Block */
 
 :root.dark {
@@ -254,3 +241,17 @@ mjx-container > svg {
   white-space: nowrap;
   max-width: 200px;
 } */
+
+
+/* Component: Docstring Custom Block */
+
+details.jldocstring.custom-block {
+    border: 1px solid var(--vp-c-gray-2);
+    color: var(--vp-c-text-1)
+}
+
+details.jldocstring.custom-block summary {
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+}
