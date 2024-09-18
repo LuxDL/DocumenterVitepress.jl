@@ -4,6 +4,21 @@ import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
 import { transformerMetaWordHighlight } from '@shikijs/transformers';
 
+
+const baseTemp = {
+  base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
+}
+
+const navTemp = {
+  nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+}
+
+const nav = [
+  ...navTemp.nav,
+  {
+    component: 'VersionPicker'
+  }
+]
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   base: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // TODO: replace this in makedocs!
@@ -12,7 +27,11 @@ export default defineConfig({
   lastUpdated: true,
   cleanUrls: true,
   outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
-  head: [['link', { rel: 'icon', href: '/DocumenterVitepress.jl/dev/favicon.ico' }]],
+  head: [
+    ['link', { rel: 'icon', href: '/DocumenterVitepress.jl/dev/favicon.ico' }],
+    ['script', {src: '/versions.js'}],
+    ['script', {src: `${baseTemp.base}siteinfo.js`}]
+  ],
   vite: {
     build: {
       assetsInlineLimit: 0, // so we can tell whether we have created inlined images or not, we don't let vite inline them
