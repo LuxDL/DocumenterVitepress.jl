@@ -62,7 +62,7 @@ export default defineConfig({
         detailedView: true
       }
     },
-    nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+    nav,
     sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     socialLinks: [

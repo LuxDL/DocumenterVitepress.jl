@@ -1,16 +1,20 @@
-<!-- From https://github.com/MakieOrg/Makie.jl/pull/4034 -->
- 
+<!-- From https://github.com/MakieOrg/Makie.jl/blob/master/docs/src/.vitepress/theme/VersionPicker.vue -->
+
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vitepress'
 import VPNavBarMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavBarMenuGroup.vue'
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
+
 const props = defineProps<{
   screenMenu?: boolean
 }>()
+
 const route = useRoute()
+
 const versions = ref([]);
 const currentVersion = ref('Versions');
+
 const waitForGlobalDocumenterVars = () => {
     return new Promise((resolve) => {
     const checkInterval = setInterval(() => {
@@ -24,6 +28,7 @@ const waitForGlobalDocumenterVars = () => {
     }, 100); // Check every 100ms
     });
 };
+
 onMounted(async () => {
     const globalvars = await waitForGlobalDocumenterVars();
     versions.value = globalvars.versions.map((v) => {
@@ -31,6 +36,7 @@ onMounted(async () => {
     });
     currentVersion.value = globalvars.currentVersion;
 });
+
 </script>
 
 <template>
@@ -51,6 +57,7 @@ onMounted(async () => {
 .VPVersionPicker :deep(button .text) {
   color: var(--vp-c-text-1) !important;
 }
+
 .VPVersionPicker:hover :deep(button .text) {
   color: var(--vp-c-text-2) !important;
 }
