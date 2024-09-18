@@ -32,7 +32,7 @@ makedocs(;
     warnonly = true,
     checkdocs=:all,
     format=DocumenterVitepress.MarkdownVitepress(
-        repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
+        repo = "github.com/tpoisot/DocumenterVitepress.jl", # this must be the full URL!
         devbranch = "master",
         devurl = "dev";
     ),
@@ -61,7 +61,7 @@ makedocs(;
 
 
 deploydocs(; 
-    repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
+    repo = "github.com/tpoisot/DocumenterVitepress.jl", # this must be the full URL!
     target = "build", # this is where Vitepress stores its output
     branch = "gh-pages",
     devbranch = "master",
