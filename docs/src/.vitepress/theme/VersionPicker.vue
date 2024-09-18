@@ -5,7 +5,6 @@ import { ref, onMounted, computed } from 'vue'
 import { useData } from 'vitepress'
 import VPNavBarMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavBarMenuGroup.vue'
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
-import { getBaseRepository } from '../baserepo'
 // Extend the global Window interface to include DOC_VERSIONS and DOCUMENTER_CURRENT_VERSION
 declare global {
   interface Window {
@@ -26,9 +25,11 @@ const isLocalBuild = () => {
   return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 }
 
-const getBaseRepositoryPath = computed(() => {
-  return getBaseRepository(site.value.base);
-});
+const getBaseRepository = () => {
+  // Extract the base repository from the current path
+  const pathParts = window.location.pathname.split('/');
+  return pathParts[1] || ''; // The first part after the domain should be the repo name
+}
 
 const waitForScriptsToLoad = () => {
   return new Promise<boolean>((resolve) => {
@@ -59,18 +60,17 @@ const loadVersions = async () => {
         text: v,
         link: '/'
       }));
-      console.log(getBaseRepositoryPath.value)
       currentVersion.value = 'dev';
       return; // Exit the function early for local builds
     }
     
     // For non-local builds, wait for scripts to load
     const scriptsLoaded = await waitForScriptsToLoad();
-    
+    const baseRepo = getBaseRepository();
     if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
       versions.value = (window.DOC_VERSIONS as string[]).map((v: string) => ({
         text: v,
-        link: `${getBaseRepositoryPath.value}${v}/`
+        link: `${window.location.origin}/${baseRepo}/${v}/`
       }));
       currentVersion.value = window.DOCUMENTER_CURRENT_VERSION as string;
     } else {
@@ -78,7 +78,7 @@ const loadVersions = async () => {
       const fallbackVersions = ['dev'];
       versions.value = fallbackVersions.map(v => ({
         text: v,
-        link: `${getBaseRepositoryPath.value}${v}/`
+        link: `${window.location.origin}/${baseRepo}/${v}/`
       }));
       currentVersion.value = 'dev';
     }
@@ -86,9 +86,10 @@ const loadVersions = async () => {
     console.warn('Error loading versions:', error);
     // Use fallback logic in case of an error
     const fallbackVersions = ['dev'];
+    const baseRepo = getBaseRepository();
     versions.value = fallbackVersions.map(v => ({
       text: v,
-      link: `${getBaseRepositoryPath.value}${v}/`
+      link: `${window.location.origin}/${baseRepo}/${v}/`
     }));
     currentVersion.value = 'dev';
   }
