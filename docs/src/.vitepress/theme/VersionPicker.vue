@@ -27,11 +27,21 @@ const waitForGlobalDocumenterVars = () => {
   });
 };
 
+const getBaseRepository = () => {
+  // Extract the base repository from the current path
+  const pathParts = window.location.pathname.split('/');
+  return pathParts[1] || ''; // The first part after the domain should be the repo name
+}
+
 onMounted(async () => {
   try {
     const globalvars = await waitForGlobalDocumenterVars();
+    const baseRepo = getBaseRepository();
     versions.value = globalvars.versions.map((v) => {
-      return {text: v, link: `${window.location.origin}/${v}/`}
+      return {
+        text: v, 
+        link: `${window.location.origin}/${baseRepo}/${v}/`
+      }
     });
     currentVersion.value = globalvars.currentVersion;
   } catch (error) {

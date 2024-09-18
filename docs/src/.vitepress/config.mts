@@ -29,7 +29,7 @@ export default defineConfig({
   outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
   head: [
     ['link', { rel: 'icon', href: '/DocumenterVitepress.jl/dev/favicon.ico' }],
-    ['script', {src: '/DocumenterVitepress.jl/versions.js'}],
+    ['script', {src: `${baseTemp.base}versions.js`}],
     ['script', {src: `${baseTemp.base}siteinfo.js`}]
   ],
   vite: {
