@@ -1,71 +1,112 @@
-<!-- From https://github.com/MakieOrg/Makie.jl/blob/master/docs/src/.vitepress/theme/VersionPicker.vue -->
+<!-- Adapted from https://github.com/MakieOrg/Makie.jl/blob/master/docs/src/.vitepress/theme/VersionPicker.vue -->
+
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
-import { useRoute } from 'vitepress'
+import { ref, onMounted, computed } from 'vue'
+import { useData } from 'vitepress'
 import VPNavBarMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavBarMenuGroup.vue'
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
+import { getBaseRepository } from '../baserepo'
+// Extend the global Window interface to include DOC_VERSIONS and DOCUMENTER_CURRENT_VERSION
+declare global {
+  interface Window {
+    DOC_VERSIONS?: string[];
+    DOCUMENTER_CURRENT_VERSION?: string;
+  }
+}
 
 const props = defineProps<{
   screenMenu?: boolean
 }>()
 
-const route = useRoute()
-const versions = ref([]);
+const versions = ref<Array<{ text: string, link: string }>>([]);
 const currentVersion = ref('Versions');
+const { site } = useData()
 
-const waitForGlobalDocumenterVars = () => {
-  return new Promise((resolve) => {
+const isLocalBuild = () => {
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+}
+
+const getBaseRepositoryPath = computed(() => {
+  return getBaseRepository(site.value.base);
+});
+
+const waitForScriptsToLoad = () => {
+  return new Promise<boolean>((resolve) => {
+    if (isLocalBuild()) {
+      resolve(false);
+      return;
+    }
     const checkInterval = setInterval(() => {
       if (window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
         clearInterval(checkInterval);
-        resolve({
-          versions: window.DOC_VERSIONS,
-          currentVersion: window.DOCUMENTER_CURRENT_VERSION
-        });
+        resolve(true);
       }
-    }, 100); // Check every 100ms
+    }, 100);
+    // Timeout after 5 seconds
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      resolve(false);
+    }, 5000);
   });
 };
 
-const getBaseRepository = () => {
-  // Extract the base repository from the current path
-  const pathParts = window.location.pathname.split('/');
-  return pathParts[1] || ''; // The first part after the domain should be the repo name
-}
-
-onMounted(async () => {
+const loadVersions = async () => {
   try {
-    const globalvars = await waitForGlobalDocumenterVars();
-    const baseRepo = getBaseRepository();
-    versions.value = globalvars.versions.map((v) => {
-      return {
-        text: v, 
-        link: `${window.location.origin}/${baseRepo}/${v}/`
-      }
-    });
-    currentVersion.value = globalvars.currentVersion;
+    if (isLocalBuild()) {
+      // Handle the local build scenario directly
+      const fallbackVersions = ['dev'];
+      versions.value = fallbackVersions.map(v => ({
+        text: v,
+        link: '/'
+      }));
+      console.log(getBaseRepositoryPath.value)
+      currentVersion.value = 'dev';
+      return; // Exit the function early for local builds
+    }
+    
+    // For non-local builds, wait for scripts to load
+    const scriptsLoaded = await waitForScriptsToLoad();
+    
+    if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
+      versions.value = (window.DOC_VERSIONS as string[]).map((v: string) => ({
+        text: v,
+        link: `${getBaseRepositoryPath.value}${v}/`
+      }));
+      currentVersion.value = window.DOCUMENTER_CURRENT_VERSION as string;
+    } else {
+      // Fallback logic if scripts fail to load or are not available
+      const fallbackVersions = ['dev'];
+      versions.value = fallbackVersions.map(v => ({
+        text: v,
+        link: `${getBaseRepositoryPath.value}${v}/`
+      }));
+      currentVersion.value = 'dev';
+    }
   } catch (error) {
-    console.error('Error setting up VersionPicker:', error);
-    // Set default values if there's an error
-    versions.value = [];
-    currentVersion.value = 'Versions';
+    console.warn('Error loading versions:', error);
+    // Use fallback logic in case of an error
+    const fallbackVersions = ['dev'];
+    versions.value = fallbackVersions.map(v => ({
+      text: v,
+      link: `${getBaseRepositoryPath.value}${v}/`
+    }));
+    currentVersion.value = 'dev';
   }
-});
+};
 
-// Computed property to ensure we always have a valid array
-const safeVersions = computed(() => versions.value || [])
+onMounted(loadVersions);
 </script>
 
 <template>
   <VPNavBarMenuGroup
-    v-if="!screenMenu && safeVersions.length > 0"
-    :item="{ text: currentVersion, items: safeVersions }"
+    v-if="!screenMenu && versions.length > 0"
+    :item="{ text: currentVersion, items: versions }"
     class="VPVersionPicker"
   />
   <VPNavScreenMenuGroup
-    v-else-if="screenMenu && safeVersions.length > 0"
+    v-else-if="screenMenu && versions.length > 0"
     :text="currentVersion"
-    :items="safeVersions"
+    :items="versions"
     class="VPVersionPicker"
   />
 </template>

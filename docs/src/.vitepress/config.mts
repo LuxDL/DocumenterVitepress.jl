@@ -3,7 +3,7 @@ import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
 import { transformerMetaWordHighlight } from '@shikijs/transformers';
-
+import { getBaseRepository } from './baserepo'
 
 const baseTemp = {
   base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
@@ -28,8 +28,8 @@ export default defineConfig({
   cleanUrls: true,
   outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
   head: [
-    ['link', { rel: 'icon', href: '/DocumenterVitepress.jl/dev/favicon.ico' }],
-    ['script', {src: '/DocumenterVitepress.jl/versions.js'}],
+    ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
+    ['script', {src: `${getBaseRepository(baseTemp.base)}versions.js`}],
     ['script', {src: `${baseTemp.base}siteinfo.js`}]
   ],
   vite: {
