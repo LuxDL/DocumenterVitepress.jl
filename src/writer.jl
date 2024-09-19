@@ -317,7 +317,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # Docstring header based on the name of the binding and it's category.
     _badge_text = """<Badge type="info" class="jlObjectType jl$(Documenter.doccat(docs.object))" text="$(Documenter.doccat(docs.object))" />"""
     print(io ,"""<details class='jldocstring custom-block' open>
-    <summary><a id='$(anchor_id)' href='#$(anchor_id)'>#</a> <span class="jlbinding">$(docs.object.binding)</span> $(_badge_text)</summary>\n
+    <summary><a id='$(anchor_id)' href='#$(anchor_id)'><span class="jlbinding">$(docs.object.binding)</span></a> $(_badge_text)</summary>\n
     """)
     # Body. May contain several concatenated docstrings.
     renderdoc(io, mime, node, page, doc; kwargs...)
