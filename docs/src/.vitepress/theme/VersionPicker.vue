@@ -28,11 +28,19 @@ const isLocalBuild = () => {
 }
 
 const getBaseRepository = () => {
-  if (typeof window === 'undefined') return ''; // Handle SSR
-  // Extract the base repository from the current path
-  const pathParts = window.location.pathname.split('/');
-  return pathParts[1] || ''; // The first part after the domain should be the repo name
-}
+  if (typeof window === 'undefined') return ''; // Handle server-side rendering (SSR)
+  const { origin, pathname } = window.location;
+  // Check if it's a GitHub Pages (or similar) setup
+  if (origin.includes('github.io')) {
+    // Extract the first part of the path as the repository name
+    const pathParts = pathname.split('/').filter(Boolean);
+    const baseRepo = pathParts.length > 0 ? `/${pathParts[0]}/` : '/';
+    return `${origin}${baseRepo}`;
+  } else {
+    // For custom domains, use just the origin (e.g., https://docs.makie.org)
+    return origin;
+  }
+};
 
 const waitForScriptsToLoad = () => {
   return new Promise<boolean>((resolve) => {
@@ -69,11 +77,14 @@ const loadVersions = async () => {
     } else {
       // For non-local builds, wait for scripts to load
       const scriptsLoaded = await waitForScriptsToLoad();
-      const baseRepo = getBaseRepository();
+      const getBaseRepositoryPath = computed(() => {
+        return getBaseRepository();
+      });
+
       if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
         versions.value = window.DOC_VERSIONS.map((v: string) => ({
           text: v,
-          link: `${window.location.origin}/${baseRepo}/${v}/`
+          link: `${getBaseRepositoryPath.value}/${v}/`
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
@@ -81,7 +92,7 @@ const loadVersions = async () => {
         const fallbackVersions = ['dev'];
         versions.value = fallbackVersions.map(v => ({
           text: v,
-          link: `${window.location.origin}/${baseRepo}/${v}/`
+          link: `${getBaseRepositoryPath.value}/${v}/`
         }));
         currentVersion.value = 'dev';
       }
@@ -90,10 +101,12 @@ const loadVersions = async () => {
     console.warn('Error loading versions:', error);
     // Use fallback logic in case of an error
     const fallbackVersions = ['dev'];
-    const baseRepo = getBaseRepository();
+    const getBaseRepositoryPath = computed(() => {
+        return getBaseRepository();
+      });
     versions.value = fallbackVersions.map(v => ({
       text: v,
-      link: `${window.location.origin}/${baseRepo}/${v}/`
+      link: `${getBaseRepositoryPath.value}/${v}/`
     }));
     currentVersion.value = 'dev';
   }

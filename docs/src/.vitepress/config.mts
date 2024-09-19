@@ -6,6 +6,7 @@ import { transformerMetaWordHighlight } from '@shikijs/transformers';
 
 function getBaseRepository(base: string): string {
   if (!base) return '/';
+  // I guess if deploy_url is available. From where do I check this ?
   const parts = base.split('/').filter(Boolean);
   return parts.length > 0 ? `/${parts[0]}/` : '/';
 }
@@ -35,6 +36,7 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
     ['script', {src: `${getBaseRepository(baseTemp.base)}versions.js`}],
+    // ['script', {src: '/versions.js'], for custom domains, I guess if deploy_url is available.
     ['script', {src: `${baseTemp.base}siteinfo.js`}]
   ],
   vite: {
