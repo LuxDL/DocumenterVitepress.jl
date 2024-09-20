@@ -7,8 +7,6 @@ outline: deep
 ## Public API
 
 ```@meta
-CollapsedDocStrings = true
-
 DocTestSetup = quote
 using DocumenterVitepress
 end

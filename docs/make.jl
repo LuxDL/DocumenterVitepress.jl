@@ -53,6 +53,7 @@ makedocs(;
         ],
         "Developers' documentation" => [
             "The rendering process" => "render_pipeline.md",
+            "Internal API" => "internal_api.md",
         ],
         "api.md",
     ],
