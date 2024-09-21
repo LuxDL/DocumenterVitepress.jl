@@ -5,8 +5,9 @@ outline: deep
 ```
 
 ## Public API
+
 ```@meta
-DocTestSetup= quote
+DocTestSetup = quote
 using DocumenterVitepress
 end
 ```
