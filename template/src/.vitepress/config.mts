@@ -4,8 +4,7 @@ import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
 
 function getBaseRepository(base: string): string {
-  if (!base) return '/';
-  // I guess if deploy_url is available. From where do I check this ?
+  if (!base || base === '/') return '/';
   const parts = base.split('/').filter(Boolean);
   return parts.length > 0 ? `/${parts[0]}/` : '/';
 }
