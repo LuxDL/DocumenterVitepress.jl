@@ -5,8 +5,7 @@ import footnote from "markdown-it-footnote";
 import { transformerMetaWordHighlight } from '@shikijs/transformers';
 
 function getBaseRepository(base: string): string {
-  if (!base) return '/';
-  // I guess if deploy_url is available. From where do I check this ?
+  if (!base || base === '/') return '/';
   const parts = base.split('/').filter(Boolean);
   return parts.length > 0 ? `/${parts[0]}/` : '/';
 }
