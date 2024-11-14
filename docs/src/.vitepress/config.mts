@@ -2,7 +2,6 @@ import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
-import { transformerMetaWordHighlight } from '@shikijs/transformers';
 
 function getBaseRepository(base: string): string {
   if (!base || base === '/') return '/';
@@ -55,8 +54,6 @@ export default defineConfig({
       light: "github-light",
       dark: "github-dark"
     },
-    codeTransformers: [ transformerMetaWordHighlight(), ],
-
   },
   themeConfig: {
     outline: 'deep',
