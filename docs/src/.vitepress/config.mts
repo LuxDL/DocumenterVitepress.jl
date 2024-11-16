@@ -2,8 +2,27 @@ import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
-import { transformerMetaWordHighlight } from '@shikijs/transformers';
 
+function getBaseRepository(base: string): string {
+  if (!base || base === '/') return '/';
+  const parts = base.split('/').filter(Boolean);
+  return parts.length > 0 ? `/${parts[0]}/` : '/';
+}
+
+const baseTemp = {
+  base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
+}
+
+const navTemp = {
+  nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+}
+
+const nav = [
+  ...navTemp.nav,
+  {
+    component: 'VersionPicker'
+  }
+]
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   base: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // TODO: replace this in makedocs!
@@ -12,7 +31,12 @@ export default defineConfig({
   lastUpdated: true,
   cleanUrls: true,
   outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
-  head: [['link', { rel: 'icon', href: '/DocumenterVitepress.jl/dev/favicon.ico' }]],
+  head: [
+    ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
+    ['script', {src: `${getBaseRepository(baseTemp.base)}versions.js`}],
+    // ['script', {src: '/versions.js'], for custom domains, I guess if deploy_url is available.
+    ['script', {src: `${baseTemp.base}siteinfo.js`}]
+  ],
   vite: {
     build: {
       assetsInlineLimit: 0, // so we can tell whether we have created inlined images or not, we don't let vite inline them
@@ -30,8 +54,6 @@ export default defineConfig({
       light: "github-light",
       dark: "github-dark"
     },
-    codeTransformers: [ transformerMetaWordHighlight(), ],
-
   },
   themeConfig: {
     outline: 'deep',
@@ -43,7 +65,7 @@ export default defineConfig({
         detailedView: true
       }
     },
-    nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+    nav,
     sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     socialLinks: [
