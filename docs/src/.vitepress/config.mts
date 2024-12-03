@@ -20,8 +20,11 @@ const navTemp = {
 const nav = [
   ...navTemp.nav,
   {
-    component: 'VersionPicker'
-  }
+    component: 'VersionPicker',
+  },
+  {
+    component: 'StarUs',
+  },
 ]
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
