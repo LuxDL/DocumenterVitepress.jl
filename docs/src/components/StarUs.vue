@@ -1,9 +1,9 @@
+<!-- code adapted from https://github.com/observablehq/plot/blob/main/docs/.vitepress/theme/VersionAndStars.vue -->
 <script setup>
 
-// import {formatPrefix} from "d3-format";
-// import {data} from "./stargazers.data";
-
-// const formattedStarCount = data ? formatPrefix(".1s", 1000)(data) : "";
+import {formatPrefix} from "d3-format";
+import {data} from "./stargazers.data";
+const formattedStarCount = data ? formatPrefix(".1s", 1000)(data) : "";
 
 </script>
 
@@ -11,13 +11,15 @@
   <a
     target="_blank"
     data-decoration="&#x2605;"
+    :title="data.toLocaleString('en-US').concat(' GitHub stars')"
     href="https://github.com/LuxDL/DocumenterVitepress.jl"
   >
-    <span>GitHub️ {{ 100 }}</span>
+    <span>GitHub️ {{ formattedStarCount }}</span>
   </a>
   <a
     class="mobile"
     target="_blank"
+    :title="data.toLocaleString('en-US').concat(' GitHub stars')"
     href="https://luxdl.github.io/DocumenterVitepress.jl/stable/"
   >
     <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
