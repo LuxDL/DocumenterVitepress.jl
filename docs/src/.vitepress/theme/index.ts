@@ -14,11 +14,11 @@ export default {
   Layout() {
     return h(DefaultTheme.Layout, null, {
       'aside-ads-before': () => h(AsideTrustees),
+      'nav-bar-content-after': () => h(StarUs),
     })
   },
   enhanceApp({ app, router, siteData }) {
     enhanceAppWithTabs(app);
     app.component('VersionPicker', VersionPicker);
-    app.component('StarUs', StarUs);
   }
 } satisfies Theme
