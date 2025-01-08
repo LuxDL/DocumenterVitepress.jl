@@ -49,7 +49,7 @@ makedocs(;
             "Updating to DocumenterVitepress" => "documenter_to_vitepress_docs_example.md",
             "DocumenterCitations integration" => "citations.md",
             "CSS Styling" => "style_css.md",
-
+            "Authors' badge" => "author_badge.md",
         ],
         "Developers' documentation" => [
             "The rendering process" => "render_pipeline.md",
