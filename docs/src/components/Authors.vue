@@ -5,6 +5,8 @@
         :key="author.name"
         :author="author.name"
         :avatar="author.avatar"
+        :platform="author.platform"
+        :link="author.link"
       />
     </div>
   </template>
