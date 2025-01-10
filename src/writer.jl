@@ -143,9 +143,6 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
 
-    # from `vitepress_config.jl`
-    modify_config_file(doc, settings, deploy_decision)
-
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
     if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
@@ -172,7 +169,10 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
         end
     end
-    # Main.@infiltrate
+     # from `vitepress_config.jl`
+    # This needs to be run after favicons and logos are moved to the public subfolder
+    modify_config_file(doc, settings, deploy_decision)
+
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
