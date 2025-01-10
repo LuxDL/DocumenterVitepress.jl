@@ -4,6 +4,10 @@
 
 You can simply add `using DocumenterVitepress` to your `make.jl` file, and replace `format = HTML(...)` in `makedocs` with:
 ```julia
+# you might need to stop the Vitepress server if it's running before
+# updating or creating new files
+try run(`pkill -f vitepress`) catch end # [!code error]
+
 makedocs(...,
     format = MarkdownVitepress(
         repo = "<url_to_your_repo>",

@@ -55,6 +55,10 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
 
    DocMeta.setdocmeta!(Example, :DocTestSetup, :(using Example); recursive=true)
 
+    # you might need to stop the Vitepress server if it's running before
+    # updating or creating new files
+    try run(`pkill -f vitepress`) catch end # [!code error]
+
    makedocs(;
        modules = [Example],
        repo = Remotes.GitHub("ExampleOrg", "Example.jl"),
