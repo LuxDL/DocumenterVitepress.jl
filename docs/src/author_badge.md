@@ -164,3 +164,17 @@ You can include an `AuthorBadge` directly anywhere. See examples below.
 ````
 
 :::
+
+Icons by [icons8](https://icons8.com).
+
+::: details icons8 license
+
+If you use the default icons, you should provide attribution. Something like:
+
+```md
+Icons by [icons8](https://icons8.com).
+```
+
+see https://icons8.com/license for more info.
+
+:::
