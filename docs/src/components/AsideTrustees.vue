@@ -59,11 +59,11 @@
   width: 100%;
   gap: 1rem;
   background-color: var(--vp-c-bg-alt);
-  border: 2px solid var(--vp-c-bg-alt);
+  border: 1.25px solid var(--vp-c-bg-alt);
   transition: border-color 0.5s;
 }
 .enjoyer:hover {
-  border: 2px solid var(--vp-c-brand-light);
+  border: 1.25px solid var(--vp-c-brand-1);
 }
 .enjoyer img {
   transition: transform 0.5s;
