@@ -51,6 +51,7 @@ makedocs(;
             "DocumenterCitations integration" => "citations.md",
             "CSS Styling" => "style_css.md",
             "Authors' badge" => "author_badge.md",
+            "GitHub Icon with Stars" => "repo_stars.md",
         ],
         "Developers' documentation" => [
             "The rendering process" => "render_pipeline.md",
