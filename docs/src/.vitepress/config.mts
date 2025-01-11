@@ -20,7 +20,7 @@ const navTemp = {
 const nav = [
   ...navTemp.nav,
   {
-    component: 'VersionPicker'
+    component: 'VersionPicker',
   }
 ]
 // https://vitepress.dev/reference/site-config
@@ -69,7 +69,7 @@ export default defineConfig({
     sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     socialLinks: [
-      { icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }
+      { icon: 'slack', link: 'https://julialang.org/slack/' }
     ],
     footer: {
       message: 'Made with <a href="https://documenter.juliadocs.org/stable/" target="_blank"><strong>Documenter.jl</strong></a>, <a href="https://vitepress.dev" target="_blank"><strong>VitePress</strong></a> and <a href="https://luxdl.github.io/DocumenterVitepress.jl/stable/" target="_blank"><strong>DocumenterVitepress.jl</strong></a> <br>',
