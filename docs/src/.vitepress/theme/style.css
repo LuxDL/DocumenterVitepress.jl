@@ -56,9 +56,10 @@ pre, code {
 
 :root.dark {
   /* Greens */
-  --vp-dark-green: #2a6e4f; /* Main accent green */
-  --vp-dark-green-light: #3b8a65;
-  --vp-dark-green-lighter: #52a67b;
+  --vp-dark-green: #155f3e; /* Main accent green */
+  --vp-dark-green-dark: #2b855c;
+  --vp-dark-green-light: #42d392;
+  --vp-dark-green-lighter: #35eb9a;
   --vp-dark-green-dimm: #2e3834;
 
   /* Complementary Colors */
@@ -87,7 +88,7 @@ pre, code {
   --vp-button-brand-bg: var(--vp-dark-green);
   --vp-button-brand-hover-border: var(--vp-dark-green-lighter);
   --vp-button-brand-hover-text: var(--vp-dark-text);
-  --vp-button-brand-hover-bg: var(--vp-dark-green-light);
+  --vp-button-brand-hover-bg: var(--vp-dark-green-dark);
   --vp-button-brand-active-border: var(--vp-dark-green-light);
   --vp-button-brand-active-text: var(--vp-dark-text);
   --vp-button-brand-active-bg: var(--vp-dark-green);
