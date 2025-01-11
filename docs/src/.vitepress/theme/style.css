@@ -52,9 +52,7 @@ pre, code {
   --vp-c-brand-dark: #535bf2;
   --vp-c-brand-darker: #454ce1;
   --vp-c-brand-dimm: #212425;
-}
-
-:root.dark {
+  --vp-tip-bg: rgb(254, 254, 254);
   /* Greens */
   --vp-dark-green: #155f3e; /* Main accent green */
   --vp-dark-green-dark: #2b855c;
@@ -65,7 +63,7 @@ pre, code {
   /* Complementary Colors */
   --vp-dark-gray: #1e1e1e;
   --vp-dark-gray-soft: #2a2a2a;
-  --vp-dark-gray-mute: #383838;
+  --vp-dark-gray-mute: #242424;
   --vp-light-gray: #d1d5db;
 
   /* Text Colors */
@@ -76,9 +74,26 @@ pre, code {
   --vp-dark-bg: #121212; /* Main background */
   --vp-dark-bg-alt: #1a1a1a; /* Alternative background */
   --vp-dark-bg-dimm: #101010;
-
-  /* Borders */
+  
+    /* Borders */
   --vp-dark-border: #3b8a65;
+    /* custom tip */
+  --vp-custom-block-tip-border: var(--vp-c-brand-darker);
+  --vp-custom-block-tip-bg: var(--vp-tip-bg);
+  /* button */
+  --vp-button-brand-border: var(--vp-dark-green-dark);
+  --vp-button-brand-bg: var(--vp-dark-green-dark);
+  --vp-button-brand-hover-border: var(--vp-dark-green-dark);
+  --vp-button-brand-hover-bg: var(--vp-dark-green);
+  --vp-button-brand-active-border: var(--vp-dark-green-light);
+  --vp-button-brand-active-bg: var(--vp-dark-green);
+}
+
+:root.dark {
+  /* custom tip */
+  --vp-custom-block-tip-border: var(--vp-dark-green-dark);
+  --vp-custom-block-tip-text: var(--vp-dark-subtext);
+  --vp-custom-block-tip-bg: var(--vp-dark-gray-mute);
 }
 
 /* Button */
