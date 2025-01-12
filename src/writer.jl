@@ -143,24 +143,28 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
     # copy vue components
-    source_components = joinpath(dirname(@__DIR__), "template/components")
+    source_components = joinpath(dirname(@__DIR__), "template/src/components")
     destination_dir = joinpath(builddir, settings.md_output_path, "components")
     # Ensure the destination directory exists
     mkpath(destination_dir)
     for item in readdir(source_components)
         src = joinpath(source_components, item)
         dest = joinpath(destination_dir, item)
-        if !exists(dest)  # Check if the destination file or directory already exists
-            if isdir(src)
-                cp(src, dest)  # Copy directories recursively
-            else
-                cp(src, dest) # Copy individual files
+        if !isfile(dest) && !isdir(dest)
+            try
+                if isdir(src)
+                    cp(src, dest; force=true)
+                else
+                    cp(src, dest; force=true)
+                end
+                println("Copied: $dest")
+            catch e
+                println("Error copying $src to $dest: $e")
             end
         else
             println("Skipping: $dest (already exists)")
         end
     end
-
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
     if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
