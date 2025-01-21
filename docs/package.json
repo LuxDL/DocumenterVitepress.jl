@@ -1,10 +1,11 @@
 {
   "devDependencies": {
+    "@nolebase/vitepress-plugin-enhanced-readabilities": "^2.12.1",
     "@types/d3-format": "^3.0.4",
-    "@types/node": "^22.10.5",
+    "@types/node": "^22.10.7",
     "markdown-it": "^14.1.0",
     "markdown-it-mathjax3": "^4.3.2",
-    "vitepress": "^1.5.0",
+    "vitepress": "^1.6.1",
     "vitepress-plugin-tabs": "^0.5.0"
   },
   "scripts": {
