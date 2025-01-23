@@ -43,10 +43,10 @@ makedocs(;
     pages = [
         "Manual" => [
             "Get Started" => "get_started.md",
+            "Updating to DocumenterVitepress" => "documenter_to_vitepress_docs_example.md",
             "Code" => "code_example.md",
             "Markdown" => "markdown-examples.md",
             "MIME output" => "mime_examples.md",
-            "Updating to DocumenterVitepress" => "documenter_to_vitepress_docs_example.md",
             "DocumenterCitations integration" => "citations.md",
             "CSS Styling" => "style_css.md",
             "Authors' badge" => "author_badge.md",
