@@ -1,4 +1,4 @@
-# Getting started
+# Get Started
 
 ## Simple method
 

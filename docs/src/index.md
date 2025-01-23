@@ -12,8 +12,8 @@ hero:
     alt: DocumenterVitepress
   actions:
     - theme: brand
-      text: Getting Started
-      link: /getting_started
+      text: Get Started
+      link: /get_started
     - theme: alt
       text: View on Github
       link: https://github.com/LuxDL/DocumenterVitepress.jl

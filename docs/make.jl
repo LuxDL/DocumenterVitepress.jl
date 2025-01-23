@@ -41,9 +41,8 @@ makedocs(;
     source = "src",
     build = "build",
     pages = [
-        "Home" => "index.md",
-        "Getting started" => "getting_started.md",
-        "Examples" => [
+        "Manual" => [
+            "Get Started" => "get_started.md",
             "Code" => "code_example.md",
             "Markdown" => "markdown-examples.md",
             "MIME output" => "mime_examples.md",
