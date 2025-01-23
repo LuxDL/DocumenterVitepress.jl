@@ -1,23 +1,24 @@
 // .vitepress/theme/index.ts
 import { h } from 'vue'
-import type { Theme } from 'vitepress'
+import DefaultTheme from 'vitepress/theme'
+import type { Theme as ThemeConfig } from 'vitepress'
+
 import { 
   NolebaseEnhancedReadabilitiesMenu, 
   NolebaseEnhancedReadabilitiesScreenMenu, 
 } from '@nolebase/vitepress-plugin-enhanced-readabilities/client'
 
-import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
-
-import DefaultTheme from 'vitepress/theme'
 import AsideTrustees from '../../components/AsideTrustees.vue'
 import VersionPicker from "../../components/VersionPicker.vue"
 import StarUs from '../../components/StarUs.vue'
 import AuthorBadge from '../../components/AuthorBadge.vue'
 import Authors from '../../components/Authors.vue'
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
+
+import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
 import './style.css'
 
-export default {
+export const Theme: ThemeConfig = {
   extends: DefaultTheme,
   Layout() {
     return h(DefaultTheme.Layout, null, {
@@ -36,4 +37,5 @@ export default {
     app.component('AuthorBadge', AuthorBadge)
     app.component('Authors', Authors)
   }
-} satisfies Theme
+}
+export default Theme
