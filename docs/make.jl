@@ -24,7 +24,6 @@ bib = CitationBibliography(
     style=:numeric  # default
 )
 # dev local
-try run(`pkill -f vitepress`) catch end # [!code error]
 
 makedocs(; 
     sitename = "DocumenterVitepress", 

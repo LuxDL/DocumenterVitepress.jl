@@ -132,8 +132,13 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # and copy the previous build files to the new location.
     if settings.md_output_path != "."
         for file_or_dir in current_build_files_or_dirs
+            
             src = joinpath(builddir, file_or_dir)
             dst = joinpath(builddir, settings.md_output_path, file_or_dir)
+
+            if src == joinpath(builddir, settings.md_output_path)
+                continue
+            end
             if src != dst
                 cp(src, dst; force = true)
                 rm(src; recursive = true)
