@@ -784,6 +784,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     output = String(take!(iob))
     eachline = split(output, '\n')
     println.((io,), "> " .* eachline)
+    println(io) # newline after block quote, so that successive quotes don't merge
 end
 # Inline math
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.InlineMath, page, doc; kwargs...)
