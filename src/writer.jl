@@ -1,5 +1,6 @@
 import Documenter: Documenter, Builder, Expanders, MarkdownAST
 import Documenter.DOM: escapehtml
+import EzXML
 
 import ANSIColoredPrinters
 using Base64: base64decode, base64encode
@@ -520,7 +521,7 @@ function render_mime(io::IO, mime::MIME"text/markdown", node, element, page, doc
 end
 
 function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kwargs...)
-    println(io, element)
+    print_with_script_tags_wrapped(io, element)
 end
 
 function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; md_output_path, kwargs...)
@@ -932,4 +933,38 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     image_path = relpath(joinpath(doc.user.build, image.path), dirname(page.build))
     println(io)
     println(io, "![]($image_path)")
+end
+
+
+wrap(html) = "<WRAPPER>$html</WRAPPER>" # because html strings can be multiple sibling nodes
+
+function wrap_script_tags!(node)
+    if EzXML.nodetype(node) === EzXML.ELEMENT_NODE && EzXML.nodename(node) == "script"
+        parent = EzXML.parentnode(node)
+        nxt = EzXML.hasnextnode(node) ? EzXML.nextnode(node) : nothing
+        EzXML.unlink!(node)
+        wrappernode = EzXML.ElementNode("ClientOnly")
+        EzXML.link!(wrappernode, node)
+        if nxt === nothing
+            EzXML.link!(parent, wrappernode)
+        else
+            EzXML.linkprev!(nxt, wrappernode)
+        end
+        node = wrappernode
+    elseif EzXML.hasnode(node)
+        wrap_script_tags!(EzXML.firstnode(node))
+    end
+    if EzXML.hasnextnode(node)
+        wrap_script_tags!(EzXML.nextnode(node))
+    end
+    return
+end
+
+function print_with_script_tags_wrapped(io, str)
+    xml = EzXML.parsexml(wrap(str))
+    wrap_script_tags!(xml.root)
+    for node in EzXML.eachnode(xml.root)
+        EzXML.prettyprint(io, node)
+    end
+    return
 end
