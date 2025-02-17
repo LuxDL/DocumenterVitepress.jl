@@ -38,7 +38,7 @@ features:
 ---
 ```
 
-```@raw html
+````@raw html
 <p style="margin-bottom:2cm"></p>
 
 <div class="vp-doc" style="width:80%; margin:auto">
@@ -51,11 +51,21 @@ It is meant to be used in conjunction with the `vitepress` Node.js package, whic
 
 <h2> Basic usage </h2>
 
-If you copy the contents of the `template/` directory into your `docs/` and the `.github/Documenter.yml` file to your repo, you should be good to go and edit docs as usual!
 
-Just remember to edit the navbar in `docs/src/.vitepress/config.mts`, if you want it to be different from the sidebar.
+1. Import the package in `make.jl`,
+2. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so, replacing e.g. `format = HTML(...)`:
 
-To install a logo or favicon, you can put `logo.png` and `favicon.ico` in `docs/src/assets`, and they will be automatically detected.
+```julia
+using Documenter
+using DocumenterVitepress
+makedocs(;
+    format=DocumenterVitepress.MarkdownVitepress(repo = "...", devbranch = "...", devurl = "dev"),
+    )
+```
+and enjoy the fruits of your labour!
+
+For more customizations, you can copy over some files like `src/.vitepress/theme/style.css` from the `template` directory of this repo to your `docs` folder, and experiment!
+
 
 </div>
-```
+````
