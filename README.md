@@ -24,7 +24,7 @@ pkg> add DocumenterVitepress
 
 To enable the backend:
 1. Import the package in `make.jl`,
-2. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so:
+2. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so, replacing e.g. `format = HTML(...)`:
 
 ```julia
 using Documenter
