@@ -109,13 +109,13 @@ onMounted(loadVersions);
   <template v-if="isClient">
     <VPNavBarMenuGroup
       v-if="!screenMenu && versions.length > 0"
-      :item="{ text: 'Version', items: versions.map(v => ({ ...v, class: v.text === currentVersion ? 'current-version' : '' })) }"
+      :item="{ text: 'Version', items: versions.map(v => ({ text: v.text, link: v.link, class: v.text === currentVersion ? 'current-version' : '' })) }"
       class="VPVersionPicker"
     />
     <VPNavScreenMenuGroup
       v-else-if="screenMenu && versions.length > 0"
       :text="'Version'"
-      :items="versions"
+      :items="versions.map(v => ({ text: v.text, link: v.link, class: v.text === currentVersion ? 'current-version' : '' }))"
       class="VPVersionPicker"
     />
   </template>
