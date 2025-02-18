@@ -524,6 +524,9 @@ This is the expected sequence by vitepress:
 <code> sshflags= `` `-i <keyfile> ` `` </code>
 ````
 
+## [Heading with a link](https://github.com/LuxDL/DocumenterVitepress.jl) and *bold* font
+
+This was previously breaking due to special markdown characters in the slug.
 
 ## More
 
