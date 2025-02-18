@@ -6,7 +6,6 @@ import { useData } from 'vitepress'
 import VPNavBarMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavBarMenuGroup.vue'
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
 
-// Extend the global Window interface to include DOC_VERSIONS and DOCUMENTER_CURRENT_VERSION
 declare global {
   interface Window {
     DOC_VERSIONS?: string[];
@@ -18,7 +17,7 @@ const props = defineProps<{
   screenMenu?: boolean
 }>()
 
-const versions = ref<Array<{ text: string, link: string }>>([]);
+const versions = ref<Array<{ text: string, link: string, class?: string }>>([]);
 const currentVersion = ref(window.DOCUMENTER_CURRENT_VERSION || 'Versions');
 const isClient = ref(false);
 const { site } = useData()
@@ -64,27 +63,31 @@ const loadVersions = async () => {
   try {
     if (isLocalBuild()) {
       const fallbackVersions = ['dev'];
-      versions.value = fallbackVersions.map(v => ({ text: v, link: '/' }));
+      versions.value = fallbackVersions.map(v => ({ 
+        text: v, 
+        link: '/',
+        class: v === currentVersion.value ? 'version-current' : ''
+      }));
       currentVersion.value = 'dev';
     } else {
       const scriptsLoaded = await waitForScriptsToLoad();
       const getBaseRepositoryPath = computed(() => getBaseRepository());
 
       if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
-        // Ensure the current version is included in the list
         const allVersions = new Set([...window.DOC_VERSIONS, window.DOCUMENTER_CURRENT_VERSION]);
         
         versions.value = Array.from(allVersions).map((v: string) => ({
           text: v,
           link: `${getBaseRepositoryPath.value}/${v}/`,
-          class: v === window.DOCUMENTER_CURRENT_VERSION ? 'current-version' : ''
+          class: v === window.DOCUMENTER_CURRENT_VERSION ? 'version-current' : ''
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
         const fallbackVersions = ['dev'];
         versions.value = fallbackVersions.map(v => ({
           text: v,
-          link: `${getBaseRepositoryPath.value}/${v}/`
+          link: `${getBaseRepositoryPath.value}/${v}/`,
+          class: v === currentVersion.value ? 'version-current' : ''
         }));
         currentVersion.value = 'dev';
       }
@@ -95,7 +98,8 @@ const loadVersions = async () => {
     const getBaseRepositoryPath = computed(() => getBaseRepository());
     versions.value = fallbackVersions.map(v => ({
       text: v,
-      link: `${getBaseRepositoryPath.value}/${v}/`
+      link: `${getBaseRepositoryPath.value}/${v}/`,
+      class: v === currentVersion.value ? 'version-current' : ''
     }));
     currentVersion.value = 'dev';
   }
@@ -109,13 +113,24 @@ onMounted(loadVersions);
   <template v-if="isClient">
     <VPNavBarMenuGroup
       v-if="!screenMenu && versions.length > 0"
-      :item="{ text: 'Version', items: versions.map(v => ({ text: v.text, link: v.link, class: v.text === currentVersion ? 'current-version' : '' })) }"
+      :item="{ 
+        text: 'Version', 
+        items: versions.map(v => ({ 
+          text: v.text, 
+          link: v.link, 
+          class: v.text === currentVersion.value ? 'version-current' : '' 
+        })) 
+      }"
       class="VPVersionPicker"
     />
     <VPNavScreenMenuGroup
       v-else-if="screenMenu && versions.length > 0"
       :text="'Version'"
-      :items="versions.map(v => ({ text: v.text, link: v.link, class: v.text === currentVersion ? 'current-version' : '' }))"
+      :items="versions.map(v => ({ 
+        text: v.text, 
+        link: v.link, 
+        class: v.text === currentVersion.value ? 'version-current' : '' 
+      }))"
       class="VPVersionPicker"
     />
   </template>
@@ -128,8 +143,13 @@ onMounted(loadVersions);
 .VPVersionPicker:hover :deep(button .text) {
   color: var(--vp-c-text-2) !important;
 }
-.VPVersionPicker :deep(.current-version) {
-  font-weight: bold;
+.VPVersionPicker :deep(.version-current),
+.VPVersionPicker :deep(.version-current .text) {
+  font-weight: 600;
+  color: var(--vp-c-brand-1) !important;
+}
+.VPVersionPicker:hover :deep(.version-current),
+.VPVersionPicker:hover :deep(.version-current .text) {
   color: var(--vp-c-brand-1) !important;
 }
 </style>
