@@ -71,18 +71,20 @@ const loadVersions = async () => {
       const getBaseRepositoryPath = computed(() => getBaseRepository());
 
       if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
-        versions.value = window.DOC_VERSIONS.map((v: string) => ({
+        // Ensure the current version is included in the list
+        const allVersions = new Set([...window.DOC_VERSIONS, window.DOCUMENTER_CURRENT_VERSION]);
+        
+        versions.value = Array.from(allVersions).map((v: string) => ({
           text: v,
           link: `${getBaseRepositoryPath.value}/${v}/`,
-          class: v === currentVersion.value ? 'current-version' : ''
+          class: v === window.DOCUMENTER_CURRENT_VERSION ? 'current-version' : ''
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
         const fallbackVersions = ['dev'];
         versions.value = fallbackVersions.map(v => ({
           text: v,
-          link: `${getBaseRepositoryPath.value}/${v}/`,
-          class: v === currentVersion.value ? 'current-version' : ''
+          link: `${getBaseRepositoryPath.value}/${v}/`
         }));
         currentVersion.value = 'dev';
       }
