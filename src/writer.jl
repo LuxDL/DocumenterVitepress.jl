@@ -522,12 +522,13 @@ function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kw
     function escapehtml(io, text::AbstractString)
         for char in text
             char === '<' ? write(io, "&lt;") :
-                char === '>' ? write(io, "&gt;") :
-                char === '&' ? write(io, "&amp;") :
-                char === '\'' ? write(io, "&#39;") :
-                char === '`' ? write(io, "&#96;") :
-                char === '\n' ? write(io, "&#10;") :
-                char === '"' ? write(io, "&quot;") : write(io, char)
+            char === '>' ? write(io, "&gt;") :
+            char === '&' ? write(io, "&amp;") :
+            char === '\'' ? write(io, "&#39;") :
+            char === '`' ? write(io, "\\`") :
+            char === '\n' ? write(io, "&#10;") :
+            char === '"' ? write(io, "&quot;") :
+            char === '$' ? write(io, "\\\$") : write(io, char)
         end
         return
     end
