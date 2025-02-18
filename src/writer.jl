@@ -498,7 +498,6 @@ function mime_priority end
 mime_priority(::MIME"text/plain") = 0.0
 mime_priority(::MIME"text/markdown") = 1.0
 mime_priority(::MIME"text/html") = 2.0
-mime_priority(::MIME"text/latex") = 2.5
 mime_priority(::MIME"image/svg+xml") = 3.0
 mime_priority(::MIME"image/png") = 4.0
 mime_priority(::MIME"image/webp") = 5.0
@@ -509,7 +508,7 @@ mime_priority(::MIME"image/svg+xml+lightdark") = 9.0
 mime_priority(::MIME"image/gif") = 10.0
 mime_priority(::MIME"video/mp4") = 11.0
 
-mime_priority(::MIME) = Inf
+mime_priority(::MIME) = nothing # unknown MIMEs are filtered out
 
 function render_mime(io::IO, mime::MIME, node, element, page, doc; kwargs...)
     @warn("DocumenterVitepress: Unknown MIME type $mime provided and no alternatives given.  Ignoring render!")
@@ -637,12 +636,12 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     settings = doc.user.format[settings_ind]
     md_output_path = settings.md_output_path
 
-    available_mimes = keys(d)
+    available_mimes = filter(mime -> mime_priority(mime) !== nothing, collect(keys(d)))
     if isempty(available_mimes)
         return nothing
     end
     # Sort the available mimes by priority
-    sorted_mimes = sort(collect(available_mimes), by = mime_priority)
+    sorted_mimes = sort(available_mimes, by = mime_priority)
     # Select the best MIME type for rendering
     best_mime = sorted_mimes[end]
     # Render the best MIME type
