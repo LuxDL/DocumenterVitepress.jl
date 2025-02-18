@@ -57,7 +57,7 @@ const loadVersions = async () => {
 
   try {
     if (isLocalBuild()) {
-      versions.value = [{ text: 'dev', link: '/', class: 'version-current' }];
+      versions.value = [{ text: 'dev', link: '/' }];
       currentVersion.value = 'dev';
     } else {
       const scriptsLoaded = await waitForScriptsToLoad();
@@ -67,19 +67,18 @@ const loadVersions = async () => {
         const allVersions = new Set([...window.DOC_VERSIONS, window.DOCUMENTER_CURRENT_VERSION]);
         versions.value = Array.from(allVersions).map(v => ({
           text: v,
-          link: `${baseRepoPath}/${v}/`,
-          class: v === window.DOCUMENTER_CURRENT_VERSION ? 'version-current' : ''
+          link: `${baseRepoPath}/${v}/`
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
-        versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/`, class: 'version-current' }];
+        versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/` }];
         currentVersion.value = 'dev';
       }
     }
   } catch (error) {
     console.warn('Error loading versions:', error);
     const baseRepoPath = getBaseRepository();
-    versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/`, class: 'version-current' }];
+    versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/` }];
     currentVersion.value = 'dev';
   }
   isClient.value = true;
@@ -88,8 +87,7 @@ const loadVersions = async () => {
 const versionItems = computed(() => {
   return versions.value.map((v) => ({
     text: v.text,
-    link: v.link,
-    class: `VPMenuLink ${v.text === currentVersion.value ? 'version-current' : ''}`
+    link: v.link
   }));
 });
 
@@ -118,32 +116,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.VPVersionPicker :deep(.VPMenuLink) {
-  .VPLink {
-    color: var(--vp-c-text-1);
-  }  
-  &.version-current {
-    .VPLink {
-      color: var(--vp-c-brand-1) !important;
-      font-weight: 600;
-    }
-    span {
-      color: var(--vp-c-brand-1) !important;
-      font-weight: 600;
-    }
-  }
+.VPVersionPicker :deep(button .text) {
+  color: var(--vp-c-text-1) !important;
 }
-.VPVersionPicker :deep(.VPMenuLink:hover) {
-  .VPLink {
-    color: var(--vp-c-text-2);
-  }
-  
-  &.version-current .VPLink,
-  &.version-current span {
-    color: var(--vp-c-brand-1) !important;
-  }
-}
-.VPVersionPicker :deep(.VPMenuLink span) {
-  color: var(--vp-c-text-1);
+.VPVersionPicker:hover :deep(button .text) {
+  color: var(--vp-c-text-2) !important;
 }
 </style>
