@@ -85,13 +85,13 @@ const loadVersions = async () => {
   isClient.value = true;
 };
 
-const versionItems = computed(() =>
-  versions.value.map((v) => ({
+const versionItems = computed(() => {
+  return versions.value.map((v) => ({
     text: v.text,
     link: v.link,
-    class: v.text === currentVersion.value ? 'version-current' : ''
-  }))
-);
+    class: `VPMenuLink ${v.text === currentVersion.value ? 'version-current' : ''}`
+  }));
+});
 
 onMounted(() => {
   if (typeof window !== 'undefined') {
@@ -118,19 +118,32 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.VPVersionPicker :deep(button .text) {
-  color: var(--vp-c-text-1) !important;
+.VPVersionPicker :deep(.VPMenuLink) {
+  .VPLink {
+    color: var(--vp-c-text-1);
+  }  
+  &.version-current {
+    .VPLink {
+      color: var(--vp-c-brand-1) !important;
+      font-weight: 600;
+    }
+    span {
+      color: var(--vp-c-brand-1) !important;
+      font-weight: 600;
+    }
+  }
 }
-.VPVersionPicker:hover :deep(button .text) {
-  color: var(--vp-c-text-2) !important;
+.VPVersionPicker :deep(.VPMenuLink:hover) {
+  .VPLink {
+    color: var(--vp-c-text-2);
+  }
+  
+  &.version-current .VPLink,
+  &.version-current span {
+    color: var(--vp-c-brand-1) !important;
+  }
 }
-.VPVersionPicker :deep(.version-current),
-.VPVersionPicker :deep(.version-current .text) {
-  font-weight: bold !important;
-  color: var(--vp-c-brand-1) !important;
-}
-.VPVersionPicker:hover :deep(.version-current),
-.VPVersionPicker:hover :deep(.version-current .text) {
-  color: var(--vp-c-brand-1) !important;
+.VPVersionPicker :deep(.VPMenuLink span) {
+  color: var(--vp-c-text-1);
 }
 </style>
