@@ -57,7 +57,7 @@ const loadVersions = async () => {
 
   try {
     if (isLocalBuild()) {
-      versions.value = [{ text: 'dev', link: '/', class: 'version-current' }];
+      versions.value = [{ text: 'dev', link: '/' }];
       currentVersion.value = 'dev';
     } else {
       const scriptsLoaded = await waitForScriptsToLoad();
@@ -67,31 +67,29 @@ const loadVersions = async () => {
         const allVersions = new Set([...window.DOC_VERSIONS, window.DOCUMENTER_CURRENT_VERSION]);
         versions.value = Array.from(allVersions).map(v => ({
           text: v,
-          link: `${baseRepoPath}/${v}/`,
-          class: v === window.DOCUMENTER_CURRENT_VERSION ? 'version-current' : ''
+          link: `${baseRepoPath}/${v}/`
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
-        versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/`, class: 'version-current' }];
+        versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/` }];
         currentVersion.value = 'dev';
       }
     }
   } catch (error) {
     console.warn('Error loading versions:', error);
     const baseRepoPath = getBaseRepository();
-    versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/`, class: 'version-current' }];
+    versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/` }];
     currentVersion.value = 'dev';
   }
   isClient.value = true;
 };
 
-const versionItems = computed(() =>
-  versions.value.map((v) => ({
+const versionItems = computed(() => {
+  return versions.value.map((v) => ({
     text: v.text,
-    link: v.link,
-    class: v.text === currentVersion.value ? 'version-current' : ''
-  }))
-);
+    link: v.link
+  }));
+});
 
 onMounted(() => {
   if (typeof window !== 'undefined') {
@@ -123,14 +121,5 @@ onMounted(() => {
 }
 .VPVersionPicker:hover :deep(button .text) {
   color: var(--vp-c-text-2) !important;
-}
-.VPVersionPicker :deep(.version-current),
-.VPVersionPicker :deep(.version-current .text) {
-  font-weight: bold !important;
-  color: var(--vp-c-brand-1) !important;
-}
-.VPVersionPicker:hover :deep(.version-current),
-.VPVersionPicker:hover :deep(.version-current .text) {
-  color: var(--vp-c-brand-1) !important;
 }
 </style>
