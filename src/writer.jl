@@ -498,7 +498,6 @@ function mime_priority end
 mime_priority(::MIME"text/plain") = 0.0
 mime_priority(::MIME"text/markdown") = 1.0
 mime_priority(::MIME"text/html") = 2.0
-mime_priority(::MIME"text/latex") = 2.5
 mime_priority(::MIME"image/svg+xml") = 3.0
 mime_priority(::MIME"image/png") = 4.0
 mime_priority(::MIME"image/webp") = 5.0
@@ -509,7 +508,7 @@ mime_priority(::MIME"image/svg+xml+lightdark") = 9.0
 mime_priority(::MIME"image/gif") = 10.0
 mime_priority(::MIME"video/mp4") = 11.0
 
-mime_priority(::MIME) = Inf
+mime_priority(::MIME) = nothing # unknown MIMEs are filtered out
 
 function render_mime(io::IO, mime::MIME, node, element, page, doc; kwargs...)
     @warn("DocumenterVitepress: Unknown MIME type $mime provided and no alternatives given.  Ignoring render!")
@@ -520,7 +519,25 @@ function render_mime(io::IO, mime::MIME"text/markdown", node, element, page, doc
 end
 
 function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kwargs...)
-    println(io, element)
+    function escapehtml(io, text::AbstractString)
+        for char in text
+            char === '<' ? write(io, "&lt;") :
+            char === '>' ? write(io, "&gt;") :
+            char === '&' ? write(io, "&amp;") :
+            char === '\'' ? write(io, "&#39;") :
+            char === '`' ? write(io, "\\`") :
+            char === '\n' ? write(io, "&#10;") :
+            char === '"' ? write(io, "&quot;") :
+            char === '$' ? write(io, "\\\$") : write(io, char)
+        end
+        return
+    end
+    # v-html takes a javascript expression that results in a string of html, but this
+    # has to be parsed within the context of an html attribute, so we escape all the offending
+    # characters. vitepress will not further modify this html as is usually intended with display values.
+    print(io, "<div v-html=\"`")
+    escapehtml(io, repr(mime, element))
+    println(io, "`\"></div>")
 end
 
 function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; md_output_path, kwargs...)
@@ -637,12 +654,12 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     settings = doc.user.format[settings_ind]
     md_output_path = settings.md_output_path
 
-    available_mimes = keys(d)
+    available_mimes = filter(mime -> mime_priority(mime) !== nothing, collect(keys(d)))
     if isempty(available_mimes)
         return nothing
     end
     # Sort the available mimes by priority
-    sorted_mimes = sort(collect(available_mimes), by = mime_priority)
+    sorted_mimes = sort(available_mimes, by = mime_priority)
     # Select the best MIME type for rendering
     best_mime = sorted_mimes[end]
     # Render the best MIME type
