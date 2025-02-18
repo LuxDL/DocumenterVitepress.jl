@@ -107,6 +107,8 @@ function modify_config_file(doc, settings, deploy_decision)
     if occursin("logo:", config)
         if  isfile(joinpath(doc.user.build, settings.md_output_path, "public", "logo.png"))
             push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "logo: { src: '/logo.png', width: 24, height: 24}")
+        elseif isfile(joinpath(doc.user.build, settings.md_output_path, "public", "logo.svg"))
+            push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "logo: { src: '/logo.svg', width: 24, height: 24}")
         else
             @warn "DocumenterVitepress: No logo.png file found in `docs/src/assets`.  Skipping logo replacement."
             push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'," => "")
