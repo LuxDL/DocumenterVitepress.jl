@@ -132,8 +132,13 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # and copy the previous build files to the new location.
     if settings.md_output_path != "."
         for file_or_dir in current_build_files_or_dirs
+            
             src = joinpath(builddir, file_or_dir)
             dst = joinpath(builddir, settings.md_output_path, file_or_dir)
+
+            if src == joinpath(builddir, settings.md_output_path)
+                continue
+            end
             if src != dst
                 cp(src, dst; force = true)
                 rm(src; recursive = true)
@@ -142,10 +147,29 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
         end
     end
-
-    # from `vitepress_config.jl`
-    modify_config_file(doc, settings, deploy_decision)
-
+    # copy vue components
+    source_components = joinpath(dirname(@__DIR__), "template/src/components")
+    destination_dir = joinpath(builddir, settings.md_output_path, "components")
+    # Ensure the destination directory exists
+    mkpath(destination_dir)
+    for item in readdir(source_components)
+        src = joinpath(source_components, item)
+        dest = joinpath(destination_dir, item)
+        if !isfile(dest) && !isdir(dest)
+            try
+                if isdir(src)
+                    cp(src, dest; force=true)
+                else
+                    cp(src, dest; force=true)
+                end
+                println("Copied: $dest")
+            catch e
+                println("Error copying $src to $dest: $e")
+            end
+        else
+            println("Skipping: $dest (already exists)")
+        end
+    end
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
     if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
@@ -172,7 +196,10 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
         end
     end
-    # Main.@infiltrate
+     # from `vitepress_config.jl`
+    # This needs to be run after favicons and logos are moved to the public subfolder
+    modify_config_file(doc, settings, deploy_decision)
+
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
@@ -311,12 +338,22 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     end
 end
 
+function sanitized_anchor_label(anchor)
+    # vitepress doesn't like special markdown characters in the id slug, so we just remove them.
+    # it seems unlikely to get conflicts with other slugs this way, and escaping the characters with
+    # backslashes did not make the slugs work correctly in vitepress, either
+    label = Documenter.anchor_label(anchor)
+    return replace(label, r"[\[\]\(\)*]" => "")
+end
+
+
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docs::Documenter.DocsNode, page, doc; kwargs...)
-    # @infiltrate
-    anchor_id = Documenter.anchor_label(docs.anchor)
+    open_txt = get(page.globals.meta, :CollapsedDocStrings, false) ? "" : "open"
+    anchor_id = sanitized_anchor_label(docs.anchor)
     # Docstring header based on the name of the binding and it's category.
-    print(io ,"""<details class='jldocstring custom-block' open>
-    <summary><a id='$(anchor_id)' href='#$(anchor_id)'>#</a> <span class="jlbinding">$(docs.object.binding)</span> &mdash; <span class="jlobjecttype jl$(Documenter.doccat(docs.object))">$(Documenter.doccat(docs.object))</span></summary>\n
+    _badge_text = """<Badge type="info" class="jlObjectType jl$(Documenter.doccat(docs.object))" text="$(Documenter.doccat(docs.object))" />"""
+    print(io ,"""<details class='jldocstring custom-block' $(open_txt)>
+    <summary><a id='$(anchor_id)' href='#$(anchor_id)'><span class="jlbinding">$(docs.object.binding)</span></a> $(_badge_text)</summary>\n
     """)
     # Body. May contain several concatenated docstrings.
     renderdoc(io, mime, node, page, doc; kwargs...)
@@ -469,7 +506,6 @@ function mime_priority end
 mime_priority(::MIME"text/plain") = 0.0
 mime_priority(::MIME"text/markdown") = 1.0
 mime_priority(::MIME"text/html") = 2.0
-mime_priority(::MIME"text/latex") = 2.5
 mime_priority(::MIME"image/svg+xml") = 3.0
 mime_priority(::MIME"image/png") = 4.0
 mime_priority(::MIME"image/webp") = 5.0
@@ -480,7 +516,7 @@ mime_priority(::MIME"image/svg+xml+lightdark") = 9.0
 mime_priority(::MIME"image/gif") = 10.0
 mime_priority(::MIME"video/mp4") = 11.0
 
-mime_priority(::MIME) = Inf
+mime_priority(::MIME) = nothing # unknown MIMEs are filtered out
 
 function render_mime(io::IO, mime::MIME, node, element, page, doc; kwargs...)
     @warn("DocumenterVitepress: Unknown MIME type $mime provided and no alternatives given.  Ignoring render!")
@@ -491,7 +527,25 @@ function render_mime(io::IO, mime::MIME"text/markdown", node, element, page, doc
 end
 
 function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kwargs...)
-    println(io, element)
+    function escapehtml(io, text::AbstractString)
+        for char in text
+            char === '<' ? write(io, "&lt;") :
+            char === '>' ? write(io, "&gt;") :
+            char === '&' ? write(io, "&amp;") :
+            char === '\'' ? write(io, "&#39;") :
+            char === '`' ? write(io, "\\`") :
+            char === '\n' ? write(io, "&#10;") :
+            char === '"' ? write(io, "&quot;") :
+            char === '$' ? write(io, "\\\$") : write(io, char)
+        end
+        return
+    end
+    # v-html takes a javascript expression that results in a string of html, but this
+    # has to be parsed within the context of an html attribute, so we escape all the offending
+    # characters. vitepress will not further modify this html as is usually intended with display values.
+    print(io, "<div v-html=\"`")
+    escapehtml(io, repr(mime, element))
+    println(io, "`\"></div>")
 end
 
 function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; md_output_path, kwargs...)
@@ -608,12 +662,12 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     settings = doc.user.format[settings_ind]
     md_output_path = settings.md_output_path
 
-    available_mimes = keys(d)
+    available_mimes = filter(mime -> mime_priority(mime) !== nothing, collect(keys(d)))
     if isempty(available_mimes)
         return nothing
     end
     # Sort the available mimes by priority
-    sorted_mimes = sort(collect(available_mimes), by = mime_priority)
+    sorted_mimes = sort(available_mimes, by = mime_priority)
     # Select the best MIME type for rendering
     best_mime = sorted_mimes[end]
     # Render the best MIME type
@@ -715,7 +769,7 @@ end
 # Headers
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, header::Documenter.AnchoredHeader, page, doc; kwargs...)
     anchor = header.anchor
-    id = string(Documenter.anchor_label(anchor))
+    id = sanitized_anchor_label(anchor)
     heading = first(node.children)
     println(io)
     print(io, "#"^(heading.element.level), " ")
@@ -760,6 +814,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     output = String(take!(iob))
     eachline = split(output, '\n')
     println.((io,), "> " .* eachline)
+    println(io) # newline after block quote, so that successive quotes don't merge
 end
 # Inline math
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.InlineMath, page, doc; kwargs...)

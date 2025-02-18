@@ -1,8 +1,9 @@
-# Getting started
+# Get Started
 
 ## Simple method
 
 You can simply add `using DocumenterVitepress` to your `make.jl` file, and replace `format = HTML(...)` in `makedocs` with:
+
 ```julia
 makedocs(...,
     format = MarkdownVitepress(
@@ -10,7 +11,18 @@ makedocs(...,
     )
 )
 ```
+
 and that should be it!
+
+::: details stop any vitepress session
+
+```julia
+# you might need to stop the Vitepress server if it's running before
+# updating or creating new files
+try run(`pkill -f vitepress`) catch end # [!code error]
+```
+
+:::
 
 The section [Advanced method](@ref) describes how to get more control over your Vitepress build.
 
@@ -27,13 +39,13 @@ Here are the tweaks to add:
 
 2. Within the `MarkdownVitepress` configuration of your `make.jl` file, pass the following two key word arguments and their values:
 
-  i. `md_output_path = "."`
+   i. `md_output_path = "."`
 
-  ii. `build_vitepress = false`
+   ii. `build_vitepress = false`
 
 3. Within the `makedocs` command within your `make.jl` file, pass the following key word argument:
 
-  i. `clean = false`
+   i. `clean = false`
 
 Then, to preview changes live, open two separate Julia instances both within the `docs` folder and activate the `docs` environment in both sessions.
 Within one session run `using LiveServer; servedocs(foldername="/path/to/your/docs/folder")` (this could be something like `servedocs(foldername="docs/")` or `servedocs(foldername=pwd())`).

@@ -1,6 +1,8 @@
 # DocumenterVitepress.jl
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl/stable/)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://luxdl.github.io/DocumenterVitepress.jl/dev/)
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FDocumenterVitepress&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/DocumenterVitepress)
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FDocumenterVitepress&query=total_requests&&label=Total%20Downloads)](https://juliapkgstats.com/pkg/DocumenterVitepress)
 [![CI Documenter](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml/badge.svg)](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml)
 
 <img src="https://luxdl.github.io/DocumenterVitepress.jl/stable/logo.png" align="right" style="padding-left:10px;" width="180"/>
@@ -22,7 +24,7 @@ pkg> add DocumenterVitepress
 
 To enable the backend:
 1. Import the package in `make.jl`,
-2. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so:
+2. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so, replacing e.g. `format = HTML(...)`:
 
 ```julia
 using Documenter
@@ -33,7 +35,9 @@ makedocs(;
 ```
 and enjoy the fruits of your labour!
 
-Or even better, start from scratch with a generated template.
+If you wish to fully customize your documentation with all of the capabilities of [Vitepress](https://vitepress.dev), 
+then you can use our template generator.  But be warned that you may have to update that template to keep pace with 
+DocumenterVitepress changes!
 
 > [!TIP]
 > To get a fully customizable build, run 
@@ -55,16 +59,9 @@ And keep an eye for custom domains.
 
 Because this is based on the Vitepress static site generator, you have to use NodeJS to view this site locally:
 
-## Install npm dependencies
-
-```shell
-docs> npm i
-```
-
-## run docs locally
-
-```shell
-docs> npm run docs:dev 
+```julia
+using DocumenterVitepress
+DocumenterVitepress.dev_docs()
 ```
 and edit your `make.jl` file to add `build_vitepress = false` as a keyword argument to the `MarkdownVitepress` config, to save time.  If you keep this running, perhaps in a separate Terminal window, it will automatically rebuild whenever you run `make.jl`.
 

@@ -48,3 +48,13 @@ MediaOutput{MIME"image/svg+xml"}("https://upload.wikimedia.org/wikipedia/commons
 ```@example mime-examples
 MediaOutput{MIME"image/gif"}(read(download("https://upload.wikimedia.org/wikipedia/commons/2/2c/Rotating_earth_%28large%29.gif")))
 ```
+
+```@example mime-examples
+HTML(raw"""
+<div style="width: 100px; height: 100px; background-color: black;"
+     onmousemove="let r = Math.round(event.offsetX / 100 * 255);
+                  let b = Math.round((100 - event.offsetY) / 100 * 255);
+                  this.style.backgroundColor = `rgb(${r}, 0, ${b})`;">
+</div>
+""")
+```

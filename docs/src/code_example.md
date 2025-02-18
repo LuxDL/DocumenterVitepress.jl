@@ -199,3 +199,20 @@ julia> 1 + 1
 2
 
 ```
+
+## @meta
+
+Supported meta tags:
+
+  - `CollapsedDocStrings`: works similar to Documenter.jl. If provided, the docstrings in
+    that page will be collapsed by default. Defaults to `false`. See the
+    [Internal API](@ref internal_api) page for how the docstrings are displayed when this
+    is set to `true`. Example usage:
+
+**Input**
+
+````
+```@meta
+CollapsedDocStrings = true
+```
+````

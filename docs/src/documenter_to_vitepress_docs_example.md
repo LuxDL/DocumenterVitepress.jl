@@ -82,6 +82,16 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
 
    :::
 
+::: details stop any vitepress session
+
+```julia
+# you might need to stop the Vitepress server if it's running before
+# updating or creating new files
+try run(`pkill -f vitepress`) catch end # [!code error]
+```
+
+:::
+
 2. Next, to build new docs from docs/src,
    ```sh
    $ cd docs

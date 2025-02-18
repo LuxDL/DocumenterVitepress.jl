@@ -23,7 +23,7 @@ bib = CitationBibliography(
     joinpath(@__DIR__, "src", "refs.bib");
     style=:numeric  # default
 )
-
+# dev local
 
 makedocs(; 
     sitename = "DocumenterVitepress", 
@@ -40,19 +40,20 @@ makedocs(;
     source = "src",
     build = "build",
     pages = [
-        "Home" => "index.md",
-        "Getting started" => "getting_started.md",
-        "Examples" => [
+        "Manual" => [
+            "Get Started" => "get_started.md",
+            "Updating to DocumenterVitepress" => "documenter_to_vitepress_docs_example.md",
             "Code" => "code_example.md",
             "Markdown" => "markdown-examples.md",
             "MIME output" => "mime_examples.md",
-            "Updating to DocumenterVitepress" => "documenter_to_vitepress_docs_example.md",
             "DocumenterCitations integration" => "citations.md",
             "CSS Styling" => "style_css.md",
-
+            "Authors' badge" => "author_badge.md",
+            "GitHub Icon with Stars" => "repo_stars.md",
         ],
         "Developers' documentation" => [
             "The rendering process" => "render_pipeline.md",
+            "Internal API" => "internal_api.md",
         ],
         "api.md",
     ],
