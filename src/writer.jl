@@ -338,10 +338,18 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     end
 end
 
+function sanitized_anchor_label(anchor)
+    # vitepress doesn't like special markdown characters in the id slug, so we just remove them.
+    # it seems unlikely to get conflicts with other slugs this way, and escaping the characters with
+    # backslashes did not make the slugs work correctly in vitepress, either
+    label = Documenter.anchor_label(anchor)
+    return replace(label, r"[\[\]\(\)*]" => "")
+end
+
+
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docs::Documenter.DocsNode, page, doc; kwargs...)
-    # @infiltrate
     open_txt = get(page.globals.meta, :CollapsedDocStrings, false) ? "" : "open"
-    anchor_id = Documenter.anchor_label(docs.anchor)
+    anchor_id = sanitized_anchor_label(docs.anchor)
     # Docstring header based on the name of the binding and it's category.
     _badge_text = """<Badge type="info" class="jlObjectType jl$(Documenter.doccat(docs.object))" text="$(Documenter.doccat(docs.object))" />"""
     print(io ,"""<details class='jldocstring custom-block' $(open_txt)>
@@ -761,7 +769,7 @@ end
 # Headers
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, header::Documenter.AnchoredHeader, page, doc; kwargs...)
     anchor = header.anchor
-    id = string(Documenter.anchor_label(anchor))
+    id = sanitized_anchor_label(anchor)
     heading = first(node.children)
     println(io)
     print(io, "#"^(heading.element.level), " ")
