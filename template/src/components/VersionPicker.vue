@@ -6,7 +6,6 @@ import { useData } from 'vitepress'
 import VPNavBarMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavBarMenuGroup.vue'
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
 
-// Extend the global Window interface to include DOC_VERSIONS and DOCUMENTER_CURRENT_VERSION
 declare global {
   interface Window {
     DOC_VERSIONS?: string[];
@@ -18,8 +17,8 @@ const props = defineProps<{
   screenMenu?: boolean
 }>()
 
-const versions = ref<Array<{ text: string, link: string }>>([]);
-const currentVersion = ref('Versions');
+const versions = ref<Array<{ text: string, link: string, class?: string }>>([]);
+const currentVersion = ref(window.DOCUMENTER_CURRENT_VERSION || 'Versions');
 const isClient = ref(false);
 const { site } = useData()
 
@@ -30,14 +29,11 @@ const isLocalBuild = () => {
 const getBaseRepository = () => {
   if (typeof window === 'undefined') return ''; // Handle server-side rendering (SSR)
   const { origin, pathname } = window.location;
-  // Check if it's a GitHub Pages (or similar) setup
   if (origin.includes('github.io')) {
-    // Extract the first part of the path as the repository name
     const pathParts = pathname.split('/').filter(Boolean);
     const baseRepo = pathParts.length > 0 ? `/${pathParts[0]}` : '';
     return `${origin}${baseRepo}`;
   } else {
-    // For custom domains, use just the origin (e.g., https://docs.makie.org)
     return origin;
   }
 };
@@ -54,7 +50,6 @@ const waitForScriptsToLoad = () => {
         resolve(true);
       }
     }, 100);
-    // Timeout after 5 seconds
     setTimeout(() => {
       clearInterval(checkInterval);
       resolve(false);
@@ -63,50 +58,48 @@ const waitForScriptsToLoad = () => {
 };
 
 const loadVersions = async () => {
-  if (typeof window === 'undefined') return; // Guard for SSR
+  if (typeof window === 'undefined') return;
 
   try {
     if (isLocalBuild()) {
-      // Handle the local build scenario directly
       const fallbackVersions = ['dev'];
-      versions.value = fallbackVersions.map(v => ({
-        text: v,
-        link: '/'
+      versions.value = fallbackVersions.map(v => ({ 
+        text: v, 
+        link: '/',
+        class: v === currentVersion.value ? 'version-current' : ''
       }));
       currentVersion.value = 'dev';
     } else {
-      // For non-local builds, wait for scripts to load
       const scriptsLoaded = await waitForScriptsToLoad();
-      const getBaseRepositoryPath = computed(() => {
-        return getBaseRepository();
-      });
+      const getBaseRepositoryPath = computed(() => getBaseRepository());
 
       if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
-        versions.value = window.DOC_VERSIONS.map((v: string) => ({
+        const allVersions = new Set([...window.DOC_VERSIONS, window.DOCUMENTER_CURRENT_VERSION]);
+        
+        versions.value = Array.from(allVersions).map((v: string) => ({
           text: v,
-          link: `${getBaseRepositoryPath.value}/${v}/`
+          link: `${getBaseRepositoryPath.value}/${v}/`,
+          class: v === window.DOCUMENTER_CURRENT_VERSION ? 'version-current' : ''
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
-        // Fallback logic if scripts fail to load or are not available
         const fallbackVersions = ['dev'];
         versions.value = fallbackVersions.map(v => ({
           text: v,
-          link: `${getBaseRepositoryPath.value}/${v}/`
+          link: `${getBaseRepositoryPath.value}/${v}/`,
+          class: v === currentVersion.value ? 'version-current' : ''
         }));
         currentVersion.value = 'dev';
       }
     }
   } catch (error) {
     console.warn('Error loading versions:', error);
-    // Use fallback logic in case of an error
     const fallbackVersions = ['dev'];
-    const getBaseRepositoryPath = computed(() => {
-        return getBaseRepository();
-      });
+    const getBaseRepositoryPath = computed(() => getBaseRepository());
     versions.value = fallbackVersions.map(v => ({
       text: v,
-      link: `${getBaseRepositoryPath.value}/${v}/`
+      link: `${getBaseRepositoryPath.value}/${v}/`,
+      class: v === currentVersion.value ? 'version-current' : ''
     }));
     currentVersion.value = 'dev';
   }
@@ -120,13 +113,24 @@ onMounted(loadVersions);
   <template v-if="isClient">
     <VPNavBarMenuGroup
       v-if="!screenMenu && versions.length > 0"
-      :item="{ text: currentVersion, items: versions }"
+      :item="{ 
+        text: 'Version', 
+        items: versions.map(v => ({ 
+          text: v.text, 
+          link: v.link, 
+          class: v.text === currentVersion.value ? 'version-current' : '' 
+        })) 
+      }"
       class="VPVersionPicker"
     />
     <VPNavScreenMenuGroup
       v-else-if="screenMenu && versions.length > 0"
-      :text="currentVersion"
-      :items="versions"
+      :text="'Version'"
+      :items="versions.map(v => ({ 
+        text: v.text, 
+        link: v.link, 
+        class: v.text === currentVersion.value ? 'version-current' : '' 
+      }))"
       class="VPVersionPicker"
     />
   </template>
@@ -138,5 +142,14 @@ onMounted(loadVersions);
 }
 .VPVersionPicker:hover :deep(button .text) {
   color: var(--vp-c-text-2) !important;
+}
+.VPVersionPicker :deep(.version-current),
+.VPVersionPicker :deep(.version-current .text) {
+  font-weight: 600;
+  color: var(--vp-c-brand-1) !important;
+}
+.VPVersionPicker:hover :deep(.version-current),
+.VPVersionPicker:hover :deep(.version-current .text) {
+  color: var(--vp-c-brand-1) !important;
 }
 </style>
