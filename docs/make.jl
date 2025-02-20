@@ -45,7 +45,7 @@ makedocs(;
             "Updating to DocumenterVitepress" => "documenter_to_vitepress_docs_example.md",
             "Code" => "code_example.md",
             "Markdown" => "markdown-examples.md",
-            "MIME output" => "mime_examples/mime-examples.md",
+            "MIME output" => "mime_examples/mime_examples.md",
             "DocumenterCitations integration" => "citations.md",
             "CSS Styling" => "style_css.md",
             "Authors' badge" => "author_badge.md",
