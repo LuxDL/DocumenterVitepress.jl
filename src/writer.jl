@@ -990,12 +990,17 @@ end
 # ### Documenter.jl page links
 # We figure out the correct path to the page, and render it as a link in Markdown.
 # TODO: generate a `Markdown.Link` object?  But that seems like overkill...
+function resolve_relative_path(from_page::String, to_page::Documenter.Page, doc)
+    to_page_path = to_page.build
+    relative_path = relpath(to_page_path, dirname(from_page))
+    return relative_path
+end
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc; kwargs...)
     # Main.@infiltrate
     path = if !isempty(link.fragment)
         "/" * replace(Documenter.pagekey(doc, link.page), ".md" => "") * "#" * string(link.fragment)
     else
-        Documenter.pagekey(doc, link.page)
+        resolve_relative_path(page.build, link.page, doc)
     end
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
@@ -1004,8 +1009,12 @@ end
 
 # Documenter.jl local links
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.LocalLink, page, doc; kwargs...)
-    # Main.@infiltrate
-    path = isempty(link.fragment) ? link.path : "$(Documenter.pagekey(doc, page))#$(link.fragment)"
+    path = if isempty(link.fragment)
+        link.path
+    else
+        relative_path = resolve_relative_path(page.build, page.build, doc)
+        replace(relative_path, ".md" => "") * "#" * link.fragment
+    end
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")

@@ -195,3 +195,4 @@ docs $ npm run docs:dev
 
 This will deploy your documentation locally on a webserver.  See [here](https://vitepress.dev/guide/getting-started#up-and-running) to know more.
 
+Go back [home](../index.md) test.
