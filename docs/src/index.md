@@ -69,5 +69,3 @@ For more customizations, you can copy over some files like `src/.vitepress/theme
 
 </div>
 ````
-
-Add some links here in normal markdown, to [Lux](https://lux.csail.mit.edu/stable/) and to an internal reference [get started](./manual/get_started.md) and to the [tabs](./manual/markdown-examples#tabs) section.

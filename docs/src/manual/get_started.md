@@ -195,4 +195,4 @@ docs $ npm run docs:dev
 
 This will deploy your documentation locally on a webserver.  See [here](https://vitepress.dev/guide/getting-started#up-and-running) to know more.
 
-Go back [home](../index.md) test.
+If you want to know more about the rendering, go to the [rendering process](../devs/render_pipeline.md) section. For ways of using `markdown`, visit the [*tabs*](./manual/markdown-examples#tabs) or the [*Code*](./code_example.md) sections for examples.
