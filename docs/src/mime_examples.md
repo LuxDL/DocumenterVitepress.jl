@@ -20,9 +20,18 @@ Base.show(io, ::MimeType, media::MediaOutput{MimeType}) where MimeType = write(i
 # MediaOutput{MIME"text/plain"}("Hello there!")
 ```
 
+PNG images that carry pixel density metadata will be shown at the correct size. This is a plot rendered at high pixel density which does not carry dpi metadata.
+
 ```@example mime-examples
 using DocumenterVitepress
-MediaOutput{MIME"image/png"}(read(joinpath(pathof(DocumenterVitepress) |> dirname |> dirname, "docs", "src", "assets", "logo.png")))
+MediaOutput{MIME"image/png"}(read(joinpath(pathof(DocumenterVitepress) |> dirname |> dirname, "docs", "src", "assets", "plot_without_dpi.png")))
+```
+
+And this is the same plot but with dpi metadata embedded. DocumenterVitepress annotates the corrected size in its Markdown output.
+
+```@example mime-examples
+using DocumenterVitepress
+MediaOutput{MIME"image/png"}(read(joinpath(pathof(DocumenterVitepress) |> dirname |> dirname, "docs", "src", "assets", "plot_with_dpi.png")))
 ```
 
 ```@example mime-examples
