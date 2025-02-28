@@ -52,7 +52,7 @@ pre, code {
   --vp-c-brand-dark: #535bf2;
   --vp-c-brand-darker: #454ce1;
   --vp-c-brand-dimm: #212425;
-  --vp-tip-bg: rgb(224, 223, 223);
+  --vp-tip-bg: rgb(254, 254, 254);
   /* Greens */
   --vp-dark-green: #155f3e; /* Main accent green */
   --vp-dark-green-dark: #2b855c;
@@ -92,7 +92,7 @@ pre, code {
 }
 
 :root.dark {
-  --vp-source-bg: var(--vp-tip-bg);
+  --vp-source-bg: rgb(224, 223, 223);
   /* custom tip */
   --vp-custom-block-tip-border: var(--vp-dark-green-dark);
   --vp-custom-block-tip-text: var(--vp-dark-subtext);
