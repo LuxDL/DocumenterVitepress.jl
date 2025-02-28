@@ -213,4 +213,5 @@ mjx-container > svg {
 }
 .jldocstring.custom-block summary a {
   pointer-events: none;
+  text-decoration: none;
 }
