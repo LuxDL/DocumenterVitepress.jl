@@ -374,10 +374,7 @@ function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.
         if url !== nothing
             # This is how Documenter does it:
             # push!(ret.nodes, a[".docs-sourcelink", :target=>"_blank", :href=>url]("source"))
-            # so clearly we should be inserting some form of HTML tag here, 
-            # and defining its rendering in CSS?
-            # TODO: switch to Documenter style here
-            println(io, "\n", "[source]($url)", "\n")
+            println(io, "\n", """<Badge type="info" class="source-link" text="source"><a href="$url" target="_blank" rel="noreferrer">source</a></Badge>""", "\n")
         end
     end
 end
