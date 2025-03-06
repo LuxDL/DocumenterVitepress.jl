@@ -80,9 +80,18 @@ This function takes the filename `file`, and returns a file path in the `mdfolde
 
 """
 function docpath(file, builddir, mdfolder)
-    path = relpath(file, builddir)
-    filename = mdext(path)
-    return joinpath(builddir, mdfolder, filename) 
+    # For Windows, handle the build prefix and get the relative part
+    if Sys.iswindows() && startswith(file, "build\\")
+        # Extract everything after "build\"
+        relative_part = split(file, "build\\")[2]
+        # Join with target directory structure
+        return normpath(joinpath(builddir, mdfolder, relative_part))
+    else
+        # Unix systems or non-build prefix
+        path = relpath(file, builddir)
+        filename = mdext(path)
+        return joinpath(builddir, mdfolder, filename)
+    end
 end
 
 """
@@ -190,6 +199,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             for file in files[favicon_files]
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
                 file_destpath = joinpath(builddir, settings.md_output_path, "public", file_relpath)
+                dest_dir = dirname(file_destpath)
+                mkpath(dest_dir) # Ensure destination directory exists
                 if normpath(file) != normpath(file_destpath)
                     cp(file, file_destpath; force = true)
                 end
@@ -211,8 +222,10 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     end
 
     mkpath(joinpath(builddir, "final_site"))
-    if isfile(joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts"))
-        touch(joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts"))
+    config_path = joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts")
+    if isfile(config_path)
+        mkpath(dirname(config_path)) # Ensure .vitepress directory exists
+        touch(config_path)
     end
 
     # Now that the Markdown files are written, we can build the Vitepress site if required.
