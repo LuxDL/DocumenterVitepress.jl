@@ -241,19 +241,31 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
 
             cd(dirname(builddir)) do
-                # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
-                # when interpolating the `npm` command.  
-                # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
-                # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
+                # Use a platform-independent way to handle paths
+                package_json_path = joinpath(dirname(builddir), "package.json")
+                template_path = joinpath(dirname(@__DIR__), "template", "package.json")
+                build_output_path = joinpath(builddir, settings.md_output_path)
+                
                 node(; adjust_PATH = true, adjust_LIBPATH = true) do _
                     if settings.install_npm || should_remove_package_json
-                        if !isfile(joinpath(dirname(builddir), "package.json"))
-                            cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
+                        if !isfile(package_json_path)
+                            cp(template_path, package_json_path)
                             should_remove_package_json = true
+                        end 
+                        # For Windows specifically, try different command construction
+                        if Sys.iswindows()
+                            # Try with cmd /c to explicitly invoke Windows command processor
+                            run(`cmd /c "$(npm)" install`)
+                        else
+                            run(`$(npm) install`)
                         end
-                        run(`$(npm) install`)
                     end
-                    run(`$(npm) run env -- vitepress build $(joinpath(builddir, settings.md_output_path))`)
+                    # Similarly for the vitepress build command
+                    if Sys.iswindows()
+                        run(`cmd /c "$(npm)" exec vitepress build "$(build_output_path)"`)
+                    else
+                        run(`$(npm) run env -- vitepress build $(build_output_path)`)
+                    end
                 end
             end
         catch e
