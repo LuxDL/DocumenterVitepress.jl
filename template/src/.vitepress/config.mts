@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
+import path from 'path'
 
 function getBaseRepository(base: string): string {
   if (!base || base === '/') return '/';
@@ -38,8 +39,13 @@ export default defineConfig({
     // ['script', {src: '/versions.js'], for custom domains, I guess if deploy_url is available.
     ['script', {src: `${baseTemp.base}siteinfo.js`}]
   ],
-  ignoreDeadLinks: true,
+  
   vite: {
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '../components')
+      }
+    },
     optimizeDeps: {
       exclude: [ 
         '@nolebase/vitepress-plugin-enhanced-readabilities/client',

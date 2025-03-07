@@ -8,9 +8,9 @@ import {
   NolebaseEnhancedReadabilitiesScreenMenu, 
 } from '@nolebase/vitepress-plugin-enhanced-readabilities/client'
 
-import VersionPicker from "../../components/VersionPicker.vue"
-import AuthorBadge from '../../components/AuthorBadge.vue'
-import Authors from '../../components/Authors.vue'
+import VersionPicker from "@/VersionPicker.vue"
+import AuthorBadge from '@/AuthorBadge.vue'
+import Authors from '@/Authors.vue'
 
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
 

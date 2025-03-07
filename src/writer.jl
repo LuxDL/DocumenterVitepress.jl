@@ -80,9 +80,18 @@ This function takes the filename `file`, and returns a file path in the `mdfolde
 
 """
 function docpath(file, builddir, mdfolder)
-    path = relpath(file, builddir)
-    filename = mdext(path)
-    return joinpath(builddir, mdfolder, filename) 
+    # For Windows, handle the build prefix and get the relative part
+    if Sys.iswindows() && startswith(file, "build\\")
+        # Extract everything after "build\"
+        relative_part = split(file, "build\\")[2]
+        # Join with target directory structure
+        return normpath(joinpath(builddir, mdfolder, relative_part))
+    else
+        # Unix systems or non-build prefix
+        path = relpath(file, builddir)
+        filename = mdext(path)
+        return joinpath(builddir, mdfolder, filename)
+    end
 end
 
 """
@@ -190,6 +199,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             for file in files[favicon_files]
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
                 file_destpath = joinpath(builddir, settings.md_output_path, "public", file_relpath)
+                dest_dir = dirname(file_destpath)
+                mkpath(dest_dir) # Ensure destination directory exists
                 if normpath(file) != normpath(file_destpath)
                     cp(file, file_destpath; force = true)
                 end
@@ -211,8 +222,10 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     end
 
     mkpath(joinpath(builddir, "final_site"))
-    if isfile(joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts"))
-        touch(joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts"))
+    config_path = joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts")
+    if isfile(config_path)
+        mkpath(dirname(config_path)) # Ensure .vitepress directory exists
+        touch(config_path)
     end
 
     # Now that the Markdown files are written, we can build the Vitepress site if required.
@@ -232,16 +245,34 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 # when interpolating the `npm` command.  
                 # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
                 # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
-                node(; adjust_PATH = true, adjust_LIBPATH = true) do _
-                    if settings.install_npm || should_remove_package_json
-                        if !isfile(joinpath(dirname(builddir), "package.json"))
-                            cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                            should_remove_package_json = true
-                        end
-                        run(`$(npm) install`)
+
+                package_json_path = joinpath(dirname(builddir), "package.json")
+                template_path = joinpath(dirname(@__DIR__), "template", "package.json")
+                build_output_path = joinpath(builddir, settings.md_output_path)
+                
+                if settings.install_npm || should_remove_package_json
+                    if !isfile(package_json_path)
+                        cp(template_path, package_json_path)
+                        should_remove_package_json = true
                     end
-                    run(`$(npm) run env -- vitepress build $(joinpath(builddir, settings.md_output_path))`)
-                end
+                    # wrap in `node(...) do _`
+                    node(; adjust_PATH = true, adjust_LIBPATH = true) do _
+                        # On Windows systems
+                        if Sys.iswindows()
+                            # system_npm = "C:\\Program Files\\nodejs\\npm.cmd"
+                            @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
+                            @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
+                            # install dependecies
+                            run(`cmd /c $npm install`)
+                            # run(`cmd /c $npm exec vitepress build $build_output_path`) # activate once a new > NodeJS_20_jll artifact is available.
+                            # Debugging alternative
+                            # run(`cmd /c "set DEBUG=vitepress:* & $npm exec vitepress build $build_output_path"`)
+                        else
+                            run(`$(npm) install`)
+                            run(`$(npm) run env -- vitepress build $(build_output_path)`)
+                        end
+                    end
+                end                
             end
         catch e
             rethrow(e)
