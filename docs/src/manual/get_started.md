@@ -1,13 +1,5 @@
 # Get Started
 
-```@contents
-Pages = [
-    "code_example.md",
-    "style_css.md",
-    ]
-Depth = 1
-```
-
 ## Simple method
 
 You can simply add `using DocumenterVitepress` to your `make.jl` file, and replace `format = HTML(...)` in `makedocs` with:

@@ -426,14 +426,48 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, i
     return println(io)
 end
 
+function starts_with_at(anchor_frag)
+    starts_with_at = startswith(anchor_frag, "@")
+    if starts_with_at
+        # Remove the @ symbol
+        anchor_frag = anchor_frag[2:end]
+    end
+    return anchor_frag
+end
+
+function vitepress_anchor(anchor::String)
+    # Remove the leading # if it exists
+    anchor_frag = startswith(anchor, "#") ? anchor[2:end] : anchor
+    anchor_frag_at = starts_with_at(anchor_frag)
+    # Check if the anchor is a single word (no special characters besides dots)
+    if !occursin(r"[-_,:;!?@#$%^&*()\s]", anchor_frag_at)
+        # Single words get lowercased first
+        lowercased = lowercase(anchor_frag_at)
+        # Then transform all dots to hyphens
+        transformed = replace(lowercased, "." => "-")
+        return "#" * transformed
+    else
+        return "#" * anchor_frag
+    end
+end
+
 function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, contents::Documenter.ContentsNode, page, doc; kwargs...)
+    current_path = nothing
     for (count, path, anchor) in contents.elements
         path = mdext(path)
         header = anchor.object
-        url = string(path, Documenter.anchor_fragment(anchor))
-        link = Markdown.Link(anchor.id, replace(url, " " => "%20"))
+        anchor_frag = Documenter.anchor_fragment(anchor)
+        anchor_frag = vitepress_anchor(anchor_frag)
+        url = replace(string(path, anchor_frag), " " => "%20")
+        anchor_id = replace(anchor.id, "-" => " ")
+        link = Markdown.Link(anchor_id, url)
         level = header.level
-        @show level
+        # Reset level to 1 if this is a new path
+        if path != current_path
+            level = 1
+            current_path = path
+        end
+
         print(io, "    "^(level - 1), "- ")
         linkfix = ".md#"
         println(io, replace(Markdown.plaininline(link), linkfix => "#"))
