@@ -432,7 +432,8 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
         header = anchor.object
         url = string(path, Documenter.anchor_fragment(anchor))
         link = Markdown.Link(anchor.id, replace(url, " " => "%20"))
-        level = anchor.order
+        level = header.level
+        @show level
         print(io, "    "^(level - 1), "- ")
         linkfix = ".md#"
         println(io, replace(Markdown.plaininline(link), linkfix => "#"))
