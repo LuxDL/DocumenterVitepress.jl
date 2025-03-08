@@ -216,3 +216,50 @@ Supported meta tags:
 CollapsedDocStrings = true
 ```
 ````
+
+## @contents
+
+Use this to create a list of content.
+
+**Input**
+````
+```@contents
+Pages = [
+    "get_started.md",
+    "documenter_to_vitepress_docs_example.md",
+    "style_css.md",
+    "code_example.md",
+    "markdown-examples.md",
+    "mime_examples.md",
+    "citations.md",
+    "style_css.md",
+    "author_badge.md",
+    "repo_stars.md",
+    "../devs/render_pipeline.md",
+    "../devs/internal_api.md",
+    "../api.md"
+    ]
+Depth = 3
+```
+````
+
+**Output**
+
+```@contents
+Pages = [
+    "get_started.md",
+    "documenter_to_vitepress_docs_example.md",
+    "style_css.md",
+    "code_example.md",
+    "markdown-examples.md",
+    "mime_examples.md",
+    "citations.md",
+    "style_css.md",
+    "author_badge.md",
+    "repo_stars.md",
+    "../devs/render_pipeline.md",
+    "../devs/internal_api.md",
+    "../api.md"
+    ]
+Depth = 3
+```
