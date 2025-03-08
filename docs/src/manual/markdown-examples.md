@@ -476,6 +476,23 @@ You can also use fenced code blocks with the `math` tag for equations!
 \nabla^2 \Phi = \rho
 ```
 
+## [Latex Symbols $\Lambda_\theta$ and $\bf Z$](@id latex_symbols_in_headings)
+
+::: tip
+
+If you want latex symbols in headings better use `Documenter's ID interface` for proper rendering.
+
+:::
+
+**Input**
+
+````
+## [Latex Symbols $\Lambda_\theta$ and $\bf Z$](@id latex_symbols_in_headings)
+````
+
+The previous heading is the output from this input. Also, note that the `@id`'s name would show up in the `@contents` listing.
+
+
 ## Footnotes (citation-style)
 
 **Input**
