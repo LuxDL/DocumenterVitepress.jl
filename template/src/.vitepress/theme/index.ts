@@ -15,7 +15,8 @@ import Authors from '@/Authors.vue'
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
 
 import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
-import './style.css'
+import './style.css' // You could setup your own, or else a default will be copied.
+import './docstrings.css' // You could setup your own, or else a default will be copied.
 
 export const Theme: ThemeConfig = {
   extends: DefaultTheme,
