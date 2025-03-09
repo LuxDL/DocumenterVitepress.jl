@@ -37,18 +37,24 @@ function modify_config_file(doc, settings, deploy_decision)
     vitepress_config_file = joinpath(sourcedir, ".vitepress", "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
     if !isfile(vitepress_config_file)
         mkpath(splitdir(vitepress_config_file)[1])
-        @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file.  Substituting in the default file."
-        if !isfile(joinpath(source_vitepress_dir, "theme", "index.ts")) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
-            write(joinpath(build_vitepress_dir, "theme", "index.ts"), read(joinpath(template_vitepress_dir, "theme", "index.ts"), String))
-        end
-        if !isfile(joinpath(source_vitepress_dir, "theme", "style.css")) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
-            write(joinpath(build_vitepress_dir, "theme", "style.css"), read(joinpath(template_vitepress_dir, "theme", "style.css"), String))
-        end
+        @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file. Substituting in the default file."
         # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
         # which may not be writable.  However, `write` creates a new file for which Julia must have write permissions.
         write(joinpath(build_vitepress_dir, "config.mts"), read(joinpath(template_vitepress_dir, "config.mts"), String))
-        # We don't need the below line since there are no default components, though we might want to add them in the future!
-        # cp(joinpath(dirname(@__DIR__), "template", "src", "components"), joinpath(doc.user.build, settings.md_output_path, "components"))
+    end
+
+    # ? theme / check for index.ts, style.css and docstrings.css files
+    if !isfile(joinpath(source_vitepress_dir, "theme", "index.ts"))
+        @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/index.ts` file. Substituting in the default file."
+        write(joinpath(build_vitepress_dir, "theme", "index.ts"), read(joinpath(template_vitepress_dir, "theme", "index.ts"), String))
+    end
+    if !isfile(joinpath(source_vitepress_dir, "theme", "style.css"))
+        @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/style.css` file. Substituting in the default file."
+        write(joinpath(build_vitepress_dir, "theme", "style.css"), read(joinpath(template_vitepress_dir, "theme", "style.css"), String))
+    end
+    if !isfile(joinpath(source_vitepress_dir, "theme", "docstrings.css"))
+        @warn "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file."
+        write(joinpath(build_vitepress_dir, "theme", "docstrings.css"), read(joinpath(template_vitepress_dir, "theme", "docstrings.css"), String))
     end
     # reset the path to the variable that exists
     vitepress_config_file = joinpath(build_vitepress_dir, "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
