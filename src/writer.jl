@@ -965,6 +965,10 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         println.((io,), eachline)
     end
 end
+# HTMLInline
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, html::MarkdownAST.HTMLInline, page, doc; kwargs...)
+    println(io, html.html)
+end
 # Tables
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.TableCell, page, doc; kwargs...)
     println("Encountered table cell!")
