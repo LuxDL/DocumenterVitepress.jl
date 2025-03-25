@@ -13,6 +13,8 @@ import VersionPicker from "@/VersionPicker.vue"
 import StarUs from '@/StarUs.vue'
 import AuthorBadge from '@/AuthorBadge.vue'
 import Authors from '@/Authors.vue'
+import DynamicContent from '@/DynamicContent.vue'
+
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
 
 import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
@@ -37,6 +39,7 @@ export const Theme: ThemeConfig = {
     app.component('VersionPicker', VersionPicker);
     app.component('AuthorBadge', AuthorBadge)
     app.component('Authors', Authors)
+    app.component('DynamicContent', DynamicContent)
   }
 }
 export default Theme

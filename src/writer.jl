@@ -592,23 +592,24 @@ end
 function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kwargs...)
     function escapehtml(io, text::AbstractString)
         for char in text
-            char === '<' ? write(io, "&lt;") :
-            char === '>' ? write(io, "&gt;") :
-            char === '&' ? write(io, "&amp;") :
-            char === '\'' ? write(io, "&#39;") :
-            char === '`' ? write(io, "\\`") :
-            char === '\n' ? write(io, "&#10;") :
-            char === '"' ? write(io, "&quot;") :
-            char === '$' ? write(io, "\\\$") : write(io, char)
+            # char === '<' ? write(io, "&lt;") :
+            # char === '>' ? write(io, "&gt;") :
+            # char === '&' ? write(io, "&amp;") :
+            # char === '\'' ? write(io, "&#39;") :
+            # char === '`' ? write(io, "\\`") :
+            char === '\n' ? write(io, "") :
+            char === '"' ? write(io, "\\'") :
+            # char === '$' ? write(io, "\\\$") : write(io, char)
+            write(io, char)
         end
         return
     end
     # v-html takes a javascript expression that results in a string of html, but this
     # has to be parsed within the context of an html attribute, so we escape all the offending
     # characters. vitepress will not further modify this html as is usually intended with display values.
-    print(io, "<div v-html=\"`")
+    print(io, "<DynamicContent :content=\"'")
     escapehtml(io, repr(mime, element))
-    println(io, "`\"></div>")
+    println(io, "'\" />")
 end
 
 function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; md_output_path, kwargs...)
