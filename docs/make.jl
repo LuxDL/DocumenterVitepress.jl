@@ -66,7 +66,7 @@ makedocs(;
 for dir in readdir("build", join = true)
     isdir(dir) || continue
     deploydocs(; 
-        repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
+        repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
         target = dir, # each version built has its own dir
         branch = "gh-pages",
         devbranch = "master",
