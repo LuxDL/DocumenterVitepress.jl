@@ -23,7 +23,7 @@ Currently, this function replaces the following config items:
 
 Simply add more elements to the `replacers` array within this function.
 """
-function modify_config_file(doc, settings, deploy_decision)
+function modify_config_file(doc, settings, deploy_decision, folder)
 
     # Main.@infiltrate
     # Read in the config file,
@@ -71,7 +71,11 @@ function modify_config_file(doc, settings, deploy_decision)
 
     # So, after building the Markdown, we need to modify the config file to reflect the
     # correct base URL, and then build the VitePress site.
-    folder = deploy_decision.subfolder
+
+    # We don't do this anymore because we build multiple subfolder versions manually
+    # because vitepress isn't relocatable
+    # folder = deploy_decision.subfolder
+
     deploy_relpath = "$(folder)$(isempty(folder) ? "" : "/")"
     deploy_abspath = if isnothing(settings.deploy_url)
         "/" * splitpath(settings.repo)[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
@@ -86,7 +90,7 @@ function modify_config_file(doc, settings, deploy_decision)
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
 
     # # Vitepress output path
-    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../final_site'")
+    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../final_sites/$(folder)'")
     # # Vitepress navbar and sidebar
 
     provided_page_list = doc.user.pages

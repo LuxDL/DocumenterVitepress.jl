@@ -60,11 +60,17 @@ makedocs(;
     plugins = [bib,],
 )
 
-
-deploydocs(; 
-    repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
-    target = "build", # this is where Vitepress stores its output
-    branch = "gh-pages",
-    devbranch = "master",
-    push_preview = true
-)
+# if we actually deploy then the builds will have moved from final_sites into build.
+# we could also deploy all versions at once but `deploydocs` is written for just one
+# folder, so let's loop for now
+for dir in readdir("build", join = true)
+    isdir(dir) || continue
+    deploydocs(; 
+        repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
+        target = dir, # each version built has its own dir
+        branch = "gh-pages",
+        devbranch = "master",
+        push_preview = true,
+        versions = nothing, # we handle this ourselves using the multiple folders
+    )
+end
