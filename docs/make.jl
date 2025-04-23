@@ -63,7 +63,7 @@ makedocs(;
 # if we actually deploy then the builds will have moved from final_sites into build.
 # we could also deploy all versions at once but `deploydocs` is written for just one
 # folder, so let's loop for now
-for dir in readdir("build", join = true)
+for dir in readdir(joinpath(@__DIR__, "build"), join = true)
     isdir(dir) || continue
     deploydocs(; 
         repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
