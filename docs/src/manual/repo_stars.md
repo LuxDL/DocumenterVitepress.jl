@@ -31,20 +31,34 @@ And make sure you have the following highlighted elements:
 ```ts [index.ts]
 // .vitepress/theme/index.ts
 import { h } from 'vue'
-import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
-import VersionPicker from "../../components/VersionPicker.vue"
-import StarUs from '../../components/StarUs.vue' // [!code focus]
-import AuthorBadge from '../../components/AuthorBadge.vue'
-import Authors from '../../components/Authors.vue'
-import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
-import './style.css'
+import type { Theme as ThemeConfig } from 'vitepress'
 
-export default {
+import { 
+  NolebaseEnhancedReadabilitiesMenu, 
+  NolebaseEnhancedReadabilitiesScreenMenu, 
+} from '@nolebase/vitepress-plugin-enhanced-readabilities/client'
+
+import VersionPicker from "@/components/VersionPicker.vue"
+import StarUs from '@/components/StarUs.vue' // [!code focus]
+import AuthorBadge from '@/components/AuthorBadge.vue'
+import Authors from '@/components/Authors.vue'
+import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
+
+import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
+import './style.css'
+import './docstrings.css'
+
+export const Theme: ThemeConfig = {
   extends: DefaultTheme,
   Layout() {
     return h(DefaultTheme.Layout, null, {
-      'nav-bar-content-after': () => h(StarUs), // [!code focus]
+      'nav-bar-content-after': () => [
+        h(StarUs), // [!code focus]
+        h(NolebaseEnhancedReadabilitiesMenu), // Enhanced Readabilities menu
+      ],
+      // A enhanced readabilities menu for narrower screens (usually smaller than iPad Mini)
+      'nav-screen-content-after': () => h(NolebaseEnhancedReadabilitiesScreenMenu),
     })
   },
   enhanceApp({ app, router, siteData }) {
@@ -53,14 +67,16 @@ export default {
     app.component('AuthorBadge', AuthorBadge)
     app.component('Authors', Authors)
   }
-} satisfies Theme
+}
+export default Theme
 ```
 
 ```json [package.json]
 {
   "devDependencies": {
+    "@nolebase/vitepress-plugin-enhanced-readabilities": "^2.15.0",
     "@types/d3-format": "^3.0.4", // [!code focus]
-    "@types/node": "^22.10.5", // [!code focus]
+    "@types/node": "^22.13.9", // [!code focus]
     "markdown-it": "^14.1.0",
     "markdown-it-mathjax3": "^4.3.2",
     "vitepress": "^1.5.0",
@@ -76,6 +92,45 @@ export default {
     "markdown-it-footnote": "^4.0.0"
   }
 }
+
+```
+
+:::
+
+Please see that your `config.mts` file now also includes:
+
+::: warning
+
+```ts [config.mts]
+import path from 'path'
+
+export default defineConfig({
+vite: {
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '../components')
+      }
+    },
+    build: {
+      assetsInlineLimit: 0, // so we can tell whether we have created inlined images or not, we don't let vite inline them
+    },
+    optimizeDeps: {
+      exclude: [ 
+        '@nolebase/vitepress-plugin-enhanced-readabilities/client',
+        'vitepress',
+        '@nolebase/ui',
+      ], 
+    }, 
+    ssr: { 
+      noExternal: [ 
+        // If there are other packages that need to be processed by Vite, you can add them here.
+        '@nolebase/vitepress-plugin-enhanced-readabilities',
+        '@nolebase/ui',
+      ], 
+    },
+  },
+
+})
 
 ```
 
