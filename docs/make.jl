@@ -68,6 +68,13 @@ bases = readlines(joinpath(@__DIR__, "build", "bases.txt"))
 
 for (i, base) in enumerate(bases)
     @info "Deploying docs for base $(repr(base))"
+    dirname = if startswith(base, "previews")
+        @info "This is a preview so setting the dirname to \"\""
+        ""
+    else
+        base
+    end
+    
     dir = joinpath(@__DIR__, "build", "$i")
     deploydocs(;
         repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
@@ -76,6 +83,6 @@ for (i, base) in enumerate(bases)
         devbranch = "master",
         push_preview = true,
         versions = nothing, # we handle this ourselves using the multiple folders
-        dirname = base, # 
+        dirname, # 
     )
 end
