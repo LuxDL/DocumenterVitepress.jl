@@ -225,11 +225,13 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
     bases = if match(r"^v\d", deploy_decision.subfolder) !== nothing
         v = VersionNumber(deploy_decision.subfolder)
-        [
+        _bases = [
             "stable",
+            "v$(v.major)",
             "v$(v.major).$(v.minor)",
             "v$(v.major).$(v.minor).$(v.patch)",
         ]
+        filter!(x -> x ∉ ("v0", "v0.0"), _bases)
     else
         [deploy_decision.subfolder]
     end
