@@ -29,14 +29,17 @@ The `repo` kwarg is used to set the edit link for the documentation.
 The `devbranch` and `devurl` kwargs are used to set the path of the static site, which Vitepress expects in advance.
 """
 Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
-    "*Required*: The URL of the repository to which the documentation will be deployed.  This must be the full URL, like `rafaqz.github.io/Rasters.jl` or `geo.makie.jl`."
-    deploy_url::Union{String, Nothing} = nothing
     "*Required*: The full URL of the repository to which the documentation will be deployed."
     repo::String
-    "*Required*: The name of the development branch, like `master` or `main`."
+    "The name of the development branch, like `master` or `main`."
     devbranch::String = Documenter.git_remote_head_branch("MarkdownVitepress(devbranch = ...)", Documenter.currentdir())
-    "*Required*: The URL path to the development site, like `dev` or `dev-branch`."
+    "The URL path to the development site, like `dev` or `dev-branch`."
     devurl::String = "dev"
+    """
+    The URL of the repository to which the documentation will be deployed.  
+    This **must** be the full URL, **including `https://`**, like `https://rafaqz.github.io/Rasters.jl` or `https://geo.makie.jl/`.
+    """
+    deploy_url::Union{String, Nothing} = nothing
     "A description of the website as a String."
     description::String = "Documentation for $(splitdir(repo)[end])"
     """Determines whether to build the Vitepress site or only emit markdown files.  Defaults to `true`, i.e., building the full Vitepress site."""
@@ -77,9 +80,18 @@ This function takes the filename `file`, and returns a file path in the `mdfolde
 
 """
 function docpath(file, builddir, mdfolder)
-    path = relpath(file, builddir)
-    filename = mdext(path)
-    return joinpath(builddir, mdfolder, filename) 
+    # For Windows, handle the build prefix and get the relative part
+    if Sys.iswindows() && startswith(file, "build\\")
+        # Extract everything after "build\"
+        relative_part = split(file, "build\\")[2]
+        # Join with target directory structure
+        return normpath(joinpath(builddir, mdfolder, relative_part))
+    else
+        # Unix systems or non-build prefix
+        path = relpath(file, builddir)
+        filename = mdext(path)
+        return joinpath(builddir, mdfolder, filename)
+    end
 end
 
 """
@@ -98,57 +110,7 @@ render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, elemen
 where `Eltype` is the type of the `element` field of the `node` object which you care about.
 """
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
-    # Main.@exfiltrate
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
-    # copy_assets(doc, settings.md_output_path)
-    # Handle the case where the site name has to be set...
-    mime = MIME"text/plain"() # TODO: why?
-    builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
-    # Main.@infiltrate
-    sourcedir = isabspath(doc.user.source) ? doc.user.source : joinpath(doc.user.root, doc.user.source)
-    # First, we check what Documenter has copied for us already:
-    current_build_files_or_dirs = readdir(builddir)
-    # Then, we create a path to the folder where we will emit the markdown,
-    mkpath(joinpath(builddir, settings.md_output_path))
-    # and copy the previous build files to the new location.
-    for file_or_dir in current_build_files_or_dirs
-        src = joinpath(builddir, file_or_dir)
-        dst = joinpath(builddir, settings.md_output_path, file_or_dir)
-        cp(src, dst)
-        rm(src; recursive = true)
-    end
-    # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
-    # so we rename the folder.
-    if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
-        mkpath(joinpath(builddir, settings.md_output_path, "public"))
-        files = readdir(joinpath(builddir, settings.md_output_path, "assets"); join = true)
-        logo_files = contains.(last.(splitdir.(files)), "logo")
-        favicon_files = contains.(last.(splitdir.(files)), "favicon")
-        if any(logo_files)
-            for file in files[logo_files]
-                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
-                cp(file, joinpath(builddir, settings.md_output_path, "public", file_relpath))
-            end
-        end 
-        if any(favicon_files)
-            for file in files[favicon_files]
-                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
-                cp(file, joinpath(builddir, settings.md_output_path, "public", file_relpath))
-            end
-        end
-    end
-    # Main.@infiltrate
-    # Iterate over the pages, render each page separately
-    for (src, page) in doc.blueprint.pages
-        # This is where you can operate on a per-page level.
-        open(docpath(page.build, builddir, settings.md_output_path), "w") do io
-            for node in page.mdast.children
-                render(io, mime, node, page, doc)
-            end
-        end
-    end
-
-    mkpath(joinpath(builddir, "final_site"))
 
     # We manually obtain the Documenter deploy configuration,
     # so we can use it to set Vitepress's settings.
@@ -166,44 +128,191 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         deploy_decision = settings.deploy_decision
     end
     
-    # from `vitepress_config.jl`
-    modify_config_file(doc, settings, deploy_decision)
+    # copy_assets(doc, settings.md_output_path)
+    # Handle the case where the site name has to be set...
+    mime = MIME"text/plain"() # TODO: why?
+    builddir = isabspath(doc.user.build) ? doc.user.build : joinpath(doc.user.root, doc.user.build)
+    # Main.@infiltrate
+    sourcedir = isabspath(doc.user.source) ? doc.user.source : joinpath(doc.user.root, doc.user.source)
+    # First, we check what Documenter has copied for us already:
+    current_build_files_or_dirs = readdir(builddir)
+    # Then, we create a path to the folder where we will emit the markdown,
+    mkpath(joinpath(builddir, settings.md_output_path))
+    # and copy the previous build files to the new location.
+    if settings.md_output_path != "."
+        for file_or_dir in current_build_files_or_dirs
+            
+            src = joinpath(builddir, file_or_dir)
+            dst = joinpath(builddir, settings.md_output_path, file_or_dir)
 
-    # Now that the Markdown files are written, we can build the Vitepress site if required.
-    if settings.build_vitepress
-        @info "DocumenterVitepress: building Vitepress site."
-        # Build the docs using `npm`
-        should_remove_package_json = false
-        try
-            if !isfile(joinpath(dirname(builddir), "package.json"))
-                @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
-                cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                should_remove_package_json = true
+            if src == joinpath(builddir, settings.md_output_path)
+                continue
             end
-
-            cd(dirname(builddir)) do
-                # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
-                # when interpolating the `npm` command.  
-                # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
-                # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
-                node(; adjust_PATH = true, adjust_LIBPATH = true) do _
-                    if settings.install_npm || should_remove_package_json
-                        if !isfile(joinpath(dirname(builddir), "package.json"))
-                            cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                            should_remove_package_json = true
-                        end
-                        run(`$(npm) install`)
-                    end
-                    run(`$(npm) run env -- vitepress build $(joinpath(builddir, settings.md_output_path))`)
+            if src != dst
+                cp(src, dst; force = true)
+                rm(src; recursive = true)
+            else
+                println(src, dest)
+            end
+        end
+    end
+    # copy vue components
+    source_components = joinpath(dirname(@__DIR__), "template/src/components")
+    destination_dir = joinpath(builddir, settings.md_output_path, "components")
+    # Ensure the destination directory exists
+    mkpath(destination_dir)
+    for item in readdir(source_components)
+        src = joinpath(source_components, item)
+        dest = joinpath(destination_dir, item)
+        if !isfile(dest) && !isdir(dest)
+            try
+                if isdir(src)
+                    cp(src, dest; force=true)
+                else
+                    cp(src, dest; force=true)
+                end
+                println("Copied: $dest")
+            catch e
+                println("Error copying $src to $dest: $e")
+            end
+        else
+            println("Skipping: $dest (already exists)")
+        end
+    end
+    # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
+    # so we rename the folder.
+    if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
+        mkpath(joinpath(builddir, settings.md_output_path, "public"))
+        files = readdir(joinpath(builddir, settings.md_output_path, "assets"); join = true)
+        logo_files = contains.(last.(splitdir.(files)), "logo")
+        favicon_files = contains.(last.(splitdir.(files)), "favicon")
+        if any(logo_files)
+            for file in files[logo_files]
+                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
+                file_destpath = joinpath(builddir, settings.md_output_path, "public", file_relpath)
+                if normpath(file) != normpath(file_destpath)
+                    cp(file, file_destpath; force = true)
                 end
             end
-        catch e
-            rethrow(e)
-        finally
-            if should_remove_package_json
-                rm(joinpath(dirname(builddir), "package.json"))
-                rm(joinpath(dirname(builddir), "package-lock.json"))
+        end 
+        if any(favicon_files)
+            for file in files[favicon_files]
+                file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
+                file_destpath = joinpath(builddir, settings.md_output_path, "public", file_relpath)
+                dest_dir = dirname(file_destpath)
+                mkpath(dest_dir) # Ensure destination directory exists
+                if normpath(file) != normpath(file_destpath)
+                    cp(file, file_destpath; force = true)
+                end
             end
+        end
+    end
+
+    # Iterate over the pages, render each page separately
+    for (src, page) in doc.blueprint.pages
+        # This is where you can operate on a per-page level.
+        open(docpath(page.build, builddir, settings.md_output_path), "w") do io
+            for node in page.mdast.children
+                render(io, mime, node, page, doc)
+            end
+        end
+    end
+
+    mkpath(joinpath(builddir, "final_sites"))
+
+    @show settings
+    @show deploy_decision
+
+    bases = if match(r"^v\d", deploy_decision.subfolder) !== nothing
+        v = VersionNumber(deploy_decision.subfolder)
+        [
+            "stable",
+            "v$(v.major).$(v.minor)",
+            "v$(v.major).$(v.minor).$(v.patch)",
+        ]
+    else
+        [deploy_decision.subfolder]
+    end
+
+    for (i_base, base) in enumerate(bases)
+        # from `vitepress_config.jl`
+        # This needs to be run after favicons and logos are moved to the public subfolder
+        modify_config_file(doc, settings, deploy_decision, i_base, base)
+        open(joinpath(builddir, "final_sites", "bases.txt"), i_base == 1 ? "w" : "a") do io
+            println(io, base)
+        end
+
+        config_path = joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts")
+        if isfile(config_path)
+            mkpath(dirname(config_path)) # Ensure .vitepress directory exists
+            touch(config_path)
+        end
+
+        # Now that the Markdown files are written, we can build the Vitepress site if required.
+        if settings.build_vitepress
+            @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
+            # Build the docs using `npm`
+            should_remove_package_json = false
+            try
+                if !isfile(joinpath(dirname(builddir), "package.json"))
+                    @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
+                    cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
+                    should_remove_package_json = true
+                end
+
+                cd(dirname(builddir)) do
+                    # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
+                    # when interpolating the `npm` command.  
+                    # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
+                    # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
+
+                    package_json_path = joinpath(dirname(builddir), "package.json")
+                    template_path = joinpath(dirname(@__DIR__), "template", "package.json")
+                    build_output_path = joinpath(builddir, settings.md_output_path)
+                    
+                    if settings.install_npm || should_remove_package_json
+                        if !isfile(package_json_path)
+                            cp(template_path, package_json_path)
+                            should_remove_package_json = true
+                        end
+                        # wrap in `node(...) do _`
+                        node(; adjust_PATH = true, adjust_LIBPATH = true) do _
+                            # On Windows systems
+                            if Sys.iswindows()
+                                # system_npm = "C:\\Program Files\\nodejs\\npm.cmd"
+                                @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
+                                @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
+                                # install dependecies
+                                run(`cmd /c $npm install`)
+                                # run(`cmd /c $npm exec vitepress build $build_output_path`) # activate once a new > NodeJS_20_jll artifact is available.
+                                # Debugging alternative
+                                # run(`cmd /c "set DEBUG=vitepress:* & $npm exec vitepress build $build_output_path"`)
+                            else
+                                run(`$(npm) install`)
+                                run(`$(npm) run env -- vitepress build $(build_output_path)`)
+                            end
+                        end
+                    end                
+                end
+            catch e
+                rethrow(e)
+            finally
+                if should_remove_package_json
+                    rm(joinpath(dirname(builddir), "package.json"))
+                    rm(joinpath(dirname(builddir), "package-lock.json"))
+                end
+            end
+        else
+            @info """
+                DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
+                You can view it yourself by running the following in the `docs` folder:
+                ```
+                npm run docs:dev
+                ```
+                and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
+
+                All emitted markdown can be found in `$(joinpath(builddir, settings.md_output_path))`.
+                """
         end
         # This is only useful if placed in the root of the `docs` folder, and we don't 
         # have any names which conflict with Jekyll (beginning with _ or .) in any case.
@@ -214,28 +323,16 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         if clean_md_output
             @info "DocumenterVitepress: cleaning up Markdown output."
             rm(joinpath(builddir, settings.md_output_path); recursive = true)
-            contents = readdir(joinpath(builddir, "final_site"))
+            contents = readdir(joinpath(builddir, "final_sites"))
             for item in contents
-                src = joinpath(builddir, "final_site", item)
+                src = joinpath(builddir, "final_sites", item)
                 dst = joinpath(builddir, item)
                 cp(src, dst)
             end
-            rm(joinpath(builddir, "final_site"); recursive = true)
+            rm(joinpath(builddir, "final_sites"); recursive = true)
 
             @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
         end
-
-    else
-        @info """
-            DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
-            You can view it yourself by running the following in the `docs` folder:
-            ```
-            npm run docs:dev
-            ```
-            and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
-
-            All emitted markdown can be found in `$(joinpath(builddir, settings.md_output_path))`.
-            """
     end
 end
 
@@ -292,18 +389,26 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     end
 end
 
+function sanitized_anchor_label(anchor)
+    # vitepress doesn't like special markdown characters in the id slug, so we just remove them.
+    # it seems unlikely to get conflicts with other slugs this way, and escaping the characters with
+    # backslashes did not make the slugs work correctly in vitepress, either
+    label = Documenter.anchor_label(anchor)
+    return replace(label, r"[\[\]\(\)*]" => "")
+end
+
+
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docs::Documenter.DocsNode, page, doc; kwargs...)
-    # @infiltrate
-    anchor_id = Documenter.anchor_label(docs.anchor)
+    open_txt = get(page.globals.meta, :CollapsedDocStrings, false) ? "" : "open"
+    anchor_id = sanitized_anchor_label(docs.anchor)
     # Docstring header based on the name of the binding and it's category.
-    println(io,
-        "<div style='border-width:1px; border-style:solid; border-color:black; padding: 1em; border-radius: 25px;'>")
-    anchor = "<a id='$(anchor_id)' href='#$(anchor_id)'>#</a>"
-    header = "&nbsp;<b><u>$(docs.object.binding)</u></b> &mdash; <i>$(Documenter.doccat(docs.object))</i>."
-    println(io, anchor, header, "\n\n")
+    _badge_text = """<Badge type="info" class="jlObjectType jl$(Documenter.doccat(docs.object))" text="$(Documenter.doccat(docs.object))" />"""
+    print(io ,"""<details class='jldocstring custom-block' $(open_txt)>
+    <summary><a id='$(anchor_id)' href='#$(anchor_id)'><span class="jlbinding">$(docs.object.binding)</span></a> $(_badge_text)</summary>\n
+    """)
     # Body. May contain several concatenated docstrings.
     renderdoc(io, mime, node, page, doc; kwargs...)
-    return println(io, "</div>\n<br>")
+    return println(io, "</details>\n")
 end
 
 function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, page, doc; kwargs...)
@@ -320,10 +425,7 @@ function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.
         if url !== nothing
             # This is how Documenter does it:
             # push!(ret.nodes, a[".docs-sourcelink", :target=>"_blank", :href=>url]("source"))
-            # so clearly we should be inserting some form of HTML tag here, 
-            # and defining its rendering in CSS?
-            # TODO: switch to Documenter style here
-            println(io, "\n", "[source]($url)", "\n")
+            println(io, "\n", """<Badge type="info" class="source-link" text="source"><a href="$url" target="_blank" rel="noreferrer">source</a></Badge>""", "\n")
         end
     end
 end
@@ -344,13 +446,48 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, i
     return println(io)
 end
 
+function starts_with_at(anchor_frag)
+    starts_with_at = startswith(anchor_frag, "@")
+    if starts_with_at
+        # Remove the @ symbol
+        anchor_frag = anchor_frag[2:end]
+    end
+    return anchor_frag
+end
+
+function vitepress_anchor(anchor::String)
+    # Remove the leading # if it exists
+    anchor_frag = startswith(anchor, "#") ? anchor[2:end] : anchor
+    anchor_frag_at = starts_with_at(anchor_frag)
+    # Check if the anchor is a single word (no special characters besides dots)
+    if !occursin(r"[-_,:;!?@#$%^&*()\s]", anchor_frag_at)
+        # Single words get lowercased first
+        lowercased = lowercase(anchor_frag_at)
+        # Then transform all dots to hyphens
+        transformed = replace(lowercased, "." => "-")
+        return "#" * transformed
+    else
+        return "#" * anchor_frag
+    end
+end
+
 function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, contents::Documenter.ContentsNode, page, doc; kwargs...)
+    current_path = nothing
     for (count, path, anchor) in contents.elements
         path = mdext(path)
         header = anchor.object
-        url = string(path, Documenter.anchor_fragment(anchor))
-        link = Markdown.Link(anchor.id, replace(url, " " => "%20"))
-        level = anchor.order
+        anchor_frag = Documenter.anchor_fragment(anchor)
+        anchor_frag = vitepress_anchor(anchor_frag)
+        url = replace(string(path, anchor_frag), " " => "%20")
+        anchor_id = replace(anchor.id, "-" => " ")
+        link = Markdown.Link(anchor_id, url)
+        level = header.level
+        # Reset level to 1 if this is a new path
+        if path != current_path
+            level = 1
+            current_path = path
+        end
+
         print(io, "    "^(level - 1), "- ")
         linkfix = ".md#"
         println(io, replace(Markdown.plaininline(link), linkfix => "#"))
@@ -452,7 +589,6 @@ function mime_priority end
 mime_priority(::MIME"text/plain") = 0.0
 mime_priority(::MIME"text/markdown") = 1.0
 mime_priority(::MIME"text/html") = 2.0
-mime_priority(::MIME"text/latex") = 2.5
 mime_priority(::MIME"image/svg+xml") = 3.0
 mime_priority(::MIME"image/png") = 4.0
 mime_priority(::MIME"image/webp") = 5.0
@@ -463,7 +599,7 @@ mime_priority(::MIME"image/svg+xml+lightdark") = 9.0
 mime_priority(::MIME"image/gif") = 10.0
 mime_priority(::MIME"video/mp4") = 11.0
 
-mime_priority(::MIME) = Inf
+mime_priority(::MIME) = nothing # unknown MIMEs are filtered out
 
 function render_mime(io::IO, mime::MIME, node, element, page, doc; kwargs...)
     @warn("DocumenterVitepress: Unknown MIME type $mime provided and no alternatives given.  Ignoring render!")
@@ -474,30 +610,122 @@ function render_mime(io::IO, mime::MIME"text/markdown", node, element, page, doc
 end
 
 function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kwargs...)
-    println(io, element)
+    function escapehtml(io, text::AbstractString)
+        for char in text
+            char === '<' ? write(io, "&lt;") :
+            char === '>' ? write(io, "&gt;") :
+            char === '&' ? write(io, "&amp;") :
+            char === '\'' ? write(io, "&#39;") :
+            char === '`' ? write(io, "\\`") :
+            char === '\n' ? write(io, "&#10;") :
+            char === '"' ? write(io, "&quot;") :
+            char === '$' ? write(io, "\\\$") : write(io, char)
+        end
+        return
+    end
+    # v-html takes a javascript expression that results in a string of html, but this
+    # has to be parsed within the context of an html attribute, so we escape all the offending
+    # characters. vitepress will not further modify this html as is usually intended with display values.
+    print(io, "<div v-html=\"`")
+    escapehtml(io, repr(mime, element))
+    println(io, "`\"></div>")
 end
 
-function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; kwargs...)
-    # NOTE: It seems that we can't simply save the SVG images as a file and include them
+function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; md_output_path, kwargs...)
+    # NOTE: It seems that we can't always simply save the SVG images as a file and include them
     # as browsers seem to need to have the xmlns attribute set in the <svg> tag if you
     # want to include it with <img>. However, setting that attribute is up to the code
     # creating the SVG image.
-    image_text = element
-    # Additionally, Vitepress complains about the XML version and encoding string below,
-    # so we just remove this bad hombre!
-    bad_hombre_string = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" |> lowercase
-    location = findfirst(bad_hombre_string, lowercase(image_text))    
-    if !isnothing(location) # couldn't figure out how to do this in one line - maybe regex?  A question for later though.
-        image_text = replace(image_text, image_text[location] => "")
+    has_xml_namespace = match(r"<svg[^>].*?xmlns\s*=", element) !== nothing
+
+    if has_xml_namespace
+        filename = String(rand('a':'z', 7))
+        write(
+            joinpath(
+                doc.user.build,
+                md_output_path,
+                dirname(relpath(page.build, doc.user.build)),
+                "$(filename).svg"
+            ),
+            element
+        )
+        println(io, "![]($(filename).svg)")
+    else
+        # Vitepress complains about the XML version and encoding string when used as an inline svg
+        # so we remove that
+        image_text = replace(
+            element,
+            r"<\?xml.*?>\s*"i => ""
+        )
+        println(io, "<img src=\"data:image/svg+xml;base64," * base64encode(image_text) * "\"/>")
     end
-    println(io, "<img src=\"data:image/svg+xml;base64," * base64encode(image_text) * "\"/>")
+end
+
+# Taken from https://github.com/PumasAI/QuartoNotebookRunner.jl/, MIT licensed
+function png_image_metadata(bytes::Vector{UInt8})
+    if @view(bytes[1:8]) != b"\x89PNG\r\n\x1a\n"
+        throw(ArgumentError("Not a png file"))
+    end
+
+    chunk_start::Int = 9
+
+    _load(T, bytes, index) = ntoh(reinterpret(T, @view(bytes[index:index+sizeof(T)-1]))[])
+
+    function read_chunk!()
+        chunk_start > lastindex(bytes) && return nothing
+        chunk_data_length = _load(UInt32, bytes, chunk_start)
+        type = @view(bytes[chunk_start+4:chunk_start+7])
+        data = @view(bytes[chunk_start+8:chunk_start+8+chunk_data_length-1])
+        result = (; chunk_start, type, data)
+
+        # advance the chunk_start state variable
+        chunk_start += 4 + 4 + chunk_data_length + 4 # length, type, data, crc
+
+        return result
+    end
+
+    chunk = read_chunk!()
+    if chunk === nothing
+        error("PNG file had no chunks")
+    end
+    if chunk.type != b"IHDR"
+        error("PNG file must start with IHDR chunk, started with $(chunk.type)")
+    end
+
+    width = Int(_load(UInt32, chunk.data, 1))
+    height = Int(_load(UInt32, chunk.data, 5))
+
+    # if the png reports a physical pixel size, i.e., it has a pHYs chunk
+    # with the pixels per meter unit flag set, correct the basic width and height
+    # by those physical pixel sizes
+    while true
+        chunk = read_chunk!()
+        chunk === nothing && break
+        chunk.type == b"IDAT" && break
+        if chunk.type == b"pHYs"
+            is_in_meters = Bool(_load(UInt8, chunk.data, 9))
+            is_in_meters || break
+            x_px_per_meter = _load(UInt32, chunk.data, 1)
+            y_px_per_meter = _load(UInt32, chunk.data, 5)
+            # it seems sensible to round the final image size to full CSS pixels,
+            # especially given that png doesn't store dpi but px per meter
+            # in an integer format, losing some precision
+            width = round(Int, width / x_px_per_meter * (96 / 0.0254))
+            height = round(Int, height / y_px_per_meter * (96 / 0.0254))
+            break
+        end
+    end
+
+    return (; width, height)
 end
 
 function render_mime(io::IO, mime::MIME"image/png", node, element, page, doc; md_output_path, kwargs...)
     filename = String(rand('a':'z', 7))
-    write(joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename).png"),
-        base64decode(element))
-    println(io, "![]($(filename).png)")
+    pngpath = joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename).png")
+    bytes = base64decode(element)
+    write(pngpath, bytes)
+    (; width, height) = png_image_metadata(bytes)
+    println(io, "![]($(filename).png){width=$(width)px height=$(height)px}")
 end
 
 function render_mime(io::IO, mime::MIME"image/webp", node, element, page, doc; md_output_path, kwargs...)
@@ -577,12 +805,12 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     settings = doc.user.format[settings_ind]
     md_output_path = settings.md_output_path
 
-    available_mimes = keys(d)
+    available_mimes = filter(mime -> mime_priority(mime) !== nothing, collect(keys(d)))
     if isempty(available_mimes)
         return nothing
     end
     # Sort the available mimes by priority
-    sorted_mimes = sort(collect(available_mimes), by = mime_priority)
+    sorted_mimes = sort(available_mimes, by = mime_priority)
     # Select the best MIME type for rendering
     best_mime = sorted_mimes[end]
     # Render the best MIME type
@@ -684,13 +912,17 @@ end
 # Headers
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, header::Documenter.AnchoredHeader, page, doc; kwargs...)
     anchor = header.anchor
-    id = string(Documenter.anchor_label(anchor))
-    # @infiltrate
+    id = sanitized_anchor_label(anchor)
     heading = first(node.children)
     println(io)
     print(io, "#"^(heading.element.level), " ")
-    render(io, mime, node, heading.children, page, doc; kwargs...)
-    print(io, " {#$(replace(id, " " => "-"))}") # potentially use MarkdownAST.mdflatten here?
+    heading_iob = IOBuffer()
+    render(heading_iob, mime, node, heading.children, page, doc; kwargs...)
+    heading_text = rstrip(String(take!(heading_iob)))
+    print(io, heading_text)
+    if id != heading_text # if a custom ID is set, then use it.
+        print(io, " {#$(replace(id, " " => "-"))}") # potentially use MarkdownAST.mdflatten here?
+    end
     println(io)
 end
 # Thematic breaks
@@ -725,6 +957,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     output = String(take!(iob))
     eachline = split(output, '\n')
     println.((io,), "> " .* eachline)
+    println(io) # newline after block quote, so that successive quotes don't merge
 end
 # Inline math
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.InlineMath, page, doc; kwargs...)
@@ -751,6 +984,10 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         print(io, bullet())
         println.((io,), eachline)
     end
+end
+# HTMLInline
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, html::MarkdownAST.HTMLInline, page, doc; kwargs...)
+    println(io, html.html)
 end
 # Tables
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.TableCell, page, doc; kwargs...)
@@ -840,12 +1077,17 @@ end
 # ### Documenter.jl page links
 # We figure out the correct path to the page, and render it as a link in Markdown.
 # TODO: generate a `Markdown.Link` object?  But that seems like overkill...
+function resolve_relative_path(from_page::String, to_page::Documenter.Page, doc)
+    to_page_path = to_page.build
+    relative_path = relpath(to_page_path, dirname(from_page))
+    return relative_path
+end
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.PageLink, page, doc; kwargs...)
     # Main.@infiltrate
     path = if !isempty(link.fragment)
         "/" * replace(Documenter.pagekey(doc, link.page), ".md" => "") * "#" * string(link.fragment)
     else
-        Documenter.pagekey(doc, link.page)
+        resolve_relative_path(page.build, link.page, doc)
     end
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
@@ -854,8 +1096,12 @@ end
 
 # Documenter.jl local links
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, link::Documenter.LocalLink, page, doc; kwargs...)
-    # Main.@infiltrate
-    path = isempty(link.fragment) ? link.path : "$(Documenter.pagekey(doc, page))#$(link.fragment)"
+    path = if isempty(link.fragment)
+        link.path
+    else
+        relative_path = resolve_relative_path(page.build, page.build, doc)
+        replace(relative_path, ".md" => "") * "#" * link.fragment
+    end
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")

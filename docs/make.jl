@@ -23,7 +23,7 @@ bib = CitationBibliography(
     joinpath(@__DIR__, "src", "refs.bib");
     style=:numeric  # default
 )
-
+# dev local
 
 makedocs(; 
     sitename = "DocumenterVitepress", 
@@ -32,7 +32,7 @@ makedocs(;
     warnonly = true,
     checkdocs=:all,
     format=DocumenterVitepress.MarkdownVitepress(
-        repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
+        repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
         devbranch = "master",
         devurl = "dev";
     ),
@@ -40,29 +40,49 @@ makedocs(;
     source = "src",
     build = "build",
     pages = [
-        "Home" => "index.md",
-        "Getting started" => "getting_started.md",
-        "Examples" => [
-            "Code" => "code_example.md",
-            "Markdown" => "markdown-examples.md",
-            "MIME output" => "mime_examples.md",
-            "Updating to DocumenterVitepress" => "documenter_to_vitepress_docs_example.md",
-            "DocumenterCitations integration" => "citations.md",
-
+        "Manual" => [
+            "Get Started" => "manual/get_started.md",
+            "Updating to DocumenterVitepress" => "manual/documenter_to_vitepress_docs_example.md",
+            "Code" => "manual/code_example.md",
+            "Markdown" => "manual/markdown-examples.md",
+            "MIME output" => "manual/mime_examples.md",
+            "DocumenterCitations integration" => "manual/citations.md",
+            "CSS Styling" => "manual/style_css.md",
+            "Authors' badge" => "manual/author_badge.md",
+            "GitHub Icon with Stars" => "manual/repo_stars.md",
         ],
         "Developers' documentation" => [
-            "The rendering process" => "render_pipeline.md",
+            "The rendering process" => "devs/render_pipeline.md",
+            "Internal API" => "devs/internal_api.md",
         ],
         "api.md",
     ],
     plugins = [bib,],
 )
 
+# if we actually deploy then the builds will have moved from final_sites into build.
+# we could also deploy all versions at once but `deploydocs` is written for just one
+# folder, so let's loop for now
 
-deploydocs(; 
-    repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
-    target = "build", # this is where Vitepress stores its output
-    branch = "gh-pages",
-    devbranch = "master",
-    push_preview = true
-)
+bases = readlines(joinpath(@__DIR__, "build", "bases.txt"))
+
+for (i, base) in enumerate(bases)
+    @info "Deploying docs for base $(repr(base))"
+    dirname = if startswith(base, "previews")
+        @info "This is a preview so setting the dirname to \"\""
+        ""
+    else
+        base
+    end
+    
+    dir = joinpath(@__DIR__, "build", "$i")
+    deploydocs(;
+        repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
+        target = dir, # each version built has its own dir
+        branch = "gh-pages",
+        devbranch = "master",
+        push_preview = true,
+        versions = nothing, # we handle this ourselves using the multiple folders
+        dirname, # 
+    )
+end

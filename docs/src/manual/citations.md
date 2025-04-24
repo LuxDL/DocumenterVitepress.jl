@@ -37,7 +37,6 @@ This is the default style (`style=:numeric`) used throughout the other pages of 
 ```@bibliography
 Pages = [@__FILE__]
 Style = :numeric
-Canonical = false
 ```
 
 ## [Author-year style](@id author_year_style)

@@ -3,37 +3,40 @@ module DocumenterVitepressDocumenterCitationsExt
 using DocumenterCitations, DocumenterVitepress
 
 import DocumenterVitepress as DV
-using Documenter: MarkdownAST
+using Documenter: Documenter, MarkdownAST
+using .MarkdownAST: @ast
 
-# TODO: 
+# TODO:
 # - List style (rendered vs unrendered)
 # - Loose vs tight lists
 # - handle :dl properly, we cannot use Markdown for this, since it cannot be represented
 #   using pure Markdown. We need to insert HTML directly.
 #   At the moment, we treat :dl as :ol
 function DV.render(io::IO, mime::MIME"text/plain", node::DV.MarkdownAST.Node, bibliography::DocumenterCitations.BibliographyNode, page, doc; kwargs...)
-
-    println(io)
-    println(io, "***")
-    println(io, "# Bibliography")
-    println(io)
-
     # Turn the list into a proper MarkdownAST.node
     bibnode = _bibliography_to_list(bibliography)
-
     return DV.render(io, mime, bibnode, bibnode.element, page, doc; kwargs...)
 end
 
 function _bibliography_to_list(bib::DocumenterCitations.BibliographyNode)
-  # Construct a MarkdownAST.Node containing this list
-  list = MarkdownAST.List(bib.list_style in [:ol, :dl] ? :ordered : :bullet, false)
-  node = MarkdownAST.Node(list)
-  for item in bib.items
-    newitem = MarkdownAST.Node(MarkdownAST.Item())
-    push!(newitem.children, item.reference)
-    push!(node.children, newitem)
-  end
-  node
+    # Construct a MarkdownAST.Node containing this list
+    list = MarkdownAST.List(bib.list_style in [:ol, :dl] ? :ordered : :bullet, false)
+    node = MarkdownAST.Node(list)
+    for item in bib.items
+        newitem = MarkdownAST.Node(MarkdownAST.Item())
+        reference = item.reference
+        if item.anchor_key !== nothing
+            pushfirst!(
+                reference.children,
+                @ast MarkdownAST.HTMLInline(
+                    join(["<a id='", item.anchor_key, "'></a>"])
+                )
+            )
+        end
+        push!(newitem.children, reference)
+        push!(node.children, newitem)
+    end
+    node
 end
 
 # Below is the code intended for LaTeXWriter.

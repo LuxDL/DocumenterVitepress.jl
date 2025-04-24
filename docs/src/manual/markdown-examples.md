@@ -454,6 +454,12 @@ When ``a \ne 0``, there are two solutions to ``ax^2 + bx + c = 0`` and they are
 $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
 
 Don't type anything after the last double dollar sign, and make sure there are no spaces after the opening double dollar sign in the display math!
+
+You can also use fenced code blocks with the `math` tag for equations!
+
+```math
+\nabla^2 \Phi = \rho
+```
 ````
 
 **Output**
@@ -463,6 +469,29 @@ When ``a \ne 0``, there are two solutions to ``ax^2 + bx + c = 0`` and they are
 $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
 
 Don't type anything after the last double dollar sign, and make sure there are no spaces after the opening double dollar sign in the display math!
+
+You can also use fenced code blocks with the `math` tag for equations!
+
+```math
+\nabla^2 \Phi = \rho
+```
+
+## [Latex Symbols $\Lambda_\theta$ and $\bf Z$](@id latex_symbols_in_headings)
+
+::: tip
+
+If you want latex symbols in headings better use `Documenter's ID interface` for proper rendering.
+
+:::
+
+**Input**
+
+````
+## [Latex Symbols $\Lambda_\theta$ and $\bf Z$](@id latex_symbols_in_headings)
+````
+
+The previous heading is the output from this input. Also, note that the `@id`'s name would show up in the `@contents` listing.
+
 
 ## Footnotes (citation-style)
 
@@ -512,6 +541,9 @@ This is the expected sequence by vitepress:
 <code> sshflags= `` `-i <keyfile> ` `` </code>
 ````
 
+## [Heading with a link](https://github.com/LuxDL/DocumenterVitepress.jl) and *italic* font
+
+This was previously breaking due to special markdown characters in the slug.
 
 ## More
 
