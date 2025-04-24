@@ -57,9 +57,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         write(joinpath(build_vitepress_dir, "theme", "docstrings.css"), read(joinpath(template_vitepress_dir, "theme", "docstrings.css"), String))
     end
     # reset the path to the variable that exists
+    vitepress_config_file_template = joinpath(source_vitepress_dir, "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
     vitepress_config_file = joinpath(build_vitepress_dir, "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
 
-    config = read(vitepress_config_file, String)
+    config = read(vitepress_config_file_template, String)
     replacers = Vector{Pair{<: Union{AbstractString, Regex}, <: AbstractString}}()
 
 

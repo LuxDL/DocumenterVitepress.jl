@@ -220,9 +220,6 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
     mkpath(joinpath(builddir, "final_sites"))
 
-    @show settings
-    @show deploy_decision
-
     bases = if match(r"^v\d", deploy_decision.subfolder) !== nothing
         v = VersionNumber(deploy_decision.subfolder)
         _bases = [
