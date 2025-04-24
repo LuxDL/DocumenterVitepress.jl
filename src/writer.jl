@@ -317,23 +317,24 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         # This is only useful if placed in the root of the `docs` folder, and we don't 
         # have any names which conflict with Jekyll (beginning with _ or .) in any case.
         # touch(joinpath(builddir, "final_site", ".nojekyll"))
-
-        # Clean up afterwards
-        clean_md_output = isnothing(settings.clean_md_output) ? deploy_decision.all_ok : settings.clean_md_output
-        if clean_md_output
-            @info "DocumenterVitepress: cleaning up Markdown output."
-            rm(joinpath(builddir, settings.md_output_path); recursive = true)
-            contents = readdir(joinpath(builddir, "final_sites"))
-            for item in contents
-                src = joinpath(builddir, "final_sites", item)
-                dst = joinpath(builddir, item)
-                cp(src, dst)
-            end
-            rm(joinpath(builddir, "final_sites"); recursive = true)
-
-            @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
-        end
     end
+
+    # Clean up afterwards
+    clean_md_output = isnothing(settings.clean_md_output) ? deploy_decision.all_ok : settings.clean_md_output
+    if clean_md_output
+        @info "DocumenterVitepress: cleaning up Markdown output."
+        rm(joinpath(builddir, settings.md_output_path); recursive = true)
+        contents = readdir(joinpath(builddir, "final_sites"))
+        for item in contents
+            src = joinpath(builddir, "final_sites", item)
+            dst = joinpath(builddir, item)
+            cp(src, dst)
+        end
+        rm(joinpath(builddir, "final_sites"); recursive = true)
+
+        @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
+    end
+    return
 end
 
 # This function catches all nodes and decomposes them to their elements.
