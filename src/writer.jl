@@ -223,7 +223,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     @show settings
     @show deploy_decision
 
-    folders = if match(r"^v\d", deploy_decision.subfolder) !== nothing
+    bases = if match(r"^v\d", deploy_decision.subfolder) !== nothing
         v = VersionNumber(deploy_decision.subfolder)
         [
             "stable",
@@ -231,13 +231,16 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             "v$(v.major).$(v.minor).$(v.patch)",
         ]
     else
-        [isempty(deploy_decision.subfolder) ? "_" : deploy_decision.subfolder] # this is dumb
+        [deploy_decision.subfolder]
     end
 
-    for folder in folders
+    for (i_base, base) in enumerate(bases)
         # from `vitepress_config.jl`
         # This needs to be run after favicons and logos are moved to the public subfolder
-        modify_config_file(doc, settings, deploy_decision, folder)
+        modify_config_file(doc, settings, deploy_decision, i_base, base)
+        open(joinpath(builddir, "final_sites", "bases.txt"), i_base == 1 ? "w" : "a") do io
+            println(io, base)
+        end
 
         config_path = joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts")
         if isfile(config_path)
@@ -247,7 +250,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
         # Now that the Markdown files are written, we can build the Vitepress site if required.
         if settings.build_vitepress
-            @info "DocumenterVitepress: building Vitepress site \"$folder\"."
+            @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
             # Build the docs using `npm`
             should_remove_package_json = false
             try

@@ -63,14 +63,19 @@ makedocs(;
 # if we actually deploy then the builds will have moved from final_sites into build.
 # we could also deploy all versions at once but `deploydocs` is written for just one
 # folder, so let's loop for now
-for dir in readdir(joinpath(@__DIR__, "build"), join = true)
-    isdir(dir) || continue
-    deploydocs(; 
+
+bases = readlines(joinpath(@__DIR__, "build", "bases.txt"))
+
+for (i, base) in enumerate(bases)
+    @info "Deploying docs for base $(repr(base))"
+    dir = joinpath(@__DIR__, "build", "$i")
+    deploydocs(;
         repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
         target = dir, # each version built has its own dir
         branch = "gh-pages",
         devbranch = "master",
         push_preview = true,
         versions = nothing, # we handle this ourselves using the multiple folders
+        dirname = base, # 
     )
 end

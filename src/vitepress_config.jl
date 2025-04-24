@@ -23,7 +23,7 @@ Currently, this function replaces the following config items:
 
 Simply add more elements to the `replacers` array within this function.
 """
-function modify_config_file(doc, settings, deploy_decision, folder)
+function modify_config_file(doc, settings, deploy_decision, i_folder, base)
 
     # Main.@infiltrate
     # Read in the config file,
@@ -76,7 +76,7 @@ function modify_config_file(doc, settings, deploy_decision, folder)
     # because vitepress isn't relocatable
     # folder = deploy_decision.subfolder
 
-    deploy_relpath = "$(folder)$(isempty(folder) ? "" : "/")"
+    deploy_relpath = "$(base)$(isempty(base) ? "" : "/")"
     deploy_abspath = if isnothing(settings.deploy_url)
         "/" * splitpath(settings.repo)[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
         else
@@ -90,7 +90,7 @@ function modify_config_file(doc, settings, deploy_decision, folder)
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
 
     # # Vitepress output path
-    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../final_sites/$(folder)'")
+    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../final_sites/$(i_folder)'")
     # # Vitepress navbar and sidebar
 
     provided_page_list = doc.user.pages
