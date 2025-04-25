@@ -91,7 +91,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
 
     # # Vitepress output path
-    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../final_sites/$(i_folder)'")
+    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../$(i_folder)'")
     # # Vitepress navbar and sidebar
 
     provided_page_list = doc.user.pages

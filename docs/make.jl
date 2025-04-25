@@ -60,14 +60,15 @@ makedocs(;
     plugins = [bib,],
 )
 
-# if we actually deploy then the builds will have moved from final_sites into build.
-# we could also deploy all versions at once but `deploydocs` is written for just one
-# folder, so let's loop for now
+# ideally, we could deploy all versions at once but `deploydocs` is written for just one
+# folder, so let's loop over the different bases for now
 
 bases = readlines(joinpath(@__DIR__, "build", "bases.txt"))
 
 for (i, base) in enumerate(bases)
     @info "Deploying docs for base $(repr(base))"
+    # the dirname may not already exist in gh-pages as a symlink or the docs will
+    # be written to the symlinked folder. So `stable` etc must be deleted first
     dirname = if startswith(base, "previews")
         @info "This is a preview so setting the dirname to \"\""
         ""

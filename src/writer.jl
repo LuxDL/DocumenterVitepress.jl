@@ -218,8 +218,6 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
 
-    mkpath(joinpath(builddir, "final_sites"))
-
     bases = if match(r"^v\d", deploy_decision.subfolder) !== nothing
         v = VersionNumber(deploy_decision.subfolder)
         _bases = [
@@ -237,7 +235,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         # from `vitepress_config.jl`
         # This needs to be run after favicons and logos are moved to the public subfolder
         modify_config_file(doc, settings, deploy_decision, i_base, base)
-        open(joinpath(builddir, "final_sites", "bases.txt"), i_base == 1 ? "w" : "a") do io
+        open(joinpath(builddir, "bases.txt"), i_base == 1 ? "w" : "a") do io
             println(io, base)
         end
 
@@ -323,14 +321,6 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     if clean_md_output
         @info "DocumenterVitepress: cleaning up Markdown output."
         rm(joinpath(builddir, settings.md_output_path); recursive = true)
-        contents = readdir(joinpath(builddir, "final_sites"))
-        for item in contents
-            src = joinpath(builddir, "final_sites", item)
-            dst = joinpath(builddir, item)
-            cp(src, dst)
-        end
-        rm(joinpath(builddir, "final_sites"); recursive = true)
-
         @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
     end
     return
