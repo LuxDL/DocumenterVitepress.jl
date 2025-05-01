@@ -71,16 +71,20 @@ function generate_template(target::String, package = "YourPackage")
     end
 end
 
-struct MultiVersions end
+struct BaseVersion
+    base::String
+end
 
-function Documenter.determine_deploy_subfolder(deploy_decision, versions::MultiVersions)
+function Documenter.determine_deploy_subfolder(deploy_decision, versions::BaseVersion)
     # we never use a subfolder and just set that manually via the `dirname`
     return nothing
 end
 
-function Documenter.postprocess_before_push(versions::MultiVersions; subfolder, devurl, deploy_dir, dirname)
-    @warn "No special postprocessing implemented yet for MultiVersions"
+function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, devurl, deploy_dir, dirname)
+    @warn "No special postprocessing implemented yet for $versions"
     @show subfolder devurl deploy_dir dirname
+    actual_root = replace(deploy_dir, Regex("$(versions.base)\$") => "")
+    @info "The actual base root directory is $actual_root"
     return
 end
 
