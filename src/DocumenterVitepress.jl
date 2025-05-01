@@ -71,4 +71,17 @@ function generate_template(target::String, package = "YourPackage")
     end
 end
 
+struct MultiVersions end
+
+function Documenter.determine_deploy_subfolder(deploy_decision, versions::MultiVersions)
+    # we never use a subfolder and just set that manually via the `dirname`
+    return nothing
+end
+
+function Documenter.postprocess_before_push(versions::MultiVersions; subfolder, devurl, deploy_dir, dirname)
+    @warn "No special postprocessing implemented yet for MultiVersions"
+    @show subfolder devurl deploy_dir dirname
+    return
+end
+
 end
