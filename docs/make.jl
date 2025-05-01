@@ -72,7 +72,7 @@ for (i, base) in enumerate(bases)
     deploydocs(;
         repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
         target = dir, # each version built has its own dir
-        versions = DocumenterVitepress.MultiVersions(),
+        versions = DocumenterVitepress.BaseVersion(base),
         dirname = base,
         branch = "gh-pages",
         devbranch = "master",
