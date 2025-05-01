@@ -39,8 +39,6 @@ jobs:
       - name: Load Julia packages from cache
         id: julia-cache
         uses: julia-actions/cache@v2
-        with:
-          cache-name: foo
       - name: Build and deploy docs
         uses: julia-actions/julia-docdeploy@v1
         env:
@@ -49,9 +47,9 @@ jobs:
           GKSwstype: "100" # for Plots.jl plots (if you have them)
           JULIA_DEBUG: "Documenter"
           DATADEPS_ALWAYS_ACCEPT: true
-      - name: Save Julia depot cache
+      - name: Save Julia depot cache on cancel or failure
         id: julia-cache-save
-        if: always() && steps.julia-cache.outputs.cache-hit != 'true'
+        if: cancelled() || failure()
         uses: actions/cache/save@v4
         with: 
           path: |
