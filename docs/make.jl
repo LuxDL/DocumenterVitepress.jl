@@ -60,22 +60,10 @@ makedocs(;
     plugins = [bib,],
 )
 
-# ideally, we could deploy all versions at once but `deploydocs` is written for just one
-# folder, so let's loop over the different bases for now
-
-bases = readlines(joinpath(@__DIR__, "build", "bases.txt"))
-
-for (i, base) in enumerate(bases)
-    @info "Deploying docs for base $(repr(base))"
-    
-    dir = joinpath(@__DIR__, "build", "$i")
-    deploydocs(;
-        repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
-        target = dir, # each version built has its own dir
-        versions = DocumenterVitepress.BaseVersion(base),
-        dirname = base,
-        branch = "gh-pages",
-        devbranch = "master",
-        push_preview = true,
-    )
-end
+DocumenterVitepress.deploydocs(;
+    repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
+    build_dir = joinpath(@__DIR__, "build"),
+    branch = "gh-pages",
+    devbranch = "master",
+    push_preview = true,
+)

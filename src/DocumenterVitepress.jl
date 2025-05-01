@@ -88,4 +88,30 @@ function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, de
     return
 end
 
+function deploydocs(;
+    repo,
+    build_dir,
+    branch,
+    devbranch,
+    push_preview,
+)
+    bases = readlines(joinpath(build_dir, "bases.txt"))
+    @info "Found bases for deployment: $bases"
+
+    for (i, base) in enumerate(bases)
+        @info "Deploying docs for base $(repr(base))"
+        dir = joinpath(build_dir, "$i")
+        Documenter.deploydocs(;
+            repo,
+            target = dir, # each version built has its own dir
+            versions = DocumenterVitepress.BaseVersion(base),
+            dirname = base,
+            branch,
+            devbranch,
+            push_preview,
+        )
+    end
+
+end
+
 end
