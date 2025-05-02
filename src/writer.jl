@@ -291,10 +291,9 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                         end
                     end                
                 end
-                # Documenter will generate a siteinfo.js without a version because we need to set `versions=nothing` in deploydocs,
-                # so for the gh-pages workflow that will need to run to generate that after deployment, we store this information in an extra file
-                open(joinpath(builddir, "$i_base", "_version.txt"), "w") do io
-                    println(io, deploy_decision.subfolder)
+                # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
+                open(joinpath(builddir, "$i_base", "siteinfo.js"), "w") do io
+                    println(io, """var DOCUMENTER_CURRENT_VERSION = "$(deploy_decision.subfolder)";""")
                 end
             catch e
                 rethrow(e)
