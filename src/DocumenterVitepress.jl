@@ -83,7 +83,7 @@ end
 function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, devurl, deploy_dir, dirname)
     # deploydocs gets the subfolder as dirname, so to get back to the root (temp folder) we remove the appendix
     root = replace(deploy_dir, Regex("$(versions.base)\$") => "")
-    all_version_folders = filter(d -> isdir(joinpath(root, d) && (d == "stable" || d == devurl || match(r"^v\d", d) !== nothing)), readdir(root))
+    all_version_folders = filter(d -> isdir(joinpath(root, d)) && (d == "stable" || d == devurl || match(r"^v\d", d) !== nothing), readdir(root))
     @info "Found version folders" all_version_folders
     version_number_folders = filter(d -> !(d == "stable" || d == devurl), all_version_folders)
     named_folders = setdiff(all_version_folders, version_number_folders)
