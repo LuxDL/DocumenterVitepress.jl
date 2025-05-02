@@ -81,10 +81,29 @@ function Documenter.determine_deploy_subfolder(deploy_decision, versions::BaseVe
 end
 
 function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, devurl, deploy_dir, dirname)
-    @warn "No special postprocessing implemented yet for $versions"
-    @show subfolder devurl deploy_dir dirname
-    actual_root = replace(deploy_dir, Regex("$(versions.base)\$") => "")
-    @info "The actual base root directory is $actual_root"
+    # deploydocs gets the subfolder as dirname, so to get back to the root (temp folder) we remove the appendix
+    root = replace(deploy_dir, Regex("$(versions.base)\$") => "")
+    all_version_folders = filter(d -> isdir(joinpath(root, d) && (d == "stable" || d == devurl || match(r"^v\d", d) !== nothing)), readdir(root))
+    @info "Found version folders" all_version_folders
+    version_number_folders = filter(d -> !(d == "stable" || d == devurl), all_version_folders)
+    named_folders = setdiff(all_version_folders, version_number_folders)
+    order = sortperm(VersionNumber.(version_number_folders), rev = true)
+    ordered_versions = [named_folders; version_number_folders[order]]
+    open(joinpath(root, "versions.js"), "w") do io
+        println(io, "var DOC_VERSIONS = [")
+        for v in ordered_versions
+            println(io, "  ", repr(v), ",")
+        end
+        println(io, "];")
+        if !isempty(version_number_folders)
+            println(io, "var DOCUMENTER_NEWEST = ", repr(version_number_folders[order[1]]), ";")
+        end
+        if "stable" in named_folders
+            println(io, "var DOCUMENTER_STABLE = \"stable\";")
+        end
+    end
+    @info "Wrote versions.js with the following content:"
+    println(read(joinpath(root, "versions.js"), String))
     return
 end
 
