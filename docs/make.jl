@@ -62,7 +62,7 @@ makedocs(;
 
 DocumenterVitepress.deploydocs(;
     repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
-    build_dir = joinpath(@__DIR__, "build"),
+    target = joinpath(@__DIR__, "build"),
     branch = "gh-pages",
     devbranch = "master",
     push_preview = true,

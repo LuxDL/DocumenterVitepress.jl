@@ -90,17 +90,21 @@ end
 
 function deploydocs(;
     repo,
-    build_dir,
+    target,
     branch,
     devbranch,
     push_preview,
 )
-    bases = readlines(joinpath(build_dir, "bases.txt"))
+    bases_file = joinpath(target, "bases.txt")
+    if !isfile(bases_file)
+        error("Expected a file at $bases_file listing the separate bases that DocumenterVitepress has built the docs for.")
+    end
+    bases = readlines(bases_file)
     @info "Found bases for deployment: $bases"
 
     for (i, base) in enumerate(bases)
-        @info "Deploying docs for base $(repr(base))"
-        dir = joinpath(build_dir, "$i")
+        dir = joinpath(target, "$i")
+        @info "Deploying docs for base $(repr(base)) from $dir"
         Documenter.deploydocs(;
             repo,
             target = dir, # each version built has its own dir
