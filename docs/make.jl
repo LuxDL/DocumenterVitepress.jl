@@ -34,6 +34,7 @@ makedocs(;
     format=DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/jkrumbiegel/DocumenterVitepress.jl", # this must be the full URL!
         devbranch = "master",
+        deploy_url = "https://jkrumbiegel.com/DocumenterVitepress.jl",
         devurl = "dev";
     ),
     draft = false,
