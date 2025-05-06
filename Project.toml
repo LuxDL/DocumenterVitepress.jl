@@ -6,17 +6,26 @@ version = "0.1.12"
 [deps]
 ANSIColoredPrinters = "a4c015fc-c6ff-483c-b24f-f7ea428134e9"
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+Cascadia = "54eefc05-d75b-58de-a785-1a3403f0919f"
 DocInventories = "43dc2714-ed3b-44b5-b226-857eda1aa7de"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Gumbo = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
 IOCapture = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 NodeJS_20_jll = "c7aee132-11e1-519c-8219-0a43005e73c2"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
+[weakdeps]
+DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
+
+[extensions]
+DocumenterVitepressDocumenterCitationsExt = "DocumenterCitations"
+
 [compat]
 ANSIColoredPrinters = "0.0.1"
+Cascadia = "1"
 DocInventories = "1.0"
 DocStringExtensions = "0.9"
 Documenter = "1"
@@ -26,8 +35,10 @@ NodeJS_20_jll = "20"
 TOML = "1.0.3"
 julia = "1.6"
 
-[weakdeps]
-DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
+[extras]
+Cascadia = "54eefc05-d75b-58de-a785-1a3403f0919f"
+Gumbo = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
-[extensions]
-DocumenterVitepressDocumenterCitationsExt = "DocumenterCitations"
+[targets]
+test = ["Cascadia", "Gumbo", "Test"]
