@@ -1,6 +1,7 @@
 using Documenter
 using DocumenterVitepress
 using DocumenterCitations
+using DocumenterInterLinks
 
 # Handle DocumenterCitations integration - if you're running this, then you don't need anything here!!
 documenter_citations_dir = dirname(dirname(pathof(DocumenterCitations)))
@@ -23,6 +24,17 @@ bib = CitationBibliography(
     joinpath(@__DIR__, "src", "refs.bib");
     style=:numeric  # default
 )
+
+# Handle DocumenterInterLinks integration
+links = InterLinks(
+    "sphinx" => "https://www.sphinx-doc.org/en/master/",
+    "Documenter" => (
+        "https://documenter.juliadocs.org/stable/",
+        "https://documenter.juliadocs.org/stable/objects.inv",
+    ),
+);
+
+
 # dev local
 
 makedocs(; 
@@ -57,7 +69,7 @@ makedocs(;
         ],
         "api.md",
     ],
-    plugins = [bib,],
+    plugins = [bib, links],
 )
 
 
