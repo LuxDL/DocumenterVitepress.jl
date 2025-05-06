@@ -6,7 +6,6 @@ version = "0.1.12"
 [deps]
 ANSIColoredPrinters = "a4c015fc-c6ff-483c-b24f-f7ea428134e9"
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
-Cascadia = "54eefc05-d75b-58de-a785-1a3403f0919f"
 DocInventories = "43dc2714-ed3b-44b5-b226-857eda1aa7de"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"

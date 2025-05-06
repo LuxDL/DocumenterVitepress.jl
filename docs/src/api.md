@@ -4,6 +4,9 @@ outline: deep
 ---
 ```
 
+See also the section about Documenter's [Writers](@extref Documenter).
+
+
 ## Public API
 
 ```@meta
