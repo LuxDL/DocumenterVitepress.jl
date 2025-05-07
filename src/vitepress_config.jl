@@ -91,6 +91,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
 
     base_str = deploy_abspath == "/" ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
 
+    push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH" => deploy_abspath)
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
 
     # # Vitepress output path

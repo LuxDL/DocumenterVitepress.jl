@@ -13,6 +13,9 @@ declare global {
   }
 }
 
+const absoluteRoot = __DEPLOY_ABSPATH__;
+const absoluteOrigin = (typeof window === 'undefined' ? '' : window.location.origin) + absoluteRoot;
+
 const props = defineProps<{ screenMenu?: boolean }>();
 const versions = ref<Array<{ text: string, link: string, class?: string }>>([]);
 const currentVersion = ref('Versions');
@@ -21,16 +24,6 @@ const { site } = useData();
 
 const isLocalBuild = () => {
   return typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-};
-
-const getBaseRepository = () => {
-  if (typeof window === 'undefined') return '';
-  const { origin, pathname } = window.location;
-  if (origin.includes('github.io')) {
-    const pathParts = pathname.split('/').filter(Boolean);
-    return `${origin}/${pathParts[0] ?? ''}`;
-  }
-  return origin;
 };
 
 const waitForScriptsToLoad = () => {
@@ -61,24 +54,22 @@ const loadVersions = async () => {
       currentVersion.value = 'dev';
     } else {
       const scriptsLoaded = await waitForScriptsToLoad();
-      const baseRepoPath = getBaseRepository();
 
       if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
         const allVersions = new Set([...window.DOC_VERSIONS, window.DOCUMENTER_CURRENT_VERSION]);
         versions.value = Array.from(allVersions).map(v => ({
           text: v,
-          link: `${baseRepoPath}/${v}/`
+          link: `${absoluteOrigin}/${v}/`
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
-        versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/` }];
+        versions.value = [{ text: 'dev', link: `${absoluteOrigin}/dev/` }];
         currentVersion.value = 'dev';
       }
     }
   } catch (error) {
     console.warn('Error loading versions:', error);
-    const baseRepoPath = getBaseRepository();
-    versions.value = [{ text: 'dev', link: `${baseRepoPath}/dev/` }];
+    versions.value = [{ text: 'dev', link: `${absoluteOrigin}/dev/` }];
     currentVersion.value = 'dev';
   }
   isClient.value = true;
