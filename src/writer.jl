@@ -218,18 +218,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
 
-    bases = if match(r"^v\d", deploy_decision.subfolder) !== nothing
-        v = VersionNumber(deploy_decision.subfolder)
-        _bases = [
-            "stable",
-            "v$(v.major)",
-            "v$(v.major).$(v.minor)",
-            "v$(v.major).$(v.minor).$(v.patch)",
-        ]
-        filter!(x -> x ∉ ("v0", "v0.0"), _bases)
-    else
-        [deploy_decision.subfolder]
-    end
+    bases = determine_bases(deploy_decision.subfolder)
 
     for (i_base, base) in enumerate(bases)
         # from `vitepress_config.jl`
@@ -328,6 +317,71 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
     end
     return
+end
+
+is_version_string(str) = try (VersionNumber(str); true) catch; false end
+
+function determine_bases(subfolder)::Vector{String}
+    bases = if is_version_string(subfolder)
+        v = VersionNumber(subfolder)
+        @info "Subfolder is a version: $v"
+
+        patch_base = "v$(v.major).$(v.minor).$(v.patch)"
+        minor_base = "v$(v.major).$(v.minor)"
+        major_base = "v$(v.major)"
+
+        @info "Adding base `$(patch_base)`"
+        bases = [
+            patch_base
+        ]
+        all_tagged_versions = get_all_tagged_release_versions()
+        higher_versions = filter(>(v), all_tagged_versions)
+        if !isempty(v.prerelease)
+            @info "`$v` is a prerelease, not adding base `stable`"
+        elseif isempty(higher_versions)
+            @info "No higher versions than `$v` found, adding base `stable`"
+            push!(bases, "stable")
+        else
+            @info "Found release tag `$(first(higher_versions))` which is a higher version than `$v`, not adding base `stable`"
+        end
+
+        higher_versions_same_major = filter(v2 -> v2.major == v.major, higher_versions)
+        if v.major == 0
+            @info "All-zero major alias `v0` will not be added as a base"
+        elseif isempty(higher_versions_same_major)
+            @info "No higher versions than `$v` with same major version found, adding base `$(major_base)`"
+            push!(bases, major_base)
+        else
+            @info "Found release tag `$(first(higher_versions_same_major))` which is a higher version with same major version than `$v`, not adding base `$(major_base)`"
+        end
+
+        higher_versions_same_minor = filter(v2 -> v2.minor == v.minor, higher_versions_same_major)
+        if v.major == 0 && v.minor == 0
+            @info "All-zero major minor alias `v0.0` will not be added as a base"
+        elseif isempty(higher_versions_same_minor)
+            @info "No higher versions than `$v` with same major and minor version found, adding base `$(minor_base)`"
+            push!(bases, minor_base)
+        else
+            @info "Found release tag `$(first(higher_versions_same_minor))` which is a higher version with same major and minor version than `$v`, not adding base `$(minor_base)`"
+        end
+
+        filter!(x -> x ∉ ("v0", "v0.0"), bases)
+    else
+        [subfolder]
+    end
+
+    @info "Bases that will be built: $bases"
+
+    return bases
+end
+
+function get_all_tagged_release_versions()::Vector{VersionNumber}
+    tags = readlines(`$(Documenter.git()) tag`)
+    version_numbers = VersionNumber.(filter(is_version_string, tags))
+    filter!(version_numbers) do v
+        isempty(v.prerelease) # we never want alias bases for prereleases so we don't clobber `stable` etc.
+    end
+    return sort(version_numbers, rev = true)
 end
 
 # This function catches all nodes and decomposes them to their elements.
