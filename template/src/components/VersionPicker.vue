@@ -103,12 +103,12 @@ onMounted(() => {
   <template v-if="isClient">
     <VPNavBarMenuGroup
       v-if="!screenMenu && versions.length > 0"
-      :item="{ text: 'Version', items: versionItems }"
+      :item="{ text: currentVersion, items: versionItems }"
       class="VPVersionPicker"
     />
     <VPNavScreenMenuGroup
       v-else-if="screenMenu && versions.length > 0"
-      :text="'Version'"
+      :text="currentVersion"
       :items="versionItems"
       class="VPVersionPicker"
     />
