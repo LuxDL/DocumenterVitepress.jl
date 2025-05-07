@@ -5,4 +5,4 @@ DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 
 [sources]
 DocumenterVitepress = { path = ".." }
-Documenter = { url = "https://github.com/jkrumbiegel/Documenter.jl", rev = "jk/dispatch-deploy-on-versions" }
+Documenter = { url = "https://github.com/JuliaDocs/Documenter.jl", rev = "master" }
