@@ -375,13 +375,18 @@ function determine_bases(subfolder)::Vector{String}
     return bases
 end
 
+stripped_version(v::VersionNumber) = VersionNumber(v.major, v.minor, v.patch)
+
 function get_all_tagged_release_versions()::Vector{VersionNumber}
     tags = readlines(`$(Documenter.git()) tag`)
-    version_numbers = VersionNumber.(filter(is_version_string, tags))
+    version_numbers = stripped_version.(VersionNumber.(filter(is_version_string, tags)))
     filter!(version_numbers) do v
         isempty(v.prerelease) # we never want alias bases for prereleases so we don't clobber `stable` etc.
     end
-    return sort(version_numbers, rev = true)
+    # For comparison purposes, we don't care about build versions. If the new version
+    # is otherwise the same as an existing one, we push it as an update to that older one
+    stripped_version_numbers = unique(stripped_version.(version_numbers))
+    return sort(stripped_version_numbers, rev = true)
 end
 
 # This function catches all nodes and decomposes them to their elements.
