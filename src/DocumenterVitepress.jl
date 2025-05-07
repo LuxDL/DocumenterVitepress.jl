@@ -81,6 +81,9 @@ function Documenter.determine_deploy_subfolder(deploy_decision, versions::BaseVe
 end
 
 function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, devurl, deploy_dir, dirname)
+    if islink(deploy_dir)
+        error("Deploy directory \"$deploy_dir\" is a symbolic link which points to \"$(readlink(deploy_dir))\". This symlink probably exists from previous deployments using Documenter's versioning mechanism. DocumenterVitepress has to write an actual build to \"$(versions.base)\" so you need to remove the symlink manually before trying to deploy again.")
+    end
     # deploydocs gets the subfolder as dirname, so to get back to the root (temp folder) we remove the appendix
     root = replace(deploy_dir, Regex("$(versions.base)\$") => "")
     all_version_folders = filter(d -> isdir(joinpath(root, d)) && (d == "stable" || d == devurl || match(r"^v\d", d) !== nothing), readdir(root))
