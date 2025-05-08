@@ -15,3 +15,6 @@ docs/.vitepress/dist
 docs/.DS_Store
 docs/package-lock.json
 .qodo
+
+
+test/sites/build_inventory/
