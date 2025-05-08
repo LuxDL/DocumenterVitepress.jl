@@ -11,7 +11,7 @@ const props = defineProps({
   }
 });
 
-const formattedStarCount = data ? formatPrefix(".1s", 1000)(data) : "";
+const formattedStarCount = data ? (data >= 1000 ? `${data}` : formatPrefix(".1s", 1000)(data)) : "";
 </script>
 
 <template>
