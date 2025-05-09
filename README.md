@@ -22,6 +22,8 @@ pkg> add DocumenterVitepress
 
 ## Usage
 
+### Rendering
+
 To enable the backend:
 1. Import the package in `make.jl`,
 2. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so, replacing e.g. `format = HTML(...)`:
@@ -29,11 +31,71 @@ To enable the backend:
 ```julia
 using Documenter
 using DocumenterVitepress
+
 makedocs(;
-    format=DocumenterVitepress.MarkdownVitepress(repo = "...", devbranch = "...", devurl = "dev"),
-    )
+    format = DocumenterVitepress.MarkdownVitepress(
+        repo = "github.com/YourName/YourPackage.jl",
+        devbranch = "main", # or master, trunk, ...
+        devurl = "dev",
+        deploy_url = "some.custom.domain.org", # if you don't use yourname.github.io/YourPackage.jl
+    ),
+)
 ```
-and enjoy the fruits of your labour!
+
+Locally, the docs should now be written to `docs/build/1`.
+
+> [!NOTE]
+> Why `build/1`?
+> 
+> Since version 0.2, DocumenterVitepress renders a separate build for each base or sub-URL at which your site
+> should be accessible. For example, the same version `v1.2.3` might need to be made available at `/v1.2.3`, `/v1.2`, `/v1` and `/stable`.
+> The `vitepress` build process requires a separate build for each of these, which are stored in sequentially numbered
+> folders `build/1`, `build/2` and so on. The bases related to these builds are stored in the sidecar file `bases.txt`.
+> 
+> When building locally, the only base rendered should always be the empty string `""` because a local build is neither a dev build, a version build
+> or a PR preview build. Therefore, the locally rendered docs should always be found in `docs/build/1`.
+
+
+### Viewing locally
+
+To view the docs locally, you can serve the `docs/build/1` folder, for example using the `LiveServer` package:
+
+```julia
+using LiveServer
+
+LiveServer.serve(dir = "docs/build/1")
+```
+
+### Deploying
+
+Since version 0.2, DocumenterVitepress does not work with `Documenter.deploydocs` anymore because a single build can potentially
+consist of multiple versions, like `/v1.2.3`, `/v1.2`, `/v1` and `/stable`.
+
+Instead, use the separate function of the same name `DocumenterVitepress.deploydocs` which uses similar keywords, for example:
+
+```julia
+DocumenterVitepress.deploydocs(;
+    repo = "github.com/YourName/YourPackage.jl",
+    target = joinpath(@__DIR__, "build"),
+    branch = "gh-pages",
+    devbranch = "main", # or master, trunk, ...
+    push_preview = true,
+)
+```
+
+> [!CAUTION]  
+> Deployment will fail if any of the subfolders on your gh-pages branch that should be written to are symlinks to other folders.
+> For example, gh-pages might contain a `stable` symlink from earlier Documenter.jl deployments, but DocumenterVitepress wants
+> to deploy to an actual folder called `stable`.
+> 
+> Due to peculiarities in the deploy process, DocumenterVitepress cannot currently fix this automatically, so you have to delete
+> the offending symlink manually. On GitHub, you can simply go to https://github.com/YourName/YourPackage.jl/tree/gh-pages, click on
+> the symlink and on the next page delete it through the context menu. In the following screenshot from an example `gh-pages` branch,
+> the symlinks are `stable` and `v0.1` which be recognized by the arrow symbol.
+> ![](symlinks.png)
+
+
+### Customizing Vitepress
 
 If you wish to fully customize your documentation with all of the capabilities of [Vitepress](https://vitepress.dev), 
 then you can use our template generator.  But be warned that you may have to update that template to keep pace with 
@@ -54,16 +116,6 @@ And keep an eye for custom domains.
 > of `MarkdownVitepress`!  
 > 
 > Otherwise, the documentation will not render correctly.
-
-## Run locally
-
-Because this is based on the Vitepress static site generator, you have to use NodeJS to view this site locally:
-
-```julia
-using DocumenterVitepress
-DocumenterVitepress.dev_docs()
-```
-and edit your `make.jl` file to add `build_vitepress = false` as a keyword argument to the `MarkdownVitepress` config, to save time.  If you keep this running, perhaps in a separate Terminal window, it will automatically rebuild whenever you run `make.jl`.
 
 ***
 
