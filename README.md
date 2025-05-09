@@ -37,7 +37,8 @@ makedocs(;
         repo = "github.com/YourName/YourPackage.jl",
         devbranch = "main", # or master, trunk, ...
         devurl = "dev",
-        deploy_url = "some.custom.domain.org", # if you don't use yourname.github.io/YourPackage.jl
+        # if you use something else than yourname.github.io/YourPackage.jl
+        deploy_url = "yourdomain.org/docs/YourPackage",
     ),
 )
 ```
@@ -108,15 +109,6 @@ DocumenterVitepress changes!
 > DocumenterVitepress.generate_template("/path/to/YourPackage/docs", "YourPackage")
 > ```
 > to populate all of the files which Vitepress requires.
-
-And keep an eye for custom domains.
-
-> [!CAUTION]  
-> If you are deploying from a custom URL, like `geo.makie.org`, 
-> please provide the entire URL to the `deploy_url = "geo.makie.org"` keyword argument 
-> of `MarkdownVitepress`!  
-> 
-> Otherwise, the documentation will not render correctly.
 
 ***
 
