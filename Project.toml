@@ -16,7 +16,7 @@ REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 [compat]
 ANSIColoredPrinters = "0.0.1"
 DocStringExtensions = "0.9"
-Documenter = "1"
+Documenter = "1.11"
 DocumenterCitations = "1"
 IOCapture = "0.2"
 NodeJS_20_jll = "20"
