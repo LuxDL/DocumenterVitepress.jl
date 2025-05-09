@@ -91,7 +91,7 @@ DocumenterVitepress.deploydocs(;
 > Due to peculiarities in the deploy process, DocumenterVitepress cannot currently fix this automatically, so you have to delete
 > the offending symlink manually. On GitHub, you can simply go to https://github.com/YourName/YourPackage.jl/tree/gh-pages, click on
 > the symlink and on the next page delete it through the context menu. In the following screenshot from an example `gh-pages` branch,
-> the symlinks are `stable` and `v0.1` which be recognized by the arrow symbol.
+> the symlinks are `stable` and `v0.1` which can be recognized by the arrow symbol.
 > 
 > <img src="symlinks.png" width="116" alt="Screenshot of symlinks">
 
