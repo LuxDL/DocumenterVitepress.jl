@@ -92,7 +92,8 @@ DocumenterVitepress.deploydocs(;
 > the offending symlink manually. On GitHub, you can simply go to https://github.com/YourName/YourPackage.jl/tree/gh-pages, click on
 > the symlink and on the next page delete it through the context menu. In the following screenshot from an example `gh-pages` branch,
 > the symlinks are `stable` and `v0.1` which be recognized by the arrow symbol.
-> ![](symlinks.png)
+> 
+> <img src="symlinks.png" width="116" alt="Screenshot of symlinks">
 
 
 ### Customizing Vitepress
