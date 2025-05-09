@@ -7,10 +7,8 @@
 
 <img src="https://luxdl.github.io/DocumenterVitepress.jl/stable/logo.png" align="right" style="padding-left:10px;" width="180"/>
 
-> [!TIP]
-> Visit at https://luxdl.github.io/DocumenterVitepress.jl/dev/
-
-This package provides a Markdown / MkDocs backend to [Documenter.jl](https://documenter.juliadocs.org/stable/).
+This package provides a Markdown backend to [Documenter.jl](https://documenter.juliadocs.org/stable/).
+The generated Markdown is rendered to HTML using the static site generator [vitepress](https://vitepress.dev/).
 
 ## Installation
 
@@ -25,8 +23,9 @@ pkg> add DocumenterVitepress
 ### Rendering
 
 To enable the backend:
-1. Import the package in `make.jl`,
-2. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so, replacing e.g. `format = HTML(...)`:
+1. Add `DocumenterVitepress` to your `docs` environment using Pkg
+2. Add `using DocumenterVitepress` in `docs/make.jl`,
+3. Pass `format = DocumenterVitepress.MarkdownVitepress(...)` to `makedocs` like so, replacing e.g. `format = HTML(...)`:
 
 ```julia
 using Documenter
@@ -43,7 +42,7 @@ makedocs(;
 )
 ```
 
-Locally, the docs should now be written to `docs/build/1`.
+Locally, the docs should now be rendered to `docs/build/1`.
 
 > [!NOTE]
 > Why `build/1`?
@@ -69,7 +68,7 @@ LiveServer.serve(dir = "docs/build/1")
 
 ### Deploying
 
-Since version 0.2, DocumenterVitepress does not work with `Documenter.deploydocs` anymore because a single build can potentially
+Since version 0.2, DocumenterVitepress is not compatible with `Documenter.deploydocs` anymore because a single build can potentially
 consist of multiple versions, like `/v1.2.3`, `/v1.2`, `/v1` and `/stable`.
 
 Instead, use the separate function of the same name `DocumenterVitepress.deploydocs` which uses similar keywords, for example:
