@@ -49,14 +49,6 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     """The path to which the Markdown files will be output.  Defaults to `\$build/.documenter`."""
     md_output_path::String = ".documenter"
     """
-    Determines whether to clean up the Markdown assets after build, i.e., whether to remove the contents of `md_output_path` after the Vitepress site is built.  
-    Options are:
-    - `nothing`: **Default**.  Only remove the contents of `md_output_path` if the documentation will deploy, to save space.
-    - `true`: Removes the contents of `md_output_path` after the Vitepress site is built.
-    - `false`: Does not remove the contents of `md_output_path` after the Vitepress site is built.
-    """
-    clean_md_output::Union{Nothing, Bool} = nothing
-    """
     DeployDecision from Documenter.jl. This is used to determine whether to deploy the documentation or not.
     Options are:
     - `nothing`: **Default**. Automatically determine whether to deploy the documentation.
@@ -309,13 +301,6 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         # touch(joinpath(builddir, "final_site", ".nojekyll"))
     end
 
-    # Clean up afterwards
-    clean_md_output = isnothing(settings.clean_md_output) ? deploy_decision.all_ok : settings.clean_md_output
-    if clean_md_output
-        @info "DocumenterVitepress: cleaning up Markdown output."
-        rm(joinpath(builddir, settings.md_output_path); recursive = true)
-        @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
-    end
     return
 end
 
