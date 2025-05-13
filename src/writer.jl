@@ -1,5 +1,7 @@
 import Documenter: Documenter, Builder, Expanders, MarkdownAST
 import Documenter.DOM: escapehtml
+using DocInventories: DocInventories, Inventory, InventoryItem
+using TOML: TOML
 
 import ANSIColoredPrinters
 using Base64: base64decode, base64encode
@@ -60,6 +62,8 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     deploy_decision::Union{Nothing, Documenter.DeployDecision} = nothing
     "A list of assets, the same as what is provided to Documenter's HTMLWriter."
     assets = nothing
+    "A version string to write to the header of the objects.inv inventory file. This should be a valid version number without a v prefix. Defaults to the version defined in the Project.toml file in the parent folder of the documentation root"
+    inventory_version::Union{String,Nothing} = nothing
 end
 
 # return the same file with the extension changed to .md
@@ -173,8 +177,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     end
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
+    mkpath(joinpath(builddir, settings.md_output_path, "public"))
     if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
-        mkpath(joinpath(builddir, settings.md_output_path, "public"))
         files = readdir(joinpath(builddir, settings.md_output_path, "assets"); join = true)
         logo_files = contains.(last.(splitdir.(files)), "logo")
         favicon_files = contains.(last.(splitdir.(files)), "favicon")
@@ -200,15 +204,34 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
 
+    version = settings.inventory_version
+    if isnothing(version)
+        project_toml = joinpath(dirname(doc.user.root), "Project.toml")
+        version = _get_inventory_version(project_toml)
+    end
+    inventory = Inventory(; project=doc.user.sitename, version)
+
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
         open(docpath(page.build, builddir, settings.md_output_path), "w") do io
             for node in page.mdast.children
-                render(io, mime, node, page, doc)
+                render(io, mime, node, page, doc; inventory)
             end
         end
+        item = InventoryItem(
+            name = replace(splitext(src)[1], "\\" => "/"),
+            domain = "std",
+            role = "doc",
+            dispname = _pagetitle(page),
+            priority = -1,
+            uri = _get_inventory_uri(doc, page, nothing)
+        )
+        push!(inventory, item)
     end
+
+    objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
+    DocInventories.save(objects_inv, inventory)
 
     bases = determine_bases(deploy_decision.subfolder)
 
@@ -410,7 +433,8 @@ function render(io::IO, mime::MIME"text/plain", vec::Vector, page, doc; kwargs..
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, anchor::Documenter.Anchor, page, doc; kwargs...)
-    println(io, "\n<a id='", lstrip(Documenter.anchor_fragment(anchor), '#'), "'></a>")
+    anchor_id = lstrip(Documenter.anchor_fragment(anchor), '#')
+    println(io, "\n<a id='", anchor_id, "'></a>")
     return render(io, mime, node, anchor.object, page, doc; kwargs...)
 end
 
@@ -439,8 +463,17 @@ end
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, docs::Documenter.DocsNode, page, doc; kwargs...)
     open_txt = get(page.globals.meta, :CollapsedDocStrings, false) ? "" : "open"
     anchor_id = sanitized_anchor_label(docs.anchor)
+    category = Documenter.doccat(docs.object)
+    if haskey(kwargs, :inventory)
+        item = InventoryItem(
+            name = docs.anchor.id,
+            role = lowercase(category),
+            uri = _get_inventory_uri(doc, page, anchor_id),
+        )
+        push!(kwargs[:inventory], item)
+    end
     # Docstring header based on the name of the binding and it's category.
-    _badge_text = """<Badge type="info" class="jlObjectType jl$(Documenter.doccat(docs.object))" text="$(Documenter.doccat(docs.object))" />"""
+    _badge_text = """<Badge type="info" class="jlObjectType jl$(category)" text="$(category)" />"""
     print(io ,"""<details class='jldocstring custom-block' $(open_txt)>
     <summary><a id='$(anchor_id)' href='#$(anchor_id)'><span class="jlbinding">$(docs.object.binding)</span></a> $(_badge_text)</summary>\n
     """)
@@ -950,7 +983,7 @@ end
 # Headers
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, header::Documenter.AnchoredHeader, page, doc; kwargs...)
     anchor = header.anchor
-    id = sanitized_anchor_label(anchor)
+    id = replace(sanitized_anchor_label(anchor), " " => "-")  # potentially use MarkdownAST.mdflatten here?
     heading = first(node.children)
     println(io)
     print(io, "#"^(heading.element.level), " ")
@@ -958,8 +991,17 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(heading_iob, mime, node, heading.children, page, doc; kwargs...)
     heading_text = rstrip(String(take!(heading_iob)))
     print(io, heading_text)
-    if id != heading_text # if a custom ID is set, then use it.
-        print(io, " {#$(replace(id, " " => "-"))}") # potentially use MarkdownAST.mdflatten here?
+    print(io, " {#$(id)}")
+    if haskey(kwargs, :inventory)
+        item = InventoryItem(
+            name = header.anchor.id,
+            domain = "std",
+            role = "label",
+            dispname = _get_inventory_dispname(header.anchor.id, Documenter.MDFlatten.mdflatten(anchor.node)),
+            priority = -1,
+            uri = _get_inventory_uri(doc, page, id),
+        )
+        push!(kwargs[:inventory], item)
     end
     println(io)
 end
@@ -1152,3 +1194,83 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io)
     println(io, "![]($image_path)")
 end
+
+
+function _get_inventory_version(project_toml)
+    version = ""
+    if isfile(project_toml)
+        project_data = TOML.parsefile(project_toml)
+        if haskey(project_data, "version")
+            version = project_data["version"]
+            @info "Automatic `version=$(repr(version))` for inventory from $(relpath(project_toml))"
+        else
+            @warn "Cannot extract version for inventory from $(project_toml): no version information"
+        end
+    else
+        @warn "Cannot extract version for inventory from $(project_toml): no such file"
+    end
+    if isempty(version)
+        # The automatic `inventory_version` determined in this function is intended only for
+        # projects with a standard layout with Project.toml file in the expected
+        # location (the parent folder of doc.user.root). Any non-standard project should
+        # explicitly set an `inventory_version` as an option to `MarkdownVitepress()` in `makedocs`, or
+        # specifically set `inventory_version=""` so that `_get_inventory_version` is never
+        # called, and thus this warning is suppressed.
+        @warn "Please set `inventory_version` in the `MarkdownVitepress()` options passed to `makedocs`."
+    end
+    return version
+end
+
+
+function _get_inventory_uri(doc, page, anchor_id)
+    filename = relpath(page.build, doc.user.build)
+    page_url = splitext(filename)[1]
+    if Sys.iswindows()
+        page_url = replace(page_url, "\\" => "/")
+    end
+    uri = join(map(_escapeuri, split(page_url, "/")), "/")
+    if !isnothing(anchor_id)
+        uri = uri * "#" * _escapeuri(anchor_id)
+    end
+    return uri
+end
+
+
+function _get_inventory_dispname(name, dispname)
+    if dispname == name
+        dispname = "-"
+    end
+    return dispname
+end
+
+
+function _pagetitle(page)
+    page_mdast = page.mdast
+    @assert page_mdast.element isa MarkdownAST.Document
+    title_node = nothing
+    for node in page_mdast.children
+        # AnchoredHeaders should have just one child node, which is the Heading node
+        if isa(node.element, Documenter.AnchoredHeader)
+            node = first(node.children)
+        end
+        if isa(node.element, MarkdownAST.Heading) && node.element.level == 1
+            title_node = collect(node.children)
+            break
+        end
+    end
+    if isnothing(title_node)
+        return "-"
+    else
+        return Documenter.MDFlatten.mdflatten(title_node)
+    end
+end
+
+
+@inline _issafe(c::Char) =
+    c == '-' || c == '.' || c == '_' || (isascii(c) && (isletter(c) || isnumeric(c)))
+
+_utf8_chars(str::AbstractString) = (Char(c) for c in codeunits(str))
+
+_escapeuri(c::Char) = string('%', uppercase(string(Int(c), base = 16, pad = 2)))
+_escapeuri(str::AbstractString) =
+    join(_issafe(c) ? c : _escapeuri(c) for c in _utf8_chars(str))
