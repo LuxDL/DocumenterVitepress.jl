@@ -134,16 +134,22 @@ function deploydocs(;
 
     if haskey(kwargs, :versions)
         error("""
-        DocumenterVitepress.deploydocs does not support the `versions` keyword argument;
+        `DocumenterVitepress.deploydocs` does not support the `versions` keyword argument;
         Instead, amend the `deploy_decision` you pass into `MarkdownVitepress`.
         """)
     end
 
-    if haskey(kwargs, :dirname)
-        error("""
-        DocumenterVitepress.deploydocs does not support the `dirname` keyword argument, 
-        because 
-        """)
+    # Relativize the target path, if it is not absolute
+    # TODO: this is a bit hacky, but what else can we do?
+    if !isabspath(target)
+        try
+            calling_stack_item = stacktrace()[3]
+            calling_file = string(calling_stack_item.file)
+            target = joinpath(Base.dirname(calling_file), target)
+        catch e
+            @warn "Error when relativizing target path"
+            rethrow(e)
+        end
     end
 
     bases_file = joinpath(target, "bases.txt")
