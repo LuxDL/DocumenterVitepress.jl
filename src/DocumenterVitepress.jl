@@ -140,7 +140,7 @@ function deploydocs(;
         """)
     end
 
-    bases_file = joinpath(target, "bases.txt")
+    bases_file = joinpath(root, target, "bases.txt")
     if !isfile(bases_file)
         error("Expected a file at $bases_file listing the separate bases that DocumenterVitepress has built the docs for.")
     end
