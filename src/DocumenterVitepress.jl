@@ -171,6 +171,20 @@ function deploydocs(;
         )
     end
 
+    first_version = last(bases)
+    isempty(first_version) && return
+
+    # Push the correct version to the GH Actions documenter/deploy action.
+    # If we have reached this point, then the build was a success, so we can push
+    # the "success" type of result.
+    try
+        deploy_config = Documenter.auto_detect_deploy_system()
+        Documenter.post_status(deploy_config; type = "success", repo = repo, subfolder = first_version)
+    catch e
+        @warn "DocumenterVitepress: Error while pushing status to CI"
+        rethrow(e)
+    end
+
 end
 
 end
