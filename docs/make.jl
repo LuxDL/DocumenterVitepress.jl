@@ -74,8 +74,6 @@ makedocs(;
 
 DocumenterVitepress.deploydocs(;
     repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
-    target = joinpath(@__DIR__, "build"),
-    branch = "gh-pages",
     devbranch = "master",
     push_preview = true,
 )
