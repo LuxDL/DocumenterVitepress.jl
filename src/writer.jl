@@ -566,7 +566,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
         
         # Print the corresponding \item statement
         id = _hash(Documenter.anchor_label(anchor))
-        _print(io, "\\t"^depht * "[", id, "](")
+        _print(io, "\\t"^(level-1) * "[", id, "](")
         latex(io, header.children)
         _println(io, ")")
     end
