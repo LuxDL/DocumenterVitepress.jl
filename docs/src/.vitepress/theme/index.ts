@@ -1,6 +1,7 @@
 // .vitepress/theme/index.ts
 import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
+import 'virtual:group-icons.css'
 import type { Theme as ThemeConfig } from 'vitepress'
 
 import { 

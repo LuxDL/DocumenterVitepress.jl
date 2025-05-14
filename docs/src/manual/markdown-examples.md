@@ -195,6 +195,28 @@ x = -2π:0.001:2π
 
 :::
 
+##### icons
+
+::: code-group
+
+```sh [npm]
+npm install vitepress-plugin-group-icons
+```
+
+```sh [yarn]
+yarn add vitepress-plugin-group-icons
+```
+
+```sh [pnpm]
+pnpm add vitepress-plugin-group-icons
+```
+
+```sh [bun]
+bun add vitepress-plugin-group-icons
+```
+
+:::
+
 
 ### Lists
 

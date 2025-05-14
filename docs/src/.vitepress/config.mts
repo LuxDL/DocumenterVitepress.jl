@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { groupIconMdPlugin, groupIconVitePlugin } from 'vitepress-plugin-group-icons'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
@@ -67,6 +68,9 @@ export default defineConfig({
         '@nolebase/ui',
       ], 
     },
+    plugins: [
+      groupIconVitePlugin()
+    ], 
   },
 
   markdown: {
