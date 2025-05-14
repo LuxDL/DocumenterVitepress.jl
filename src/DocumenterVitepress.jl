@@ -111,9 +111,12 @@ function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, de
 end
 
 """
-    deploydocs(; repo, target, branch, devbranch, push_preview)
+    deploydocs(; repo, target, branch, devbranch, push_preview, kwargs...)
 
 Deploy the documentation built with DocumenterVitepress.
+
+The `repo` keyword argument is required, all others are optional and default to
+the defaults of `Documenter.deploydocs` (see its documentation for more details).
 
 This function only shares a name with `Documenter.deploydocs`, it should
 therefore be invoked with `DocumenterVitepress.deploydocs`. Because of
@@ -124,11 +127,25 @@ does not work with the default settings. This function offers a wrapper over
 """
 function deploydocs(;
     repo,
-    target,
-    branch,
-    devbranch,
-    push_preview,
+    target = "build",
+    dirname = "",
+    kwargs...
 )
+
+    if haskey(kwargs, :versions)
+        error("""
+        DocumenterVitepress.deploydocs does not support the `versions` keyword argument;
+        Instead, amend the `deploy_decision` you pass into `MarkdownVitepress`.
+        """)
+    end
+
+    if haskey(kwargs, :dirname)
+        error("""
+        DocumenterVitepress.deploydocs does not support the `dirname` keyword argument, 
+        because 
+        """)
+    end
+
     bases_file = joinpath(target, "bases.txt")
     if !isfile(bases_file)
         error("Expected a file at $bases_file listing the separate bases that DocumenterVitepress has built the docs for.")
@@ -142,11 +159,9 @@ function deploydocs(;
         Documenter.deploydocs(;
             repo,
             target = dir, # each version built has its own dir
-            versions = DocumenterVitepress.BaseVersion(base),
-            dirname = base,
-            branch,
-            devbranch,
-            push_preview,
+            versions = DocumenterVitepress.BaseVersion(base), # the base version
+            dirname = isempty(dirname) ? base : joinpath(dirname, base), # the dirname to use
+            kwargs...
         )
     end
 
