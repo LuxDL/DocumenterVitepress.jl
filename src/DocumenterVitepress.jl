@@ -126,6 +126,7 @@ does not work with the default settings. This function offers a wrapper over
 `Documenter.deploydocs` which deploys each separate build in sequence.
 """
 function deploydocs(;
+    root = Documenter.currentdir(),
     repo,
     target = "build",
     dirname = "",
@@ -139,19 +140,6 @@ function deploydocs(;
         """)
     end
 
-    # Relativize the target path, if it is not absolute
-    # TODO: this is a bit hacky, but what else can we do?
-    if !isabspath(target)
-        try
-            calling_stack_item = stacktrace()[3]
-            calling_file = string(calling_stack_item.file)
-            target = joinpath(Base.dirname(calling_file), target)
-        catch e
-            @warn "Error when relativizing target path"
-            rethrow(e)
-        end
-    end
-
     bases_file = joinpath(target, "bases.txt")
     if !isfile(bases_file)
         error("Expected a file at $bases_file listing the separate bases that DocumenterVitepress has built the docs for.")
@@ -163,6 +151,7 @@ function deploydocs(;
         dir = joinpath(target, "$i")
         @info "Deploying docs for base $(repr(base)) from $dir"
         Documenter.deploydocs(;
+            root,
             repo,
             target = dir, # each version built has its own dir
             versions = DocumenterVitepress.BaseVersion(base), # the base version
