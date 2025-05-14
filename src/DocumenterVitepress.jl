@@ -110,6 +110,18 @@ function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, de
     return
 end
 
+"""
+    deploydocs(; repo, target, branch, devbranch, push_preview)
+
+Deploy the documentation built with DocumenterVitepress.
+
+This function only shares a name with `Documenter.deploydocs`, it should
+therefore be invoked with `DocumenterVitepress.deploydocs`. Because of
+DocumenterVitepress's need to build a separate website for each base alias
+like `v1.2.3`, `v1.2`, `v1` and `stable`, the deployment using `Documenter.deploydocs`
+does not work with the default settings. This function offers a wrapper over
+`Documenter.deploydocs` which deploys each separate build in sequence.
+"""
 function deploydocs(;
     repo,
     target,
