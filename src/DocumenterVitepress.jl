@@ -111,9 +111,12 @@ function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, de
 end
 
 """
-    deploydocs(; repo, target, branch, devbranch, push_preview)
+    deploydocs(; repo, target, branch, devbranch, push_preview, kwargs...)
 
 Deploy the documentation built with DocumenterVitepress.
+
+The `repo` keyword argument is required, all others are optional and default to
+the defaults of `Documenter.deploydocs` (see its documentation for more details).
 
 This function only shares a name with `Documenter.deploydocs`, it should
 therefore be invoked with `DocumenterVitepress.deploydocs`. Because of
@@ -123,13 +126,21 @@ does not work with the default settings. This function offers a wrapper over
 `Documenter.deploydocs` which deploys each separate build in sequence.
 """
 function deploydocs(;
+    root = Documenter.currentdir(),
     repo,
-    target,
-    branch,
-    devbranch,
-    push_preview,
+    target = "build",
+    dirname = "",
+    kwargs...
 )
-    bases_file = joinpath(target, "bases.txt")
+
+    if haskey(kwargs, :versions)
+        error("""
+        `DocumenterVitepress.deploydocs` does not support the `versions` keyword argument;
+        Instead, amend the `deploy_decision` you pass into `MarkdownVitepress`.
+        """)
+    end
+
+    bases_file = joinpath(root, target, "bases.txt")
     if !isfile(bases_file)
         error("Expected a file at $bases_file listing the separate bases that DocumenterVitepress has built the docs for.")
     end
@@ -140,14 +151,27 @@ function deploydocs(;
         dir = joinpath(target, "$i")
         @info "Deploying docs for base $(repr(base)) from $dir"
         Documenter.deploydocs(;
+            root,
             repo,
             target = dir, # each version built has its own dir
-            versions = DocumenterVitepress.BaseVersion(base),
-            dirname = base,
-            branch,
-            devbranch,
-            push_preview,
+            versions = DocumenterVitepress.BaseVersion(base), # the base version
+            dirname = isempty(dirname) ? base : joinpath(dirname, base), # the dirname to use
+            kwargs...
         )
+    end
+
+    first_version = last(bases)
+    isempty(first_version) && return
+
+    # Push the correct version to the GH Actions documenter/deploy action.
+    # If we have reached this point, then the build was a success, so we can push
+    # the "success" type of result.
+    try
+        deploy_config = Documenter.auto_detect_deploy_system()
+        Documenter.post_status(deploy_config; type = "success", repo = repo, subfolder = first_version)
+    catch e
+        @warn "DocumenterVitepress: Error while pushing status to CI"
+        rethrow(e)
     end
 
 end
