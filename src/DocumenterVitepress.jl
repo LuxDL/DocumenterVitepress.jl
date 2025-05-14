@@ -71,4 +71,85 @@ function generate_template(target::String, package = "YourPackage")
     end
 end
 
+struct BaseVersion
+    base::String
+end
+
+function Documenter.determine_deploy_subfolder(deploy_decision, versions::BaseVersion)
+    # we never use a subfolder and just set that manually via the `dirname`
+    return nothing
+end
+
+function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, devurl, deploy_dir, dirname)
+    if islink(deploy_dir)
+        error("Deploy directory \"$deploy_dir\" is a symbolic link which points to \"$(readlink(deploy_dir))\". This symlink probably exists from previous deployments using Documenter's versioning mechanism. DocumenterVitepress has to write an actual build to \"$(versions.base)\" so you need to remove the symlink manually before trying to deploy again.")
+    end
+    # deploydocs gets the subfolder as dirname, so to get back to the root (temp folder) we remove the appendix
+    root = replace(deploy_dir, Regex("$(versions.base)\$") => "")
+    all_version_folders = filter(d -> isdir(joinpath(root, d)) && (d == "stable" || d == devurl || match(r"^v\d", d) !== nothing), readdir(root))
+    @info "Found version folders" all_version_folders
+    version_number_folders = filter(d -> !(d == "stable" || d == devurl), all_version_folders)
+    named_folders = setdiff(all_version_folders, version_number_folders)
+    order = sortperm(VersionNumber.(version_number_folders), rev = true)
+    ordered_versions = [named_folders; version_number_folders[order]]
+    open(joinpath(root, "versions.js"), "w") do io
+        println(io, "var DOC_VERSIONS = [")
+        for v in ordered_versions
+            println(io, "  ", repr(v), ",")
+        end
+        println(io, "];")
+        if !isempty(version_number_folders)
+            println(io, "var DOCUMENTER_NEWEST = ", repr(version_number_folders[order[1]]), ";")
+        end
+        if "stable" in named_folders
+            println(io, "var DOCUMENTER_STABLE = \"stable\";")
+        end
+    end
+    @info "Wrote versions.js with the following content:"
+    println(read(joinpath(root, "versions.js"), String))
+    return
+end
+
+"""
+    deploydocs(; repo, target, branch, devbranch, push_preview)
+
+Deploy the documentation built with DocumenterVitepress.
+
+This function only shares a name with `Documenter.deploydocs`, it should
+therefore be invoked with `DocumenterVitepress.deploydocs`. Because of
+DocumenterVitepress's need to build a separate website for each base alias
+like `v1.2.3`, `v1.2`, `v1` and `stable`, the deployment using `Documenter.deploydocs`
+does not work with the default settings. This function offers a wrapper over
+`Documenter.deploydocs` which deploys each separate build in sequence.
+"""
+function deploydocs(;
+    repo,
+    target,
+    branch,
+    devbranch,
+    push_preview,
+)
+    bases_file = joinpath(target, "bases.txt")
+    if !isfile(bases_file)
+        error("Expected a file at $bases_file listing the separate bases that DocumenterVitepress has built the docs for.")
+    end
+    bases = readlines(bases_file)
+    @info "Found bases for deployment: $bases"
+
+    for (i, base) in enumerate(bases)
+        dir = joinpath(target, "$i")
+        @info "Deploying docs for base $(repr(base)) from $dir"
+        Documenter.deploydocs(;
+            repo,
+            target = dir, # each version built has its own dir
+            versions = DocumenterVitepress.BaseVersion(base),
+            dirname = base,
+            branch,
+            devbranch,
+            push_preview,
+        )
+    end
+
+end
+
 end

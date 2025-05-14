@@ -23,7 +23,7 @@ Currently, this function replaces the following config items:
 
 Simply add more elements to the `replacers` array within this function.
 """
-function modify_config_file(doc, settings, deploy_decision)
+function modify_config_file(doc, settings, deploy_decision, i_folder, base)
 
     # Main.@infiltrate
     # Read in the config file,
@@ -57,9 +57,10 @@ function modify_config_file(doc, settings, deploy_decision)
         write(joinpath(build_vitepress_dir, "theme", "docstrings.css"), read(joinpath(template_vitepress_dir, "theme", "docstrings.css"), String))
     end
     # reset the path to the variable that exists
+    vitepress_config_file_template = joinpath(source_vitepress_dir, "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
     vitepress_config_file = joinpath(build_vitepress_dir, "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
 
-    config = read(vitepress_config_file, String)
+    config = read(vitepress_config_file_template, String)
     replacers = Vector{Pair{<: Union{AbstractString, Regex}, <: AbstractString}}()
 
 
@@ -71,10 +72,17 @@ function modify_config_file(doc, settings, deploy_decision)
 
     # So, after building the Markdown, we need to modify the config file to reflect the
     # correct base URL, and then build the VitePress site.
-    folder = deploy_decision.subfolder
-    deploy_relpath = "$(folder)$(isempty(folder) ? "" : "/")"
-    deploy_abspath = if isnothing(settings.deploy_url)
-        "/" * splitpath(settings.repo)[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
+
+    # We don't do this anymore because we build multiple subfolder versions manually
+    # because vitepress isn't relocatable
+    # folder = deploy_decision.subfolder
+
+    deploy_relpath = "$(base)$(isempty(base) ? "" : "/")"
+    deploy_abspath = if isempty(base) && !haskey(ENV, "CI")
+            @info "Base is \"\" and ENV[\"CI\"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path \"/\" to facilitate serving docs locally."
+            "/"
+        elseif isnothing(settings.deploy_url)
+            "/" * splitpath(settings.repo)[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
         else
             s_path = startswith(settings.deploy_url, r"http[s?]:\/\/") ? splitpath(settings.deploy_url)[2:end] : splitpath(settings.deploy_url)
             s = length(s_path) > 1 ? joinpath(s_path) : "" # ignore custom URL here
@@ -83,10 +91,11 @@ function modify_config_file(doc, settings, deploy_decision)
 
     base_str = deploy_abspath == "/" ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
 
+    push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH" => deploy_abspath)
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
 
     # # Vitepress output path
-    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../final_site'")
+    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../$(i_folder)'")
     # # Vitepress navbar and sidebar
 
     provided_page_list = doc.user.pages

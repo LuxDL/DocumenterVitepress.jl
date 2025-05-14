@@ -18,7 +18,7 @@ const formattedStarCount = data ? (data < 1000 ? `${data}` : formatPrefix(".1s",
   <a
     target="_blank"
     data-decoration="&#x2605;"
-    :title="data.toLocaleString('en-US').concat(' GitHub stars')"
+    :title="data ? data.toLocaleString('en-US').concat(' GitHub stars') : ''"
     :href="repoUrl"
   >
     <svg
@@ -38,7 +38,7 @@ const formattedStarCount = data ? (data < 1000 ? `${data}` : formatPrefix(".1s",
   <a
     class="mobile"
     target="_blank"
-    :title="data.toLocaleString('en-US').concat(' GitHub stars')"
+    :title="data ? data.toLocaleString('en-US').concat(' GitHub stars') : ''"
     :href="repoUrl"
   >
     <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">

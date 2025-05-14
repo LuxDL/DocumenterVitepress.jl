@@ -51,14 +51,6 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     """The path to which the Markdown files will be output.  Defaults to `\$build/.documenter`."""
     md_output_path::String = ".documenter"
     """
-    Determines whether to clean up the Markdown assets after build, i.e., whether to remove the contents of `md_output_path` after the Vitepress site is built.  
-    Options are:
-    - `nothing`: **Default**.  Only remove the contents of `md_output_path` if the documentation will deploy, to save space.
-    - `true`: Removes the contents of `md_output_path` after the Vitepress site is built.
-    - `false`: Does not remove the contents of `md_output_path` after the Vitepress site is built.
-    """
-    clean_md_output::Union{Nothing, Bool} = nothing
-    """
     DeployDecision from Documenter.jl. This is used to determine whether to deploy the documentation or not.
     Options are:
     - `nothing`: **Default**. Automatically determine whether to deploy the documentation.
@@ -211,9 +203,6 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
         end
     end
-     # from `vitepress_config.jl`
-    # This needs to be run after favicons and logos are moved to the public subfolder
-    modify_config_file(doc, settings, deploy_decision)
 
     version = settings.inventory_version
     if isnothing(version)
@@ -241,102 +230,171 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         push!(inventory, item)
     end
 
-    mkpath(joinpath(builddir, "final_site"))
-    config_path = joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts")
-    if isfile(config_path)
-        mkpath(dirname(config_path)) # Ensure .vitepress directory exists
-        touch(config_path)
-    end
-
     objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
     DocInventories.save(objects_inv, inventory)
 
-    # Now that the Markdown files are written, we can build the Vitepress site if required.
-    if settings.build_vitepress
-        @info "DocumenterVitepress: building Vitepress site."
-        # Build the docs using `npm`
-        should_remove_package_json = false
-        try
-            if !isfile(joinpath(dirname(builddir), "package.json"))
-                @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
-                cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                should_remove_package_json = true
-            end
+    bases = determine_bases(deploy_decision.subfolder)
 
-            cd(dirname(builddir)) do
-                # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
-                # when interpolating the `npm` command.  
-                # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
-                # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
+    for (i_base, base) in enumerate(bases)
+        # from `vitepress_config.jl`
+        # This needs to be run after favicons and logos are moved to the public subfolder
+        modify_config_file(doc, settings, deploy_decision, i_base, base)
+        open(joinpath(builddir, "bases.txt"), i_base == 1 ? "w" : "a") do io
+            println(io, base)
+        end
 
-                package_json_path = joinpath(dirname(builddir), "package.json")
-                template_path = joinpath(dirname(@__DIR__), "template", "package.json")
-                build_output_path = joinpath(builddir, settings.md_output_path)
-                
-                if settings.install_npm || should_remove_package_json
-                    if !isfile(package_json_path)
-                        cp(template_path, package_json_path)
-                        should_remove_package_json = true
-                    end
-                    # wrap in `node(...) do _`
-                    node(; adjust_PATH = true, adjust_LIBPATH = true) do _
-                        # On Windows systems
-                        if Sys.iswindows()
-                            # system_npm = "C:\\Program Files\\nodejs\\npm.cmd"
-                            @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
-                            @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
-                            # install dependecies
-                            run(`cmd /c $npm install`)
-                            # run(`cmd /c $npm exec vitepress build $build_output_path`) # activate once a new > NodeJS_20_jll artifact is available.
-                            # Debugging alternative
-                            # run(`cmd /c "set DEBUG=vitepress:* & $npm exec vitepress build $build_output_path"`)
-                        else
-                            run(`$(npm) install`)
-                            run(`$(npm) run env -- vitepress build $(build_output_path)`)
+        config_path = joinpath(builddir, settings.md_output_path, ".vitepress", "config.mts")
+        if isfile(config_path)
+            mkpath(dirname(config_path)) # Ensure .vitepress directory exists
+            touch(config_path)
+        end
+
+        # Now that the Markdown files are written, we can build the Vitepress site if required.
+        if settings.build_vitepress
+            @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
+            # Build the docs using `npm`
+            should_remove_package_json = false
+            try
+                if !isfile(joinpath(dirname(builddir), "package.json"))
+                    @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
+                    cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
+                    should_remove_package_json = true
+                end
+
+                cd(dirname(builddir)) do
+                    # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
+                    # when interpolating the `npm` command.  
+                    # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
+                    # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
+
+                    package_json_path = joinpath(dirname(builddir), "package.json")
+                    template_path = joinpath(dirname(@__DIR__), "template", "package.json")
+                    build_output_path = joinpath(builddir, settings.md_output_path)
+                    
+                    if settings.install_npm || should_remove_package_json
+                        if !isfile(package_json_path)
+                            cp(template_path, package_json_path)
+                            should_remove_package_json = true
                         end
-                    end
-                end                
+                        # wrap in `node(...) do _`
+                        node(; adjust_PATH = true, adjust_LIBPATH = true) do _
+                            # On Windows systems
+                            if Sys.iswindows()
+                                # system_npm = "C:\\Program Files\\nodejs\\npm.cmd"
+                                @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
+                                @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
+                                # install dependecies
+                                run(`cmd /c $npm install`)
+                                # run(`cmd /c $npm exec vitepress build $build_output_path`) # activate once a new > NodeJS_20_jll artifact is available.
+                                # Debugging alternative
+                                # run(`cmd /c "set DEBUG=vitepress:* & $npm exec vitepress build $build_output_path"`)
+                            else
+                                run(`$(npm) install`)
+                                run(`$(npm) run env -- vitepress build $(build_output_path)`)
+                            end
+                        end
+                    end                
+                end
+                # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
+                open(joinpath(builddir, "$i_base", "siteinfo.js"), "w") do io
+                    println(io, """var DOCUMENTER_CURRENT_VERSION = "$(deploy_decision.subfolder)";""")
+                end
+            catch e
+                rethrow(e)
+            finally
+                if should_remove_package_json
+                    rm(joinpath(dirname(builddir), "package.json"))
+                    rm(joinpath(dirname(builddir), "package-lock.json"))
+                end
             end
-        catch e
-            rethrow(e)
-        finally
-            if should_remove_package_json
-                rm(joinpath(dirname(builddir), "package.json"))
-                rm(joinpath(dirname(builddir), "package-lock.json"))
-            end
+        else
+            @info """
+                DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
+                You can view it yourself by running the following in the `docs` folder:
+                ```
+                npm run docs:dev
+                ```
+                and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
+
+                All emitted markdown can be found in `$(joinpath(builddir, settings.md_output_path))`.
+                """
         end
         # This is only useful if placed in the root of the `docs` folder, and we don't 
         # have any names which conflict with Jekyll (beginning with _ or .) in any case.
         # touch(joinpath(builddir, "final_site", ".nojekyll"))
+    end
 
-        # Clean up afterwards
-        clean_md_output = isnothing(settings.clean_md_output) ? deploy_decision.all_ok : settings.clean_md_output
-        if clean_md_output
-            @info "DocumenterVitepress: cleaning up Markdown output."
-            rm(joinpath(builddir, settings.md_output_path); recursive = true)
-            contents = readdir(joinpath(builddir, "final_site"))
-            for item in contents
-                src = joinpath(builddir, "final_site", item)
-                dst = joinpath(builddir, item)
-                cp(src, dst)
-            end
-            rm(joinpath(builddir, "final_site"); recursive = true)
+    return
+end
 
-            @info "DocumenterVitepress: Markdown output cleaned up.  Folder looks like:  $(readdir(doc.user.build))"
+is_version_string(str) = try (VersionNumber(str); true) catch; false end
+
+function determine_bases(subfolder)::Vector{String}
+    bases = if is_version_string(subfolder)
+        v = VersionNumber(subfolder)
+        @info "Subfolder is a version: $v"
+
+        patch_base = "v$(v.major).$(v.minor).$(v.patch)"
+        minor_base = "v$(v.major).$(v.minor)"
+        major_base = "v$(v.major)"
+
+        @info "Adding base `$(patch_base)`"
+        bases = [
+            patch_base
+        ]
+        all_tagged_versions = get_all_tagged_release_versions()
+        higher_versions = filter(>(v), all_tagged_versions)
+        if !isempty(v.prerelease)
+            @info "`$v` is a prerelease, not adding base `stable`"
+        elseif isempty(higher_versions)
+            @info "No higher versions than `$v` found, adding base `stable`"
+            push!(bases, "stable")
+        else
+            @info "Found release tag `$(first(higher_versions))` which is a higher version than `$v`, not adding base `stable`"
         end
 
-    else
-        @info """
-            DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
-            You can view it yourself by running the following in the `docs` folder:
-            ```
-            npm run docs:dev
-            ```
-            and if you haven't run `npm` in this repo before, install all packages by running `npm install`.
+        higher_versions_same_major = filter(v2 -> v2.major == v.major, higher_versions)
+        if v.major == 0
+            @info "All-zero major alias `v0` will not be added as a base"
+        elseif isempty(higher_versions_same_major)
+            @info "No higher versions than `$v` with same major version found, adding base `$(major_base)`"
+            push!(bases, major_base)
+        else
+            @info "Found release tag `$(first(higher_versions_same_major))` which is a higher version with same major version than `$v`, not adding base `$(major_base)`"
+        end
 
-            All emitted markdown can be found in `$(joinpath(builddir, settings.md_output_path))`.
-            """
+        higher_versions_same_minor = filter(v2 -> v2.minor == v.minor, higher_versions_same_major)
+        if v.major == 0 && v.minor == 0
+            @info "All-zero major minor alias `v0.0` will not be added as a base"
+        elseif isempty(higher_versions_same_minor)
+            @info "No higher versions than `$v` with same major and minor version found, adding base `$(minor_base)`"
+            push!(bases, minor_base)
+        else
+            @info "Found release tag `$(first(higher_versions_same_minor))` which is a higher version with same major and minor version than `$v`, not adding base `$(minor_base)`"
+        end
+
+        filter!(x -> x ∉ ("v0", "v0.0"), bases)
+    else
+        [subfolder]
     end
+
+    @info "Bases that will be built: $bases"
+
+    return bases
+end
+
+stripped_version(v::VersionNumber) = VersionNumber(v.major, v.minor, v.patch)
+
+function get_all_tagged_release_versions()::Vector{VersionNumber}
+    tags = readlines(`$(Documenter.git()) tag`)
+    version_numbers = stripped_version.(VersionNumber.(filter(is_version_string, tags)))
+    filter!(version_numbers) do v
+        isempty(v.prerelease) # we never want alias bases for prereleases so we don't clobber `stable` etc.
+    end
+    # For comparison purposes, we don't care about build versions. If the new version
+    # is otherwise the same as an existing one, we push it as an update to that older one
+    stripped_version_numbers = unique(stripped_version.(version_numbers))
+    return sort(stripped_version_numbers, rev = true)
 end
 
 # This function catches all nodes and decomposes them to their elements.
