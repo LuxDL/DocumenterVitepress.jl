@@ -664,6 +664,7 @@ function mime_priority end
 mime_priority(::MIME"text/plain") = 0.0
 mime_priority(::MIME"text/markdown") = 1.0
 mime_priority(::MIME"text/html") = 2.0
+mime_priority(::MIME"text/latex") = 2.5
 mime_priority(::MIME"image/svg+xml") = 3.0
 mime_priority(::MIME"image/png") = 4.0
 mime_priority(::MIME"image/webp") = 5.0
@@ -682,6 +683,12 @@ end
 
 function render_mime(io::IO, mime::MIME"text/markdown", node, element, page, doc; kwargs...)
     println(io, element)
+end
+
+function render_mime(io::IO, mime::MIME"text/latex", node, element, page, doc; kwargs...)
+    # println(io, "```math")
+    println(io, element)
+    # println(io, "```")
 end
 
 function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kwargs...)
