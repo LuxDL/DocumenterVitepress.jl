@@ -110,6 +110,7 @@ render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, elemen
 where `Eltype` is the type of the `element` field of the `node` object which you care about.
 """
 function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVitepress())
+    mutate_page_paths!(doc)
     @info "DocumenterVitepress: rendering MarkdownVitepress pages."
 
     # We manually obtain the Documenter deploy configuration,
@@ -215,10 +216,15 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     end
     inventory = Inventory(; project=doc.user.sitename, version)
 
+    readdir(joinpath(builddir, settings.md_output_path))
+
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
-        open(docpath(page.build, builddir, settings.md_output_path), "w") do io
+        md_path = docpath(page.build, builddir, settings.md_output_path)
+        index_md_path = to_index_md_style(md_path)
+        mkpath(dirname(index_md_path))
+        open(index_md_path, "w") do io
             for node in page.mdast.children
                 render(io, mime, node, page, doc; inventory)
             end
@@ -329,6 +335,43 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     end
 
     return
+end
+
+function mutate_page_paths!(doc)
+    for i in eachindex(doc.user.pages)
+        doc.user.pages[i] = modify_page_description(doc.user.pages[i])
+    end
+
+    for (src, page) in pairs(doc.blueprint.pages)
+        delete!(doc.blueprint.pages, src)
+        newsrc = to_index_md_style(src)
+        doc.blueprint.pages[newsrc] = modify_page(page)
+    end
+end
+
+function modify_page(p::Documenter.Page)
+    Documenter.Page(
+        p.source,
+        to_index_md_style(p.build),
+        p.workdir,
+        p.elements,
+        p.globals,
+        p.mdast,
+    )
+end
+
+modify_page_description(s::String) = to_index_md_style(s)
+modify_page_description(p::Pair{String,String}) = p[1] => to_index_md_style(p[2])
+modify_page_description(p::Pair{String,<:AbstractVector}) = p[1] => map(modify_page_description, p[2])
+
+function to_index_md_style(md_path)
+    dir, file = splitdir(md_path)
+    if file == "index.md"
+        md_path
+    else
+        name, _ = splitext(file)
+        joinpath(dir, name, "index.md")
+    end
 end
 
 is_version_string(str) = try (VersionNumber(str); true) catch; false end
