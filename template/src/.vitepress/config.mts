@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, DefaultTheme } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import mathjax3 from "markdown-it-mathjax3";
 import footnote from "markdown-it-footnote";
@@ -10,39 +10,42 @@ function getBaseRepository(base: string): string {
   return parts.length > 0 ? `/${parts[0]}/` : '/';
 }
 
-const baseTemp = {
-  base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
+type DocumenterOptions = {
+  base: string;
+  deployAbspath: string;
+  description: string;
+  editLink?: DefaultTheme.EditLink;
+  favicon?: string;
+  githubLink: string;
+  logo: string;
+  outDir: string;
+  nav: Array<any>;
+  sidebar?: DefaultTheme.Sidebar;
+  title: string;
 }
 
-const navTemp = {
-  nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
-}
+// this will be filled in by DocumenterVitepress at render time
+const DOCUMENTER = {} as DocumenterOptions;
 
-const nav = [
-  ...navTemp.nav,
-  {
-    component: 'VersionPicker'
-  }
-]
+const faviconConfig: HeadConfig = ['link', { rel: 'icon', href: `${DOCUMENTER.base}${DOCUMENTER.favicon}` }]
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
-  title: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
-  description: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+  base: DOCUMENTER.base,
+  title: DOCUMENTER.title,
+  description: DOCUMENTER.description,
   lastUpdated: true,
   cleanUrls: true,
-  outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
+  outDir: DOCUMENTER.outDir,
   head: [
-    ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
-    ['script', {src: `${getBaseRepository(baseTemp.base)}versions.js`}],
-    // ['script', {src: '/versions.js'], for custom domains, I guess if deploy_url is available.
-    ['script', {src: `${baseTemp.base}siteinfo.js`}]
+    ...(DOCUMENTER.favicon ? [faviconConfig] : []),
+    ['script', {src: `${getBaseRepository(DOCUMENTER.base)}versions.js`}],
+    ['script', {src: `${DOCUMENTER.base}siteinfo.js`}]
   ],
   
   vite: {
     define: {
-      __DEPLOY_ABSPATH__: JSON.stringify('REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH'),
+      __DEPLOY_ABSPATH__: JSON.stringify(DOCUMENTER.deployAbspath),
     },
     resolve: {
       alias: {
@@ -73,22 +76,28 @@ export default defineConfig({
     },
     theme: {
       light: "github-light",
-      dark: "github-dark"}
+      dark: "github-dark"
+    },
   },
   themeConfig: {
     outline: 'deep',
-    logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+    ...(DOCUMENTER.logo ? { src: DOCUMENTER.logo, width: 24, height: 24} : {}),
     search: {
       provider: 'local',
       options: {
         detailedView: true
       }
     },
-    nav,
-    sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
-    editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
+    nav: [
+      ...DOCUMENTER.nav,
+      {
+        component: 'VersionPicker'
+      }
+    ],
+    sidebar: DOCUMENTER.sidebar,
+    editLink: DOCUMENTER.editLink,
     socialLinks: [
-      { icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }
+      { icon: 'github', link: DOCUMENTER.githubLink }
     ],
     footer: {
       message: 'Made with <a href="https://luxdl.github.io/DocumenterVitepress.jl/dev/" target="_blank"><strong>DocumenterVitepress.jl</strong></a><br>',

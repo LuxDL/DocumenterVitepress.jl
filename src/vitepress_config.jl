@@ -64,12 +64,8 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file."
         write(joinpath(build_vitepress_dir, "theme", "docstrings.css"), read(joinpath(template_vitepress_dir, "theme", "docstrings.css"), String))
     end
-    # We have already rewritten the config file, so we can't get burned by clean=false
-    # again.
-    vitepress_config_file = joinpath(build_vitepress_dir, "config.mts")
-    config = read(vitepress_config_file, String)
-    replacers = Vector{Pair{<: Union{AbstractString, Regex}, <: AbstractString}}()
 
+    json_config = Dict()
 
     # # Vitepress base path
 
@@ -96,61 +92,56 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
             isempty(s) ? "/" : "/$(s)"
         end
 
-    base_str = deploy_abspath == "/" ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
+    base_str = deploy_abspath == "/" ? "$(deploy_abspath)$(deploy_relpath)" : "$(deploy_abspath)/$(deploy_relpath)"
 
-    push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH" => deploy_abspath)
-    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
+    json_config["deployAbspath"] = deploy_abspath
+    json_config["base"] = base_str
 
-    # # Vitepress output path
-    push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../$(i_folder)'")
-    # # Vitepress navbar and sidebar
+    # Vitepress output path
+    json_config["outDir"] = "../$(i_folder)"
+
+    # Vitepress navbar and sidebar
 
     provided_page_list = doc.user.pages
-    sidebar_navbar_info = pagelist2str.((doc,), provided_page_list)
-    sidebar_navbar_string = join(sidebar_navbar_info, ",\n")
-    push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: [\n$sidebar_navbar_string\n]\n")
-    push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
+    sidebar_navbar_info = sidebar(doc) # pagelist2str.((doc,), provided_page_list)
+    json_config["sidebar"] = sidebar_navbar_info
+    json_config["nav"] = sidebar_navbar_info
 
-    # # Title
-    push!(replacers, "title: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "title: '$(doc.user.sitename)'")
+    # Title
+    json_config["title"] = doc.user.sitename
 
-    # # Description
-    push!(replacers, "description: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "description: '$(replace(settings.description, "'" => "\\'"))'")
+    # Description
+    json_config["description"] = settings.description
 
-    # # Edit link
-    push!(replacers, "editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "editLink: { pattern: \"https://$(settings.repo)$(endswith(settings.repo, "/") ? "" : "/")edit/$(settings.devbranch)/docs/src/:path\" }")
+    # Edit link
+    json_config["editLink"] = Dict("pattern" => "https://$(settings.repo)$(endswith(settings.repo, "/") ? "" : "/")edit/$(settings.devbranch)/docs/src/:path")
 
-    # # Github repo
+    # Github repo
     full_repo = startswith(settings.repo, r"https?:\/\/") ? settings.repo : "https://" * settings.repo
-    push!(replacers, """{ icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' }""" => """{ icon: 'github', link: '$full_repo' }""")
+    json_config["githubLink"] = full_repo
 
-    # # Logo
-
-    if occursin("logo:", config)
-        if  isfile(joinpath(doc.user.build, settings.md_output_path, "public", "logo.png"))
-            push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "logo: { src: '/logo.png', width: 24, height: 24}")
-        elseif isfile(joinpath(doc.user.build, settings.md_output_path, "public", "logo.svg"))
-            push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "logo: { src: '/logo.svg', width: 24, height: 24}")
-        else
-            @warn "DocumenterVitepress: No logo.png file found in `docs/src/assets`.  Skipping logo replacement."
-            push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'," => "")
-        end
+    # Logo
+    if isfile(joinpath(doc.user.build, settings.md_output_path, "public", "logo.png"))
+        json_config["logo"] = "/logo.png"
+    elseif isfile(joinpath(doc.user.build, settings.md_output_path, "public", "logo.svg"))
+        json_config["logo"] = "/logo.svg"
+    else
+        @warn "DocumenterVitepress: No logo.png file found in `docs/src/assets`."
     end
 
-    # # Favicon
-
-    if occursin("rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'", config)
-        if  isfile(joinpath(doc.user.build, settings.md_output_path, "public", "favicon.ico"))
-            push!(replacers, "rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'" => "rel: 'icon', href: `\${baseTemp.base}favicon.ico`")
-        else
-            @warn "DocumenterVitepress: No favicon.ico file found in `docs/src/assets`.  Skipping favicon replacement."
-            push!(replacers, "['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }]," => "")
-        end
+    # Favicon
+    if  isfile(joinpath(doc.user.build, settings.md_output_path, "public", "favicon.ico"))
+        json_config["favicon"] = "favicon.ico"
+    else
+        @warn "DocumenterVitepress: No favicon.ico file found in `docs/src/assets`."
     end
 
-    # Finally, run all the replacers and write the new config file
-
-    new_config = replace(config, replacers...)
+    # We have already rewritten the config file, so we can't get burned by clean=false
+    # again.
+    vitepress_config_file = joinpath(build_vitepress_dir, "config.mts")
+    config = read(vitepress_config_file, String)
+    json_config_string = strip(JSON.json(json_config, 2))
+    new_config = replace(config, "const DOCUMENTER = {}" => "const DOCUMENTER = $json_config_string")
     write(vitepress_config_file, new_config)
     yield()
     touch(vitepress_config_file)
@@ -161,7 +152,37 @@ end
 function _get_raw_text(element)
 end
 
-function pagelist2str(doc, page::String)
+function sidebar(doc)
+    return map(p -> sidebar_page_entry(doc, p), doc.user.pages)
+end
+
+sidebar_page_entry(doc, name_any::Pair{String, <: Any}) = sidebar_page_entry(doc, first(name_any) => last(name_any))
+
+function sidebar_page_entry(doc, page::String)
+    return Dict(
+        "text" => get_page_name(doc, page),
+        "link" => splitext(page)[1],
+    )
+end
+
+function sidebar_page_entry(doc, name_page::Pair{String, String})
+    name, page = name_page
+    return Dict(
+        "text" => name,
+        "link" => splitext(page)[1],
+    )
+end
+
+function sidebar_page_entry(doc, name_contents::Pair{String, <: AbstractVector})
+    name, contents = name_contents
+    return Dict(
+        "text" => name,
+        "items" => map(p -> sidebar_page_entry(doc, p), contents),
+        "collapsed" => false,
+    )
+end
+
+function get_page_name(doc, page::String)
     # If no name is given, find the first header in the page,
     # and use that as the name.
     elements = collect(doc.blueprint.pages[page].mdast.children)
@@ -169,51 +190,10 @@ function pagelist2str(doc, page::String)
     # you can get the MarkdownAST stuff via `page.mdast`.
     # I f``
     idx = findfirst(x -> x.element isa Union{MarkdownAST.Heading, Documenter.AnchoredHeader}, elements)
-    name = if isnothing(idx)
+    return if isnothing(idx)
         splitext(page)[1]
     else
         Documenter.MDFlatten.mdflatten(elements[idx])
     end
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
 end
 
-pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
-
-function pagelist2str(doc, name_page::Pair{String, String})
-    name, page = name_page
-    # This is the simplest and easiest case.
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
-end
-
-function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
-    name, contents = name_contents
-    # This is for nested stuff.  Should work automatically but you never know...
-    rendered_contents = pagelist2str.((doc,), contents)
-    return "{ text: '$(replace(name, "'" => "\\'"))', collapsed: false, items: [\n$(join(rendered_contents, ",\n"))]\n }" # TODO: add a link here if the name is the same name as a file?
-end
-
-function sidebar_items(doc, page::String)
-    # We look at the page elements, and obtain all level 1 and 2 headers.
-    elements = doc.blueprint.pages[page].elements
-    headers = filter(x -> x isa Union{MarkdownAST.Heading{1}, MarkdownAST.Heading{2}}, elements)
-    # If nothing is found, move on in life
-    if length(headers) ≤ 1
-        return ""
-    end
-    # Otherwise, we return a collapsible tree of headers for each level 1 and 2 header.
-    items = headers
-    return "collapsed: true, items: [\n $(join(_item_link.((page,), items), ",\n"))\n]"
-end
-
-function _item_link(page, item)
-    return "{ text: '$(replace(Documenter.MDFlatten.mdflatten(item), "'" => "\\'"))', link: '/$(splitext(page)[1])#$(replace(item, " " => "-"))' }"
-
-end
-
-function _get_first_or_string(x::String)
-    return x
-end
-
-function _get_first_or_string(x)
-    return first(x)
-end
