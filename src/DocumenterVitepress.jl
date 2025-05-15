@@ -10,6 +10,7 @@ using Documenter: Documenter, Selectors
 
 using DocStringExtensions
 using NodeJS_20_jll: node, npm
+import JSON
 
 const ASSETS = normpath(joinpath(@__DIR__, "..", "assets"))
 
