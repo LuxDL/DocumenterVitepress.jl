@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed relative path to favicon in vitepress config [#265](https://github.com/LuxDL/DocumenterVitepress.jl/pull/265).
+
 ## v0.2.1 - 2025-05-15
 Bug fix release after v0.2.0 - now, namespacing deploydocs as `DocumenterVitepress.deploydocs` should "just work".
 
