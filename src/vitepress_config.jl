@@ -141,7 +141,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
 
     if occursin("rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'", config)
         if  isfile(joinpath(doc.user.build, settings.md_output_path, "public", "favicon.ico"))
-            push!(replacers, "rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'" => "rel: 'icon', href: `\${getBaseRepository(baseTemp.base)}favicon.ico`")
+            push!(replacers, "rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'" => "rel: 'icon', href: `\${baseTemp.base}favicon.ico`")
         else
             @warn "DocumenterVitepress: No favicon.ico file found in `docs/src/assets`.  Skipping favicon replacement."
             push!(replacers, "['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }]," => "")
