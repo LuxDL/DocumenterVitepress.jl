@@ -1,7 +1,7 @@
 <!-- Adapted from https://github.com/MakieOrg/Makie.jl/blob/master/docs/src/.vitepress/theme/VersionPicker.vue -->
 
 <script setup lang="ts">
-import { ref, onMounted, computed} from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { useData } from 'vitepress'
 import VPNavBarMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavBarMenuGroup.vue'
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
@@ -22,6 +22,7 @@ const versions = ref<Array<{ text: string, link: string, class?: string }>>([]);
 const currentVersion = ref('Versions');
 const isClient = ref(false);
 const { site } = useData();
+const isOpen = ref(false);
 
 const isLocalBuild = () => {
   return typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
@@ -157,34 +158,68 @@ const versionItems = computed(() => {
   return items;
 });
 
+const toggleDropdown = (event) => {
+  event.stopPropagation();
+  isOpen.value = !isOpen.value;
+};
+
+const closeDropdown = () => {
+  isOpen.value = false;
+};
+
 onMounted(() => {
   if (typeof window !== 'undefined') {
     currentVersion.value = window.DOCUMENTER_CURRENT_VERSION ?? 'Versions';
     loadVersions();
+    
+    // Add global click event to close dropdown when clicking outside
+    document.addEventListener('click', closeDropdown);
   }
+});
+
+// Clean up event listener
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeDropdown);
 });
 </script>
 
 <template>
   <template v-if="isClient">
     <!-- For Desktop Navigation -->
-    <div v-if="!screenMenu && versions.length > 0" class="VPVersionPicker version-picker-container">
-      <div class="version-menu-button" @click="$event.currentTarget.classList.toggle('expanded')">
-        <span>{{ currentVersion }}</span>
-        <span class="arrow" />
-        
-        <div class="dropdown-container">
-          <template v-for="item in versionItems" :key="item.text">
-            <!-- Standard direct link for standalone versions -->
-            <a v-if="!item.items" :href="item.link" class="version-item">{{ item.text }}</a>
+    <div v-if="!screenMenu && versions.length > 0" class="VPVersionPicker custom-version-picker">
+      <button 
+        type="button" 
+        class="version-button" 
+        role="button" 
+        aria-haspopup="true"
+        :aria-expanded="isOpen"
+        @click="toggleDropdown"
+      >
+        <span class="button-text">{{ currentVersion }}</span>
+        <span class="button-arrow" :class="{ 'is-open': isOpen }"></span>
+      </button>
+      
+      <div v-if="isOpen" class="dropdown" @click.stop>
+        <div class="dropdown-wrapper">
+          <div class="dropdown-items">
+            <!-- Regular links for standalone versions -->
+            <a 
+              v-for="item in versionItems.filter(i => !i.items)" 
+              :key="item.text" 
+              :href="item.link" 
+              class="dropdown-item"
+            >
+              {{ item.text }}
+            </a>
             
-            <!-- Collapsible group for version groups -->
+            <!-- Collapsible groups -->
             <CollapsibleVersionGroup 
-              v-else 
+              v-for="item in versionItems.filter(i => i.items)" 
+              :key="item.text" 
               :text="item.text" 
               :items="item.items" 
             />
-          </template>
+          </div>
         </div>
       </div>
     </div>
@@ -193,88 +228,109 @@ onMounted(() => {
     <VPNavScreenMenuGroup
       v-else-if="screenMenu && versions.length > 0"
       :text="currentVersion"
-      :items="versionItems"
-      class="VPVersionPicker"
-    >
-      <template #item="{ item }">
-        <!-- Handle collapsible groups in mobile view -->
-        <CollapsibleVersionGroup 
-          v-if="item.isCollapsible" 
-          :text="item.text" 
-          :items="item.items" 
-        />
-        <a v-else :href="item.link">{{ item.text }}</a>
-      </template>
-    </VPNavScreenMenuGroup>
+      :items="versionItems.filter(i => !i.isCollapsible)"
+      class="VPVersionPicker mobile-version-picker"
+    />
+    
+    <!-- For Mobile: Custom Group Implementation -->
+    <div v-if="screenMenu && versions.length > 0" class="mobile-collapsible-wrapper">
+      <CollapsibleVersionGroup 
+        v-for="item in versionItems.filter(i => i.isCollapsible)" 
+        :key="item.text" 
+        :text="item.text" 
+        :items="item.items" 
+      />
+    </div>
   </template>
 </template>
 
 <style scoped>
-.version-picker-container {
+.custom-version-picker {
   position: relative;
-  display: inline-block;
+  color: var(--vp-c-text-1);
 }
 
-.version-menu-button {
+.version-button {
   display: flex;
   align-items: center;
-  cursor: pointer;
-  padding: 0 12px;
   height: var(--vp-nav-height-mobile);
+  padding: 0 12px;
+  margin: 0 -12px;
+  background: transparent;
+  border: none;
   color: var(--vp-c-text-1);
   transition: color 0.25s;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
-.version-menu-button:hover {
+.version-button:hover {
   color: var(--vp-c-brand);
 }
 
-.version-menu-button .arrow {
+.button-text {
+  line-height: var(--vp-nav-height-mobile);
+}
+
+.button-arrow {
   margin-left: 4px;
-  width: 6px;
-  height: 6px;
-  border-left: 1px solid currentColor;
-  border-bottom: 1px solid currentColor;
-  transform: rotate(-45deg);
+  width: 7px;
+  height: 7px;
+  border-top: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  transform: rotate(135deg) translateY(-3px);
   transition: transform 0.25s;
 }
 
-.version-menu-button.expanded .arrow {
-  transform: rotate(135deg);
+.button-arrow.is-open {
+  transform: rotate(-45deg) translateY(0);
 }
 
-.dropdown-container {
-  display: none;
+.dropdown {
   position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 200px;
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
+  top: calc(var(--vp-nav-height-mobile) - 1px);
+  right: 0;
+  overflow: hidden;
   border-radius: 8px;
-  padding: 8px 0;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--vp-shadow-3);
+  border: 1px solid var(--vp-c-divider);
+  background-color: var(--vp-c-bg);
+  min-width: 180px;
   z-index: 100;
 }
 
-.version-menu-button.expanded .dropdown-container {
-  display: block;
+.dropdown-wrapper {
+  max-height: calc(100vh - var(--vp-nav-height-mobile) - 20px);
+  overflow-y: auto;
 }
 
-.version-item {
+.dropdown-items {
+  padding: 12px 0;
+}
+
+.dropdown-item {
   display: block;
-  padding: 8px 16px;
+  padding: 0 16px;
+  height: 32px;
+  line-height: 32px;
+  font-size: 14px;
   color: var(--vp-c-text-1);
+  white-space: nowrap;
   text-decoration: none;
 }
 
-.version-item:hover {
-  background-color: var(--vp-c-gray-light-4);
+.dropdown-item:hover {
   color: var(--vp-c-brand);
 }
 
-/* Dark mode overrides */
-html.dark .version-item:hover {
-  background-color: var(--vp-c-gray-dark-3);
+.mobile-collapsible-wrapper {
+  padding: 0 24px;
+  margin-top: 12px;
+}
+
+/* Dark mode support */
+html.dark .dropdown {
+  background-color: var(--vp-c-bg);
 }
 </style>
