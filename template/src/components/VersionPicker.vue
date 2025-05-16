@@ -75,11 +75,78 @@ const loadVersions = async () => {
   isClient.value = true;
 };
 
+// Define types for version objects
+interface Version {
+  text: string;
+  link: string;
+}
+
+interface ParsedVersion {
+  major: string;
+  minor: string;
+  full: string;
+}
+
+interface VersionGroup {
+  text: string;
+  items?: Version[];
+  link?: string;
+}
+
+// Parse version string into structured object
+const parseVersionString = (version: string): ParsedVersion | null => {
+  const match = version.match(/^v?(\d+)\.(\d+)\.(\d+)$/);
+  if (match) {
+    return {
+      major: `v${match[1]}`,
+      minor: `v${match[1]}.${match[2]}`,
+      full: version
+    };
+  }
+  return null;
+};
+
+
 const versionItems = computed(() => {
-  return versions.value.map((v) => ({
-    text: v.text,
-    link: v.link
-  }));
+  const groups = new Map<string, Version[]>();
+  const standalone: Version[] = [];
+
+  versions.value.forEach((v) => {
+    const parsed = parseVersionString(v.text);
+
+    if (!parsed) {
+      // Handle special versions like 'dev' or 'stable'
+      standalone.push({
+        text: v.text,
+        link: v.link
+      });
+      return;
+    }
+
+    if (!groups.has(parsed.major)) {
+      groups.set(parsed.major, []);
+    }
+    // We know the group exists since we just ensured it above
+    groups.get(parsed.major)!.push({
+      text: v.text,
+      link: v.link
+    });
+  });
+
+  // Create the final items array
+  const items: VersionGroup[] = [...standalone];
+
+  // Add grouped versions
+  for (const [major, versionsList] of groups) {
+    items.push({
+      text: major,
+      items: versionsList.sort((a, b) => 
+        b.text.localeCompare(a.text, undefined, { numeric: true })
+      )
+    });
+  }
+
+  return items;
 });
 
 onMounted(() => {
