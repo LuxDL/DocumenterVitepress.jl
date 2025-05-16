@@ -5,6 +5,7 @@ import { ref, onMounted, computed} from 'vue'
 import { useData } from 'vitepress'
 import VPNavBarMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavBarMenuGroup.vue'
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
+import CollapsibleVersionGroup from './CollapsibleVersionGroup.vue'
 
 declare global {
   interface Window {
@@ -84,6 +85,7 @@ interface VersionGroup {
   text: string;
   items?: Version[];
   link?: string;
+  isCollapsible?: boolean;
 }
 
 // Parse version string to extract major.minor part (e.g., "v0.1" from "v0.1.2")
@@ -137,7 +139,8 @@ const versionItems = computed(() => {
       text: groupKey, // e.g., "v0.1"
       items: versionsList.sort((a, b) =>
         b.text.localeCompare(a.text, undefined, { numeric: true })
-      )
+      ),
+      isCollapsible: true
     });
   }
 
@@ -164,25 +167,114 @@ onMounted(() => {
 
 <template>
   <template v-if="isClient">
-    <VPNavBarMenuGroup
-      v-if="!screenMenu && versions.length > 0"
-      :item="{ text: currentVersion, items: versionItems }"
-      class="VPVersionPicker"
-    />
+    <!-- For Desktop Navigation -->
+    <div v-if="!screenMenu && versions.length > 0" class="VPVersionPicker version-picker-container">
+      <div class="version-menu-button" @click="$event.currentTarget.classList.toggle('expanded')">
+        <span>{{ currentVersion }}</span>
+        <span class="arrow" />
+        
+        <div class="dropdown-container">
+          <template v-for="item in versionItems" :key="item.text">
+            <!-- Standard direct link for standalone versions -->
+            <a v-if="!item.items" :href="item.link" class="version-item">{{ item.text }}</a>
+            
+            <!-- Collapsible group for version groups -->
+            <CollapsibleVersionGroup 
+              v-else 
+              :text="item.text" 
+              :items="item.items" 
+            />
+          </template>
+        </div>
+      </div>
+    </div>
+    
+    <!-- For Mobile Navigation -->
     <VPNavScreenMenuGroup
       v-else-if="screenMenu && versions.length > 0"
       :text="currentVersion"
       :items="versionItems"
       class="VPVersionPicker"
-    />
+    >
+      <template #item="{ item }">
+        <!-- Handle collapsible groups in mobile view -->
+        <CollapsibleVersionGroup 
+          v-if="item.isCollapsible" 
+          :text="item.text" 
+          :items="item.items" 
+        />
+        <a v-else :href="item.link">{{ item.text }}</a>
+      </template>
+    </VPNavScreenMenuGroup>
   </template>
 </template>
 
 <style scoped>
-.VPVersionPicker :deep(button .text) {
-  color: var(--vp-c-text-1) !important;
+.version-picker-container {
+  position: relative;
+  display: inline-block;
 }
-.VPVersionPicker:hover :deep(button .text) {
-  color: var(--vp-c-text-2) !important;
+
+.version-menu-button {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 12px;
+  height: var(--vp-nav-height-mobile);
+  color: var(--vp-c-text-1);
+  transition: color 0.25s;
+}
+
+.version-menu-button:hover {
+  color: var(--vp-c-brand);
+}
+
+.version-menu-button .arrow {
+  margin-left: 4px;
+  width: 6px;
+  height: 6px;
+  border-left: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.25s;
+}
+
+.version-menu-button.expanded .arrow {
+  transform: rotate(135deg);
+}
+
+.dropdown-container {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 8px 0;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.version-menu-button.expanded .dropdown-container {
+  display: block;
+}
+
+.version-item {
+  display: block;
+  padding: 8px 16px;
+  color: var(--vp-c-text-1);
+  text-decoration: none;
+}
+
+.version-item:hover {
+  background-color: var(--vp-c-gray-light-4);
+  color: var(--vp-c-brand);
+}
+
+/* Dark mode overrides */
+html.dark .version-item:hover {
+  background-color: var(--vp-c-gray-dark-3);
 }
 </style>
