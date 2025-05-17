@@ -71,7 +71,7 @@ Then the very first step here is to update the `make.jl` file to follow the Docu
        ],
    )
 
-   deploydocs(;
+   DocumenterVitepress.deploydocs(;
        repo = "github.com/ExampleOrg/Example.jl",
        target = "build", # this is where Vitepress stores its output
        devbranch = "main",
