@@ -31,3 +31,6 @@ DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 
 [extensions]
 DocumenterVitepressDocumenterCitationsExt = "DocumenterCitations"
+
+[extras]
+DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
