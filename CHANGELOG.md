@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Fixed relative path to favicon in vitepress config [#265](https://github.com/LuxDL/DocumenterVitepress.jl/pull/265).
+- Added `keep` option in `DocumenterVitepress.MarkdownFormat` to control which versions of the documentation are kept. By default, all `:patch` versions are kept, but if less granularity is desired, this can be changed to `:minor` or `:breaking`. For `:minor`, `v1.0` and `v1.1` would be kept, for `:breaking` only `v1` [#269](https://github.com/LuxDL/DocumenterVitepress.jl/pull/269)..
 
 ## v0.2.1 - 2025-05-15
 Bug fix release after v0.2.0 - now, namespacing deploydocs as `DocumenterVitepress.deploydocs` should "just work".
