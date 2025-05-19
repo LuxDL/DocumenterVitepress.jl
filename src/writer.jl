@@ -821,8 +821,8 @@ function render_mime(io::IO, mime::MIME"image/png", node, element, page, doc; md
     pngpath = joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename).png")
     bytes = base64decode(element)
     write(pngpath, bytes)
-    (; width, height) = png_image_metadata(bytes)
-    println(io, "![]($(filename).png){width=$(width)px height=$(height)px}")
+    p = png_image_metadata(bytes)
+    println(io, "![]($(filename).png){width=$(p.width)px height=$(p.height)px}")
 end
 
 function render_mime(io::IO, mime::MIME"image/webp", node, element, page, doc; md_output_path, kwargs...)
