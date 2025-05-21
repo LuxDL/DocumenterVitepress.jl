@@ -90,7 +90,16 @@ function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, de
     @info "Found version folders" all_version_folders
     version_number_folders = filter(d -> !(d == "stable" || d == devurl), all_version_folders)
     named_folders = setdiff(all_version_folders, version_number_folders)
-    order = sortperm(VersionNumber.(version_number_folders), rev = true)
+    stored_versions = map(version_number_folders) do vfolder
+        try
+            siteinfo = read(joinpath(root, vfolder, "siteinfo.js"), String)
+            vstr = match(r"DOCUMENTER_CURRENT_VERSION\s+=\s+\"(.*?)\"", siteinfo)[1]
+            VersionNumber(vstr)
+        catch
+            v"0.0.0"
+        end
+    end
+    order = sortperm(stored_versions, rev = true)
     ordered_versions = [named_folders; version_number_folders[order]]
     open(joinpath(root, "versions.js"), "w") do io
         println(io, "var DOC_VERSIONS = [")
@@ -99,7 +108,7 @@ function Documenter.postprocess_before_push(versions::BaseVersion; subfolder, de
         end
         println(io, "];")
         if !isempty(version_number_folders)
-            println(io, "var DOCUMENTER_NEWEST = ", repr(version_number_folders[order[1]]), ";")
+            println(io, "var DOCUMENTER_NEWEST = ", repr(string(stored_versions[order[1]])), ";")
         end
         if "stable" in named_folders
             println(io, "var DOCUMENTER_STABLE = \"stable\";")

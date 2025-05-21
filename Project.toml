@@ -23,7 +23,7 @@ Documenter = "1.11"
 DocumenterCitations = "1"
 IOCapture = "0.2"
 NodeJS_20_jll = "20"
-TOML = "1.0.3"
+TOML = "0.2,1"
 julia = "1.6"
 
 [weakdeps]
@@ -31,3 +31,6 @@ DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 
 [extensions]
 DocumenterVitepressDocumenterCitationsExt = "DocumenterCitations"
+
+[extras]
+DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"

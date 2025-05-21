@@ -64,6 +64,14 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     assets = nothing
     "A version string to write to the header of the objects.inv inventory file. This should be a valid version number without a v prefix. Defaults to the version defined in the Project.toml file in the parent folder of the documentation root"
     inventory_version::Union{String,Nothing} = nothing
+    """
+    Sets the granularity of versions which should be kept. Options are :patch, :minor or :breaking (the default).
+    You can use this to reduce the number of docs versions that coexist on your dev branch. With :patch, every patch
+    version will be stored. With :minor, v1.1.0, v1.1.1, v1.1.2 etc. will overwrite each other as v1.1. With :breaking,
+    only the major versions v1, v2, v3 etc. will be kept, except below v1 where each minor version will be kept, as these are
+    considered breaking under Julia's interpretation of SemVer.
+    """
+    keep = :breaking
 end
 
 # return the same file with the extension changed to .md
@@ -237,7 +245,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
     DocInventories.save(objects_inv, inventory)
 
-    bases = determine_bases(deploy_decision.subfolder)
+    bases = determine_bases(deploy_decision.subfolder; settings.keep)
 
     for (i_base, base) in enumerate(bases)
         # from `vitepress_config.jl`
@@ -333,48 +341,62 @@ end
 
 is_version_string(str) = try (VersionNumber(str); true) catch; false end
 
-function determine_bases(subfolder)::Vector{String}
+function determine_bases(
+        subfolder;
+        keep::Symbol,
+        all_tagged_versions::Vector{VersionNumber} = get_all_tagged_release_versions(),
+        log = true,
+    )::Vector{String}
+
+    keep in (:patch, :minor, :breaking) || error("Invalid `keep` value $(repr(keep)). Only :patch, :minor or :breaking are allowed.")
     bases = if is_version_string(subfolder)
         v = VersionNumber(subfolder)
-        @info "Subfolder is a version: $v"
+        log && @info "Subfolder is a version: $v"
 
         patch_base = "v$(v.major).$(v.minor).$(v.patch)"
         minor_base = "v$(v.major).$(v.minor)"
         major_base = "v$(v.major)"
 
-        @info "Adding base `$(patch_base)`"
-        bases = [
-            patch_base
-        ]
-        all_tagged_versions = get_all_tagged_release_versions()
+        bases = []
+        if keep === :patch || (v.major == 0 && v.minor == 0)
+            log && @info "Adding base `$(patch_base)`"
+            push!(bases, patch_base)
+        else
+            log && @info "Not adding base `$(patch_base)` because keep == $(repr(keep))"
+        end
+        
         higher_versions = filter(>(v), all_tagged_versions)
         if !isempty(v.prerelease)
-            @info "`$v` is a prerelease, not adding base `stable`"
+            log && @info "`$v` is a prerelease, not adding base `stable`"
         elseif isempty(higher_versions)
-            @info "No higher versions than `$v` found, adding base `stable`"
+            log && @info "No higher versions than `$v` found, adding base `stable`"
             push!(bases, "stable")
         else
-            @info "Found release tag `$(first(higher_versions))` which is a higher version than `$v`, not adding base `stable`"
+            log && @info "Found release tag `$(first(higher_versions))` which is a higher version than `$v`, not adding base `stable`"
         end
 
         higher_versions_same_major = filter(v2 -> v2.major == v.major, higher_versions)
         if v.major == 0
-            @info "All-zero major alias `v0` will not be added as a base"
+            log && @info "All-zero major alias `v0` will not be added as a base"
         elseif isempty(higher_versions_same_major)
-            @info "No higher versions than `$v` with same major version found, adding base `$(major_base)`"
+            log && @info "No higher versions than `$v` with same major version found, adding base `$(major_base)`"
             push!(bases, major_base)
         else
-            @info "Found release tag `$(first(higher_versions_same_major))` which is a higher version with same major version than `$v`, not adding base `$(major_base)`"
+            log && @info "Found release tag `$(first(higher_versions_same_major))` which is a higher version with same major version than `$v`, not adding base `$(major_base)`"
         end
 
         higher_versions_same_minor = filter(v2 -> v2.minor == v.minor, higher_versions_same_major)
         if v.major == 0 && v.minor == 0
-            @info "All-zero major minor alias `v0.0` will not be added as a base"
+            log && @info "All-zero major minor alias `v0.0` will not be added as a base"
         elseif isempty(higher_versions_same_minor)
-            @info "No higher versions than `$v` with same major and minor version found, adding base `$(minor_base)`"
-            push!(bases, minor_base)
+            if keep === :breaking && v.major > 0
+                log && @info "No higher versions than `$v` with same major and minor version found, but not adding base `$(minor_base)` because keep == :breaking"
+            else
+                log && @info "No higher versions than `$v` with same major and minor version found, adding base `$(minor_base)`"
+                push!(bases, minor_base)
+            end
         else
-            @info "Found release tag `$(first(higher_versions_same_minor))` which is a higher version with same major and minor version than `$v`, not adding base `$(minor_base)`"
+            log && @info "Found release tag `$(first(higher_versions_same_minor))` which is a higher version with same major and minor version than `$v`, not adding base `$(minor_base)`"
         end
 
         filter!(x -> x ∉ ("v0", "v0.0"), bases)
@@ -382,7 +404,7 @@ function determine_bases(subfolder)::Vector{String}
         [subfolder]
     end
 
-    @info "Bases that will be built: $bases"
+    log && @info "Bases that will be built: $bases"
 
     return bases
 end
@@ -799,8 +821,8 @@ function render_mime(io::IO, mime::MIME"image/png", node, element, page, doc; md
     pngpath = joinpath(doc.user.build, md_output_path, dirname(relpath(page.build, doc.user.build)), "$(filename).png")
     bytes = base64decode(element)
     write(pngpath, bytes)
-    (; width, height) = png_image_metadata(bytes)
-    println(io, "![]($(filename).png){width=$(width)px height=$(height)px}")
+    p = png_image_metadata(bytes)
+    println(io, "![]($(filename).png){width=$(p.width)px height=$(p.height)px}")
 end
 
 function render_mime(io::IO, mime::MIME"image/webp", node, element, page, doc; md_output_path, kwargs...)
