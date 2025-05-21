@@ -65,13 +65,13 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     "A version string to write to the header of the objects.inv inventory file. This should be a valid version number without a v prefix. Defaults to the version defined in the Project.toml file in the parent folder of the documentation root"
     inventory_version::Union{String,Nothing} = nothing
     """
-    Sets the granularity of versions which should be kept. Options are :patch (the default), :minor or :breaking.
+    Sets the granularity of versions which should be kept. Options are :patch, :minor or :breaking (the default).
     You can use this to reduce the number of docs versions that coexist on your dev branch. With :patch, every patch
-    version will be stored. With :minor, v0.1.0, v0.1.1, v0.1.2 etc. will overwrite each other as v0.1. With :breaking,
+    version will be stored. With :minor, v1.1.0, v1.1.1, v1.1.2 etc. will overwrite each other as v1.1. With :breaking,
     only the major versions v1, v2, v3 etc. will be kept, except below v1 where each minor version will be kept, as these are
     considered breaking under Julia's interpretation of SemVer.
     """
-    keep = :patch
+    keep = :breaking
 end
 
 # return the same file with the extension changed to .md
