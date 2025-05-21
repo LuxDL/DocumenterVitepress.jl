@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.2.2 - 2025-05-21
+
 - Fixed relative path to favicon in vitepress config [#265](https://github.com/LuxDL/DocumenterVitepress.jl/pull/265).
 - Added `keep` option in `DocumenterVitepress.MarkdownFormat` to control which versions of the documentation are kept. The new default is `:breaking`, which means that **only versions are kept that are incompatible with each other**. This means that v1.2.3 will be accessible only under v1, and when v1.2.4 or v1.3.0 are rendered, they will overwrite only this v1 folder because they are not breaking. If a v2.0.0 is tagged, it will be saved under v2 because it's breaking relative to v1. For versions starting with v0, all minor versions will be kept because they are considered incompatible under Julia semver rules. The other options are `:minor` and `:patch`. For `:minor`, `v1.0` and `v1.1` would be kept as well, and for `:patch` every patch release. Note that `:patch` will take most storage on the `gh-pages` branch, which will affect deploy times especially if doc builds contain many images or other larger assets [#269](https://github.com/LuxDL/DocumenterVitepress.jl/pull/269). If you have previously rendered patch versions like `v1.2.3` to your gh-pages branch, you might want to delete those manually after switching to, e.g., the `:breaking` scheme, so that the version picker dropdown only reflects `v1`.
 
