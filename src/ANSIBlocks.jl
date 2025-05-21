@@ -20,7 +20,7 @@ function Selectors.runner(::Type{ANSIBlocks}, node, page, doc)
     # Bail early if in draft mode
     if Documenter.is_draft(doc, page)
         @debug "Skipping evaluation of @ansi block in draft mode:\n$(x.code)"
-        page.mapping[x] = Documenter.create_draft_result(x; blocktype="@ansi")
+        page.mapping[x] = Documenter.create_draft_result!(x; blocktype="julia")
         return
     end
 
