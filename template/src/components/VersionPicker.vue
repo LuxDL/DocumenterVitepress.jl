@@ -53,6 +53,10 @@ const waitForScriptsToLoad = () => {
 const loadVersions = async () => {
   if (typeof window === 'undefined') return;
 
+  console.log(absoluteRoot);
+  console.log(absoluteOrigin);
+  console.log(joinPath(absoluteOrigin, '/dev/');
+
   try {
     if (isLocalBuild()) {
       versions.value = [{ text: 'dev', link: '/' }];
