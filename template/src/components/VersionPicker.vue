@@ -2,7 +2,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed} from 'vue'
-import { useData, joinPath } from 'vitepress'
+import { useData } from 'vitepress'
 import VPNavBarMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavBarMenuGroup.vue'
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
 
@@ -11,6 +11,11 @@ declare global {
     DOC_VERSIONS?: string[];
     DOCUMENTER_CURRENT_VERSION?: string;
   }
+}
+
+// from vitepress, MIT
+function joinPath(base: string, path: string) {
+  return `${base}${path}`.replace(/\/+/g, '/')
 }
 
 const absoluteRoot = __DEPLOY_ABSPATH__;
