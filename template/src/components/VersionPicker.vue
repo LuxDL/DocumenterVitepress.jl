@@ -2,7 +2,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed} from 'vue'
-import { useData } from 'vitepress'
+import { useData, joinPath } from 'vitepress'
 import VPNavBarMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavBarMenuGroup.vue'
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
 
@@ -56,20 +56,19 @@ const loadVersions = async () => {
       const scriptsLoaded = await waitForScriptsToLoad();
 
       if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
-        const allVersions = new Set([...window.DOC_VERSIONS, window.DOCUMENTER_CURRENT_VERSION]);
-        versions.value = Array.from(allVersions).map(v => ({
+        versions.value = window.DOC_VERSIONS.map(v => ({
           text: v,
-          link: `${absoluteOrigin}/${v}/`
+          link: joinPath(absoluteOrigin, `/${v}/`),
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
-        versions.value = [{ text: 'dev', link: `${absoluteOrigin}/dev/` }];
+        versions.value = [{ text: 'dev', link: joinPath(absoluteOrigin, '/dev/') }];
         currentVersion.value = 'dev';
       }
     }
   } catch (error) {
     console.warn('Error loading versions:', error);
-    versions.value = [{ text: 'dev', link: `${absoluteOrigin}/dev/` }];
+    versions.value = [{ text: 'dev', link: joinPath(absoluteOrigin, '/dev/') }];
     currentVersion.value = 'dev';
   }
   isClient.value = true;
