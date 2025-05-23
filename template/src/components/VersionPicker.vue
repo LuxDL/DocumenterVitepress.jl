@@ -55,7 +55,7 @@ const loadVersions = async () => {
 
   console.log(absoluteRoot);
   console.log(absoluteOrigin);
-  console.log(joinPath(absoluteOrigin, '/dev/');
+  console.log(joinPath(absoluteOrigin, '/dev/'));
 
   try {
     if (isLocalBuild()) {
