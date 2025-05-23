@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed occasional double slashes in version picker URLs and remove the unnecessary current version from the bottom of the version list [#272](https://github.com/LuxDL/DocumenterVitepress.jl/pull/272).
+
 ## v0.2.2 - 2025-05-21
 
 - Fixed relative path to favicon in vitepress config [#265](https://github.com/LuxDL/DocumenterVitepress.jl/pull/265).
