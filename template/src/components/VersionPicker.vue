@@ -19,7 +19,12 @@ function joinPath(base: string, path: string) {
 }
 
 const absoluteRoot = __DEPLOY_ABSPATH__;
-const absoluteOrigin = (typeof window === 'undefined' ? '' : window.location.origin) + absoluteRoot;
+const siteOrigin = (typeof window === 'undefined' ? '' : window.location.origin);
+
+function absoluteUrl(relative) {
+  const withRoot = joinPath(absoluteRoot, relative);
+  return siteOrigin + withRoot; // don't call `joinPath` on https:// part to not remove double slashes there
+}
 
 const props = defineProps<{ screenMenu?: boolean }>();
 const versions = ref<Array<{ text: string, link: string, class?: string }>>([]);
@@ -53,10 +58,6 @@ const waitForScriptsToLoad = () => {
 const loadVersions = async () => {
   if (typeof window === 'undefined') return;
 
-  console.log(absoluteRoot);
-  console.log(absoluteOrigin);
-  console.log(joinPath(absoluteOrigin, '/dev/'));
-
   try {
     if (isLocalBuild()) {
       versions.value = [{ text: 'dev', link: '/' }];
@@ -67,17 +68,17 @@ const loadVersions = async () => {
       if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
         versions.value = window.DOC_VERSIONS.map(v => ({
           text: v,
-          link: joinPath(absoluteOrigin, `/${v}/`),
+          link: absoluteUrl(`/${v}/`),
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
-        versions.value = [{ text: 'dev', link: joinPath(absoluteOrigin, '/dev/') }];
+        versions.value = [{ text: 'dev', link: absoluteUrl('/dev/') }];
         currentVersion.value = 'dev';
       }
     }
   } catch (error) {
     console.warn('Error loading versions:', error);
-    versions.value = [{ text: 'dev', link: joinPath(absoluteOrigin, '/dev/') }];
+    versions.value = [{ text: 'dev', link: absoluteUrl('/dev/') }];
     currentVersion.value = 'dev';
   }
   isClient.value = true;
