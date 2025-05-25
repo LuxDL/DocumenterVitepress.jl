@@ -13,8 +13,18 @@ declare global {
   }
 }
 
+// from vitepress, MIT
+function joinPath(base: string, path: string) {
+  return `${base}${path}`.replace(/\/+/g, '/')
+}
+
 const absoluteRoot = __DEPLOY_ABSPATH__;
-const absoluteOrigin = (typeof window === 'undefined' ? '' : window.location.origin) + absoluteRoot;
+const siteOrigin = (typeof window === 'undefined' ? '' : window.location.origin);
+
+function absoluteUrl(relative) {
+  const withRoot = joinPath(absoluteRoot, relative);
+  return siteOrigin + withRoot; // don't call `joinPath` on https:// part to not remove double slashes there
+}
 
 const props = defineProps<{ screenMenu?: boolean }>();
 const versions = ref<Array<{ text: string, link: string, class?: string }>>([]);
@@ -56,20 +66,19 @@ const loadVersions = async () => {
       const scriptsLoaded = await waitForScriptsToLoad();
 
       if (scriptsLoaded && window.DOC_VERSIONS && window.DOCUMENTER_CURRENT_VERSION) {
-        const allVersions = new Set([...window.DOC_VERSIONS, window.DOCUMENTER_CURRENT_VERSION]);
-        versions.value = Array.from(allVersions).map(v => ({
+        versions.value = window.DOC_VERSIONS.map(v => ({
           text: v,
-          link: `${absoluteOrigin}/${v}/`
+          link: absoluteUrl(`/${v}/`),
         }));
         currentVersion.value = window.DOCUMENTER_CURRENT_VERSION;
       } else {
-        versions.value = [{ text: 'dev', link: `${absoluteOrigin}/dev/` }];
+        versions.value = [{ text: 'dev', link: absoluteUrl('/dev/') }];
         currentVersion.value = 'dev';
       }
     }
   } catch (error) {
     console.warn('Error loading versions:', error);
-    versions.value = [{ text: 'dev', link: `${absoluteOrigin}/dev/` }];
+    versions.value = [{ text: 'dev', link: absoluteUrl('/dev/') }];
     currentVersion.value = 'dev';
   }
   isClient.value = true;
