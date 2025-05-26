@@ -153,7 +153,11 @@ function deploydocs(;
     if !isfile(bases_file)
         error("Expected a file at $bases_file listing the separate bases that DocumenterVitepress has built the docs for.")
     end
-    bases = readlines(bases_file)
+    bases = filter(!isempty, readlines(bases_file))
+    if isempty(bases)
+        @info "Found no bases suitable for deployment (empty bases are skipped)."
+        return
+    end
     @info "Found bases for deployment: $bases"
 
     for (i, base) in enumerate(bases)
