@@ -77,7 +77,7 @@ end
 # return the same file with the extension changed to .md
 mdext(f) = string(splitext(f)[1], ".md")
 
-@static if hasproperty(Documenter, :writer_supports_ansicolor) # only on Documenter v1.11.something
+@static if  :writer_supports_ansicolor in names(Documenter; all = true) # only on Documenter v1.11.something
     Documenter.writer_supports_ansicolor(::MarkdownVitepress) = true
 end
 
