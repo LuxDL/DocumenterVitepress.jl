@@ -901,7 +901,8 @@ function render_mime(io::IO, mime::MIME"video/mp4", node, element, page, doc; md
 end
 
 function render_mime(io::IO, mime::MIME"text/plain", node, element, page, doc; kwargs...)
-    return render(io, mime, node, Markdown.Code(element), page, doc; kwargs...)
+    # Note: this should specifically be ansi so that Vitepress picks it up.
+    return render(io, mime, node, Markdown.Code("ansi", element), page, doc; kwargs...)
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, d::Dict{MIME, Any}, page, doc; kwargs...)
