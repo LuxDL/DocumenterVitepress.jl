@@ -72,6 +72,7 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     considered breaking under Julia's interpretation of SemVer.
     """
     keep = :breaking
+    ansicolor::Bool = true
 end
 
 # return the same file with the extension changed to .md
