@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## v0.2.5 - 2025-05-29
+- Add LaTeX rendering support on outputs from Documenter blocks.
+- Fix a bug with `@ansi` blocks in draft mode.
+- Add a definition to let `@example` blocks print in color.
 
 ## v0.2.4 - 2025-05-26
 
