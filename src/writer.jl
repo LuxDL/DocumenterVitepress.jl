@@ -1087,14 +1087,20 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Lists
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc; kwargs...)
-    bullet(i) = list.type === :ordered ? "$(i+=1). " : "- "
+    bullet(i) = list.type === :ordered ? "$(i+1). " : "- "
+    # `iob` is reset at `take!` and then reused in the next loop
     iob = IOBuffer()
+    # Loop through all items of the list
     for (i, item) in enumerate(node.children)
         render(iob, mime, item, item.children, page, doc; prenewline = false, kwargs...)
         eachline = split(String(take!(iob)), '\n')
         eachline[2:end] .= "  " .* eachline[2:end]
+        final_string = join(eachline, '\n')
+        if !endswith(final_string, '\n')
+            final_string = final_string * "\n"
+        end
         print(io, bullet(i))
-        print(io, join(eachline, '\n'))
+        print(io, final_string)
     end
 end
 # HTMLInline
