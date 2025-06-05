@@ -106,10 +106,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # # Vitepress navbar and sidebar
 
     provided_page_list = doc.user.pages
-    sidebar_navbar_info = pagelist2str.((doc,), provided_page_list)
-    sidebar_navbar_string = join(sidebar_navbar_info, ",\n")
-    push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: [\n$sidebar_navbar_string\n]\n")
-    push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
+    sidebar_info = sprint(print, pagelist2str(doc, provided_page_list, Val(:sidebar)))
+    navbar_info = sprint(print, pagelist2str(doc, provided_page_list, Val(:navbar)))
+    push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: $(sidebar_info)\n")
+    push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: $(navbar_info)\n")
 
     # # Title
     push!(replacers, "title: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "title: '$(doc.user.sitename)'")
@@ -158,10 +158,9 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     return
 end
 
-function _get_raw_text(element)
-end
+# Utility methods to get data about pages
 
-function pagelist2str(doc, page::String)
+function get_title(doc, page::AbstractString)
     # If no name is given, find the first header in the page,
     # and use that as the name.
     elements = collect(doc.blueprint.pages[page].mdast.children)
@@ -174,35 +173,34 @@ function pagelist2str(doc, page::String)
     else
         Documenter.MDFlatten.mdflatten(elements[idx])
     end
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return name
 end
+get_title(doc, page::Pair{<: AbstractString, <: Any}) = first(page)
 
-pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
-
-function pagelist2str(doc, name_page::Pair{String, String})
+# Catch all method: just broadcast over any iterable assuming it is a collection
+function pagelist2str(doc, pages, sidenav::Val)
+    contents = map(pages) do page
+        "{ " * pagelist2str(doc, page, sidenav) * " }"
+    end
+    return "[" * join(contents, ",\n") * "]"
+end
+function pagelist2str(doc, page::AbstractString, sidenav::Val)
+    name = get_title(doc, page)
+    return "text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])'" # , $(sidebar_items(doc, page)) }"
+end
+function pagelist2str(doc, name_page::Pair{<: AbstractString, <: AbstractString}, sidenav::Val)
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return "text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])'" # , $(sidebar_items(doc, page)) }"
 end
-
-function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
+function pagelist2str(doc, name_contents::Pair{<: AbstractString, <: AbstractVector}, sidenav::Val)
     name, contents = name_contents
     # This is for nested stuff.  Should work automatically but you never know...
-    rendered_contents = pagelist2str.((doc,), contents)
-    return "{ text: '$(replace(name, "'" => "\\'"))', collapsed: false, items: [\n$(join(rendered_contents, ",\n"))]\n }" # TODO: add a link here if the name is the same name as a file?
-end
-
-function sidebar_items(doc, page::String)
-    # We look at the page elements, and obtain all level 1 and 2 headers.
-    elements = doc.blueprint.pages[page].elements
-    headers = filter(x -> x isa Union{MarkdownAST.Heading{1}, MarkdownAST.Heading{2}}, elements)
-    # If nothing is found, move on in life
-    if length(headers) ≤ 1
-        return ""
+    rendered_contents = map(contents) do content
+        "{" * pagelist2str(doc, content, sidenav) * "}"
     end
-    # Otherwise, we return a collapsible tree of headers for each level 1 and 2 header.
-    items = headers
-    return "collapsed: true, items: [\n $(join(_item_link.((page,), items), ",\n"))\n]"
+    final_contents = join(rendered_contents, ",\n")
+    return "text: '$(replace(name, "'" => "\\'"))', collapsed: false, items: [\n$(final_contents)\n]" # TODO: add a link here if the name is the same name as a file?
 end
 
 function _item_link(page, item)
