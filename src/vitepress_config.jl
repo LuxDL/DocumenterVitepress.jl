@@ -188,12 +188,23 @@ function pagelist2str(doc, page::AbstractString, sidenav::Val)
     name = get_title(doc, page)
     return "text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])'" # , $(sidebar_items(doc, page)) }"
 end
+
+function pagelist2str(doc, name_page::Pair{<: Any, <: Any}, sidenav::Val)
+    name, page = name_page
+    # This is the simplest and easiest case.
+    return pagelist2str(doc, name => page, sidenav) # , $(sidebar_items(doc, page)) }"
+end
+
+function pagelist2str(doc, name_page::Pair{<: Any, <: Nothing}, sidenav::Val)
+    return ""
+end
+
 function pagelist2str(doc, name_page::Pair{<: AbstractString, <: AbstractString}, sidenav::Val)
     name, page = name_page
     # This is the simplest and easiest case.
     return "text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])'" # , $(sidebar_items(doc, page)) }"
 end
-function pagelist2str(doc, name_contents::Pair{<: AbstractString, <: AbstractVector}, sidenav::Val)
+function pagelist2str(doc, name_contents::Pair{<: AbstractString, <: AbstractArray}, sidenav::Val)
     name, contents = name_contents
     # This is for nested stuff.  Should work automatically but you never know...
     rendered_contents = map(contents) do content
