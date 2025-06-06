@@ -228,6 +228,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
         open(docpath(page.build, builddir, settings.md_output_path), "w") do io
+            merge_and_render_frontmatter(io, MIME("text/yaml"), page, doc)
             for node in page.mdast.children
                 render(io, mime, node, page, doc; inventory)
             end
