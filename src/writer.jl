@@ -949,6 +949,9 @@ render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, ::Documenter.Setu
 # Raw nodes are used to insert raw HTML into the output. We just print it as is.
 # TODO: what if the `raw` is not HTML?  That is not addressed here but we ought to address it...
 function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, raw::Documenter.RawNode, page, doc; kwargs...)
+    if startswith(raw.text, "---")
+        return # this was already handled by frontmatter.
+    end
     return raw.name === :html ? println(io, raw.text, "\n") : nothing
 end
 
