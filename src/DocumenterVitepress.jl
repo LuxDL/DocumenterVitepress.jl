@@ -15,6 +15,7 @@ const ASSETS = normpath(joinpath(@__DIR__, "..", "assets"))
 
 include("vitepress_interface.jl")
 include("vitepress_config.jl")
+include("frontmatter.jl")
 include("writer.jl")
 include("ANSIBlocks.jl")
 
