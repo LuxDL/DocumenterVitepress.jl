@@ -211,7 +211,12 @@ function pagelist2str(doc, name_contents::Pair{<: AbstractString, <: AbstractArr
         "{" * pagelist2str(doc, content, sidenav) * "}"
     end
     final_contents = join(rendered_contents, ",\n")
-    return "text: '$(replace(name, "'" => "\\'"))', collapsed: false, items: [\n$(final_contents)\n]" # TODO: add a link here if the name is the same name as a file?
+    collapse = if sidenav === Val(:sidebar)
+        "collapsed: false,"
+    else
+        ""
+    end
+    return "text: '$(replace(name, "'" => "\\'"))', $collapse items: [\n$(final_contents)\n]" # TODO: add a link here if the name is the same name as a file?
 end
 
 function _item_link(page, item)
