@@ -475,6 +475,12 @@ You can also use fenced code blocks with the `math` tag for equations!
 ```math
 \nabla^2 \Phi = \rho
 ```
+## DataFrame
+
+```@example
+using DataFrames
+DataFrame(A=1:3, B=5:7, fixed=1)
+```
 
 ## [Latex Symbols $\Lambda_\theta$ and $\bf Z$](@id latex_symbols_in_headings)
 
