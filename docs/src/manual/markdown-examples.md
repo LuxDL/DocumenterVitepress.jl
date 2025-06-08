@@ -478,21 +478,19 @@ You can also use fenced code blocks with the `math` tag for equations!
 
 ## LaTeXStrings
 
-```@example latexstring
-using LaTeXStrings
-```
-
 :::tabs
 
 == text string
 
-```@example latexstring
+```@example
+using LaTeXStrings
 L"an equation: $\alpha^2$"
 ```
 
 == text/latex display
 
-```@example latexstring
+```@example
+using LaTeXStrings
 LaTeXString("an equation: \$\\alpha^2\$")
 ```
 

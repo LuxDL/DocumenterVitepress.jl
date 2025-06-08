@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.2.6 - 2025-06-08
+- Lowers MIME priority for LaTeX rendering.
+
 ## v0.2.5 - 2025-05-29
 - Add LaTeX rendering support on outputs from Documenter blocks.
 - Fix a bug with `@ansi` blocks in draft mode.
