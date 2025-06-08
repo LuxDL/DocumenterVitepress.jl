@@ -475,6 +475,29 @@ You can also use fenced code blocks with the `math` tag for equations!
 ```math
 \nabla^2 \Phi = \rho
 ```
+
+## LaTeXStrings
+
+```@example latexstring
+using LaTeXStrings
+```
+
+:::tabs
+
+== text string
+
+```@example latexstring
+L"an equation: $\alpha^2$"
+```
+
+== text/latex display
+
+```@example latexstring
+LaTeXString("an equation: \$\\alpha^2\$")
+```
+
+:::
+
 ## DataFrame
 
 ```@example
