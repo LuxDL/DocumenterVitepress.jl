@@ -2,6 +2,7 @@ using Documenter
 using DocumenterVitepress
 using DocumenterCitations
 using DocumenterInterLinks
+using LaTeXStrings
 
 # Handle DocumenterCitations integration - if you're running this, then you don't need anything here!!
 documenter_citations_dir = dirname(dirname(pathof(DocumenterCitations)))

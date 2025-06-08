@@ -476,6 +476,33 @@ You can also use fenced code blocks with the `math` tag for equations!
 \nabla^2 \Phi = \rho
 ```
 
+## LaTeXStrings
+
+:::tabs
+
+== text string
+
+```@example
+using LaTeXStrings
+L"an equation: $\alpha^2$"
+```
+
+== text/latex display
+
+```@example
+using LaTeXStrings
+LaTeXString("an equation: \$\\alpha^2\$")
+```
+
+:::
+
+## DataFrame
+
+```@example
+using DataFrames
+DataFrame(A=1:3, B=5:7, fixed=1)
+```
+
 ## [Latex Symbols $\Lambda_\theta$ and $\bf Z$](@id latex_symbols_in_headings)
 
 ::: tip

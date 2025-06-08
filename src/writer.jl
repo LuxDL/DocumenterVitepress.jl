@@ -685,9 +685,9 @@ element.  Priority is in ascending order, i.e., 1 has more priority than 0.
 """
 function mime_priority end
 mime_priority(::MIME"text/plain") = 0.0
+mime_priority(::MIME"text/latex") = 0.5
 mime_priority(::MIME"text/markdown") = 1.0
 mime_priority(::MIME"text/html") = 2.0
-mime_priority(::MIME"text/latex") = 2.5
 mime_priority(::MIME"image/svg+xml") = 3.0
 mime_priority(::MIME"image/png") = 4.0
 mime_priority(::MIME"image/webp") = 5.0
