@@ -24,6 +24,12 @@ function Selectors.runner(::Type{ANSIBlocks}, node, page, doc)
         return
     end
 
+    Base.depwarn(
+        "The `@ansi` block is deprecated, `@example` does everything including ANSI highlighting now.  Please use that instead.",
+        :dv_ansiblock;
+        force = true
+    )
+
     # The sandboxed module -- either a new one or a cached one from this page.
     mod = Documenter.get_sandbox_module!(page.globals.meta, "atexample", name)
 
