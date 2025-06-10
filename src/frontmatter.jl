@@ -13,6 +13,13 @@ function merge_and_render_frontmatter(io::IO, mime::MIME"text/yaml", page, doc; 
             push!(frontmatter, join(split(element.text, "\n")[2:end-1], "\n"))
         end
     end
+
+    if haskey(page.globals.meta, :Title)
+        pushfirst!(frontmatter, "title: \"$(page.globals.meta[:Title])\"")
+    end
+    if haskey(page.globals.meta, :Description)
+        pushfirst!(frontmatter, "description: \"$(page.globals.meta[:Description])\"")
+    end
     println(io, "---")
     println(io, join(frontmatter, "\n"))
     println(io, "---")
