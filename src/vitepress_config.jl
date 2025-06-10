@@ -93,11 +93,11 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         else
             s_path = if startswith(settings.deploy_url, r"http[s?]:\/\/")
                 frags = split(settings.deploy_url, '/') # "https", "", "my.custom.domain", "sub", "dir"
-                length(frags) > 3 ? frags[3:end] : "/" #                               |-> "sub", "dir"
+                length(frags) >= 4 ? frags[4:end] : "/" #                               |-> "sub", "dir"
             else
                 split(settings.deploy_url, '/') # "sub", "dir"
             end
-            s = length(s_path) > 1 ? joinpath(s_path) : "" # ignore custom URL here
+            s = join(s_path, '/')
             isempty(s) ? "/" : "/$(s)"
         end
 
