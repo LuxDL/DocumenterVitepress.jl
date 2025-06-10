@@ -93,7 +93,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         else
             s_path = if startswith(settings.deploy_url, r"http[s?]:\/\/")
                 frags = split(settings.deploy_url, '/') # "https", "", "my.custom.domain", "sub", "dir"
-                length(frags) >= 4 ? frags[4:end] : "/" #                               |-> "sub", "dir"
+                length(frags) >= 4 ? frags[4:end] : [""] #                             |-> "sub", "dir"
             else
                 split(settings.deploy_url, '/') # "sub", "dir"
             end
@@ -101,7 +101,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
             isempty(s) ? "/" : "/$(s)"
         end
 
-    base_str = deploy_abspath == "/" ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
+    base_str = endswith(deploy_abspath, "/") ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
 
     push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH" => deploy_abspath)
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
