@@ -256,9 +256,10 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             push!(inventory, item)
         end
     end
-
-    objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
-    DocInventories.save(objects_inv, inventory)
+    if settings.write_inventory
+        objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
+        DocInventories.save(objects_inv, inventory)
+    end
 
     bases = determine_bases(deploy_decision.subfolder; settings.keep)
 
