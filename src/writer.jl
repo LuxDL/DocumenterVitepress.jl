@@ -264,62 +264,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
         # Now that the Markdown files are written, we can build the Vitepress site if required.
         if settings.build_vitepress
-            @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
-            # Build the docs using `npm`
-            should_remove_package_json = false
-            try
-                if !isfile(joinpath(dirname(builddir), "package.json"))
-                    @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
-                    cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                    should_remove_package_json = true
-                end
-
-                cd(dirname(builddir)) do
-                    # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
-                    # when interpolating the `npm` command.  
-                    # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
-                    # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
-
-                    package_json_path = joinpath(dirname(builddir), "package.json")
-                    template_path = joinpath(dirname(@__DIR__), "template", "package.json")
-                    build_output_path = joinpath(builddir, settings.md_output_path)
-
-                    if settings.install_npm || should_remove_package_json
-                        if !isfile(package_json_path)
-                            cp(template_path, package_json_path)
-                            should_remove_package_json = true
-                        end
-                        # wrap in `node(...) do _`
-                        node(; adjust_PATH = true, adjust_LIBPATH = true) do _
-                            # On Windows systems
-                            if Sys.iswindows()
-                                # system_npm = "C:\\Program Files\\nodejs\\npm.cmd"
-                                @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
-                                @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
-                                # install dependecies
-                                run(`cmd /c $npm install`)
-                                # run(`cmd /c $npm exec vitepress build $build_output_path`) # activate once a new > NodeJS_20_jll artifact is available.
-                                # Debugging alternative
-                                # run(`cmd /c "set DEBUG=vitepress:* & $npm exec vitepress build $build_output_path"`)
-                            else
-                                run(`$(npm) install`)
-                                run(`$(npm) run env -- vitepress build $(build_output_path)`)
-                            end
-                        end
-                    end
-                end
-                # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
-                open(joinpath(builddir, "$i_base", "siteinfo.js"), "w") do io
-                    println(io, """var DOCUMENTER_CURRENT_VERSION = "$(deploy_decision.subfolder)";""")
-                end
-            catch e
-                rethrow(e)
-            finally
-                if should_remove_package_json
-                    rm(joinpath(dirname(builddir), "package.json"))
-                    rm(joinpath(dirname(builddir), "package-lock.json"))
-                end
-            end
+            build_vitepress(bases, base, i_base, builddir, settings)
         else
             @info """
                 DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
@@ -338,6 +283,65 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     end
 
     return
+end
+
+function build_vitepress(bases, base, i_base, builddir, settings)
+    @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
+    # Build the docs using `npm`
+    should_remove_package_json = false
+    try
+        if !isfile(joinpath(dirname(builddir), "package.json"))
+            @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
+            cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
+            should_remove_package_json = true
+        end
+
+        cd(dirname(builddir)) do
+            # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
+            # when interpolating the `npm` command.
+            # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
+            # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
+
+            package_json_path = joinpath(dirname(builddir), "package.json")
+            template_path = joinpath(dirname(@__DIR__), "template", "package.json")
+            build_output_path = joinpath(builddir, settings.md_output_path)
+
+            if settings.install_npm || should_remove_package_json
+                if !isfile(package_json_path)
+                    cp(template_path, package_json_path)
+                    should_remove_package_json = true
+                end
+                # wrap in `node(...) do _`
+                node(; adjust_PATH = true, adjust_LIBPATH = true) do _
+                    # On Windows systems
+                    if Sys.iswindows()
+                        # system_npm = "C:\\Program Files\\nodejs\\npm.cmd"
+                        @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
+                        @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
+                        # install dependecies
+                        run(`cmd /c $npm install`)
+                        # run(`cmd /c $npm exec vitepress build $build_output_path`) # activate once a new > NodeJS_20_jll artifact is available.
+                        # Debugging alternative
+                        # run(`cmd /c "set DEBUG=vitepress:* & $npm exec vitepress build $build_output_path"`)
+                    else
+                        run(`$(npm) install`)
+                        run(`$(npm) run env -- vitepress build $(build_output_path)`)
+                    end
+                end
+            end
+        end
+        # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
+        open(joinpath(builddir, "$i_base", "siteinfo.js"), "w") do io
+            println(io, """var DOCUMENTER_CURRENT_VERSION = "$(deploy_decision.subfolder)";""")
+        end
+    catch e
+        rethrow(e)
+    finally
+        if should_remove_package_json
+            rm(joinpath(dirname(builddir), "package.json"))
+            rm(joinpath(dirname(builddir), "package-lock.json"))
+        end
+    end
 end
 
 is_version_string(str) = try (VersionNumber(str); true) catch; false end
