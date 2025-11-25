@@ -11,8 +11,8 @@ import Markdown
 """
     MarkdownVitepress(; repo, devbranch, devurl, kwargs...)
 
-This is the main entry point for the Vitepress Markdown writer.  
-    
+This is the main entry point for the Vitepress Markdown writer.
+
 It is a config which can be passed to the `format` keyword argument in `Documenter.makedocs`, and causes it to emit a Vitepress site.
 
 !!! tip "Quick start"
@@ -38,7 +38,7 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     "The URL path to the development site, like `dev` or `dev-branch`."
     devurl::String = "dev"
     """
-    The URL of the repository to which the documentation will be deployed.  
+    The URL of the repository to which the documentation will be deployed.
     This **must** be the full URL, **including `https://`**, like `https://rafaqz.github.io/Rasters.jl` or `https://geo.makie.jl/`.
     """
     deploy_url::Union{String, Nothing} = nothing
@@ -56,7 +56,7 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     - `nothing`: **Default**. Automatically determine whether to deploy the documentation.
     - `Documenter.DeployDecision`: Override the automatic decision and deploy based on the passed config.
     It might be useful to use the latter if DocumenterVitepress fails to deploy automatically.
-    You can pass a manually constructed `Documenter.DeployDecision` struct, or the output of 
+    You can pass a manually constructed `Documenter.DeployDecision` struct, or the output of
     `Documenter.deploy_folder(Documenter.auto_detect_deploy_system(); repo, devbranch, devurl, push_preview)`.
     """
     deploy_decision::Union{Nothing, Documenter.DeployDecision} = nothing
@@ -106,7 +106,7 @@ end
 """
     render(args...)
 
-This is the main entry point and recursive function to render a Documenter document to 
+This is the main entry point and recursive function to render a Documenter document to
 Markdown in the Vitepress flavour.  It is called by `Documenter.build` and should not be
 called directly.
 
@@ -136,7 +136,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     else
         deploy_decision = settings.deploy_decision
     end
-    
+
     # copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
     mime = MIME"text/plain"() # TODO: why?
@@ -150,7 +150,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # and copy the previous build files to the new location.
     if settings.md_output_path != "."
         for file_or_dir in current_build_files_or_dirs
-            
+
             src = joinpath(builddir, file_or_dir)
             dst = joinpath(builddir, settings.md_output_path, file_or_dir)
 
@@ -203,7 +203,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                     cp(file, file_destpath; force = true)
                 end
             end
-        end 
+        end
         if any(favicon_files)
             for file in files[favicon_files]
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
@@ -283,7 +283,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                     package_json_path = joinpath(dirname(builddir), "package.json")
                     template_path = joinpath(dirname(@__DIR__), "template", "package.json")
                     build_output_path = joinpath(builddir, settings.md_output_path)
-                    
+
                     if settings.install_npm || should_remove_package_json
                         if !isfile(package_json_path)
                             cp(template_path, package_json_path)
@@ -306,7 +306,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                                 run(`$(npm) run env -- vitepress build $(build_output_path)`)
                             end
                         end
-                    end                
+                    end
                 end
                 # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
                 open(joinpath(builddir, "$i_base", "siteinfo.js"), "w") do io
@@ -332,7 +332,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 All emitted markdown can be found in `$(joinpath(builddir, settings.md_output_path))`.
                 """
         end
-        # This is only useful if placed in the root of the `docs` folder, and we don't 
+        # This is only useful if placed in the root of the `docs` folder, and we don't
         # have any names which conflict with Jekyll (beginning with _ or .) in any case.
         # touch(joinpath(builddir, "final_site", ".nojekyll"))
     end
@@ -365,7 +365,7 @@ function determine_bases(
         else
             log && @info "Not adding base `$(patch_base)` because keep == $(repr(keep))"
         end
-        
+
         higher_versions = filter(>(v), all_tagged_versions)
         if !isempty(v.prerelease)
             log && @info "`$v` is a prerelease, not adding base `stable`"
@@ -608,7 +608,7 @@ function intelligent_language(lang::String)
 end
 
 function join_multiblock(node::Documenter.MarkdownAST.Node)
-    @assert node.element isa Documenter.MultiCodeBlock 
+    @assert node.element isa Documenter.MultiCodeBlock
     mcb = node.element
     if mcb.language == "ansi"
         # Return a vector of Markdown code blocks
@@ -623,9 +623,9 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
         for thing in code_blocks
             # reset the buffer and push the old code block
             if thing.language != current_language
-                # Remove this if statement if you want to 
+                # Remove this if statement if you want to
                 # include empty code blocks in the output.
-                if isempty(thing.code) 
+                if isempty(thing.code)
                     current_string *= "\n\n"
                     continue
                 end
@@ -1079,7 +1079,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # Main.@infiltrate
     print(io, "\$", math.math, "\$")
 end
-# Display math 
+# Display math
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.DisplayMath, page, doc; kwargs...)
     # Main.@infiltrate
     println(io)
@@ -1128,7 +1128,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         end
     end
     # We create this IOBuffer in order to render to it.
-    iob = IOBuffer() 
+    iob = IOBuffer()
     # This will eventually hold the rendered table cells as Strings.
     cell_strings = Vector{Vector{String}}()
     current_row_vec = String[]
