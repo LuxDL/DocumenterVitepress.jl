@@ -26,7 +26,7 @@ function Selectors.runner(::Type{ANSIBlocks}, node, page, doc)
 
     Base.depwarn(
         "The `@ansi` block is deprecated, `@example` does everything including ANSI highlighting now.  Please use that instead.",
-        :dv_ansiblock;
+        :ANSIBlocks,
         force = true
     )
 
