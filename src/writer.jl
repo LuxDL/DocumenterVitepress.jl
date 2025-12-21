@@ -264,7 +264,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
         # Now that the Markdown files are written, we can build the Vitepress site if required.
         if settings.build_vitepress
-            build_vitepress(bases, base, i_base, builddir, settings)
+            build_vitepress(bases, base, i_base, builddir, deploy_decision.subfolder, settings)
         else
             @info """
                 DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
@@ -285,7 +285,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     return
 end
 
-function build_vitepress(bases, base, i_base, builddir, settings)
+function build_vitepress(bases, base, i_base, builddir, subfolder, settings)
     @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
     # Build the docs using `npm`
     should_remove_package_json = false
@@ -332,7 +332,7 @@ function build_vitepress(bases, base, i_base, builddir, settings)
         end
         # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
         open(joinpath(builddir, "$i_base", "siteinfo.js"), "w") do io
-            println(io, """var DOCUMENTER_CURRENT_VERSION = "$(deploy_decision.subfolder)";""")
+            println(io, """var DOCUMENTER_CURRENT_VERSION = "$(subfolder)";""")
         end
     catch e
         rethrow(e)
