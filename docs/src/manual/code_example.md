@@ -77,6 +77,28 @@ for color in 0:15
 end
 ```
 
+using directly `@example` should also print all `ansi` encoding
+
+**Input**
+````
+```@example
+for color in 0:15
+    print("\e[38;5;$color;48;5;$(color)m  ")
+    print("\e[49m", lpad(color, 3), " ")
+    color % 8 == 7 && println() # ‎[!code highlight]
+end
+```
+````
+**Output**
+
+```@example
+for color in 0:15
+    print("\e[38;5;$color;48;5;$(color)m  ")
+    print("\e[49m", lpad(color, 3), " ")
+    color % 8 == 7 && println() # [!code highlight]
+end
+```
+
 ## @eval
 From [Julia's documentation](https://docs.julialang.org/en/v1/) landing page.
 
