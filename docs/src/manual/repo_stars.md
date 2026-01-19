@@ -1,7 +1,7 @@
 
 ## GitHub Icon with Stars
 
-If you want to change the GitHub icon to a different one that includes _repository stars_, you will need the [`stargazers.data.ts`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/master/docs/src/components/stargazers.data.ts) and [`StarUs.vue`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/master/docs/src/components/StarUs.vue) files, along with some changes to your [`index.ts`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/master/docs/src/.vitepress/theme/index.ts) and [`package.json`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/master/docs/package.json) files.
+If you want to change the GitHub icon to a different one that includes _repository stars_, you will need the [`stargazers.data.ts`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/main/docs/src/components/stargazers.data.ts) and [`StarUs.vue`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/main/docs/src/components/StarUs.vue) files, along with some changes to your [`index.ts`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/main/docs/src/.vitepress/theme/index.ts) and [`package.json`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/main/docs/package.json) files.
 
 ::: tip Change repository information
 
