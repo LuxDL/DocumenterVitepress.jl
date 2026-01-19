@@ -1,5 +1,18 @@
 # Changelog
 
+## unreleased
+
+- Renamed `master` to `main`
+
+Local clones should do
+
+```sh
+git branch -m master main
+git fetch origin
+git branch -u origin/main main
+git remote set-head origin -a
+```
+
 ## v0.2.6 - 2025-06-08
 - Lowers MIME priority for LaTeX rendering.
 
