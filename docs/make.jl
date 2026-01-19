@@ -46,7 +46,7 @@ makedocs(;
     checkdocs=:all,
     format=DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
-        devbranch = "master",
+        devbranch = "main",
         devurl = "dev";
     ),
     draft = false,
@@ -75,6 +75,6 @@ makedocs(;
 
 DocumenterVitepress.deploydocs(;
     repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
-    devbranch = "master",
+    devbranch = "main",
     push_preview = true,
 )
