@@ -2,6 +2,7 @@
 import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import type { Theme as ThemeConfig } from 'vitepress'
+import 'virtual:mathjax-styles.css';
 
 import { 
   NolebaseEnhancedReadabilitiesMenu, 

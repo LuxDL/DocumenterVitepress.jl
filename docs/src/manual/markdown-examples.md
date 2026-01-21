@@ -476,6 +476,58 @@ You can also use fenced code blocks with the `math` tag for equations!
 \nabla^2 \Phi = \rho
 ```
 
+### labels and `eqref`
+
+**Input**
+````
+This is a simple equation
+
+```math
+\begin{equation}
+x=0 \label{eq:a}
+\end{equation}
+```
+and now we can reference this as Eq. ``\eqref{eq:a}``.
+````
+
+**Output**
+
+This is a simple equation
+
+```math
+\begin{equation}
+x=0 \label{eq:a}
+\end{equation}
+```
+
+and now we can reference this as Eq. ``\eqref{eq:a}``.
+
+**Input**
+````
+This also works
+
+```math
+\begin{align}
+\label{eq:b}
+a = 1
+\end{align}
+```
+
+see Eq. $\eqref{eq:b}$.
+````
+
+**Output**
+This also works
+
+```math
+\begin{align}
+\label{eq:b}
+a = 1
+\end{align}
+```
+
+see Eq. $\eqref{eq:b}$.
+
 ## LaTeXStrings
 
 :::tabs
