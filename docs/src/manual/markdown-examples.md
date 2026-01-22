@@ -574,6 +574,16 @@ see $\eqref{eq:c}$ ? and what about $\ref{eq:d}$?
 :::
 
 
+### Test NewCM dynamic fonts
+
+Inline math: $\oiint \mathbb{R}^3 \boldsymbol{\alpha} \widehat{AB}$
+
+Display math:
+
+```math
+\oiiint_{\Omega} f(x,y,z) \, dx\,dy\,dz
+```
+
 ## LaTeXStrings
 
 :::tabs
