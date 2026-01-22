@@ -13,7 +13,11 @@ const mathjaxInstance = await createMathjaxInstance({
   tex: {
     tags: 'ams',
   },
-})!;
+});
+
+if (!mathjaxInstance) {
+  throw new Error('Failed to create MathJax instance.');
+}
 
 const virtualModuleId = 'virtual:mathjax-styles.css';
 const resolvedVirtualModuleId = '\0' + virtualModuleId;

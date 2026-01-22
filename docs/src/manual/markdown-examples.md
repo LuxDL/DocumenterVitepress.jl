@@ -477,6 +477,9 @@ You can also use fenced code blocks with the `math` tag for equations!
 ```
 
 ### labels and `eqref`
+You can label equations inside math environments and reference them later using `\eqref{...}` (or `\ref{...}` if you only want the equation number). This works for single equations as well as multi-line environments such as `align`.
+
+#### Single equation
 
 **Input**
 ````
@@ -501,6 +504,9 @@ x=0 \label{eq:a}
 ```
 
 and now we can reference this as Eq. ``\eqref{eq:a}``.
+
+#### `align` environment with a single label
+Labels can also be used inside an `align` environment.
 
 **Input**
 ````
@@ -527,6 +533,45 @@ a = 1
 ```
 
 see Eq. $\eqref{eq:b}$.
+
+#### Multi-line align with labeled lines
+
+**Input**
+````
+```math
+\begin{align}
+\nabla\cdot\mathbf{E}  &= 4 \pi \rho \label{eq:c} \\
+\nabla\cdot\mathbf{B}  &= 2 \\
+\nabla\times\mathbf{E} &= - \frac{1}{c} \frac{\partial\mathbf{B}}{\partial t} \label{eq:d} \\
+\nabla\times\mathbf{B} &= - \frac{1}{c}
+\left(4 \pi \mathbf{J} + \frac{\partial\mathbf{E}}{\partial t}\right)
+\end{align}
+```
+
+see $\eqref{eq:c}$ ? and what about $\ref{eq:d}$?
+````
+
+**Output**
+
+```math
+\begin{align}
+\nabla\cdot\mathbf{E}  &= 4 \pi \rho \label{eq:c} \\
+\nabla\cdot\mathbf{B}  &= 2 \\
+\nabla\times\mathbf{E} &= - \frac{1}{c} \frac{\partial\mathbf{B}}{\partial t} \label{eq:d}\\
+\nabla\times\mathbf{B} &= - \frac{1}{c}
+\left(4 \pi \mathbf{J} + \frac{\partial\mathbf{E}}{\partial t}\right)
+\end{align}
+```
+
+see $\eqref{eq:c}$ ? and what about $\ref{eq:d}$?
+
+::: tip
+- Use `\eqref{...}` to automatically include parentheses around the equation number.
+- Use `\ref{...}` if you only need the raw number.
+- Labels must be unique within a document.
+- In multi-line environments, place `\label{}` on the specific line you want to reference.
+:::
+
 
 ## LaTeXStrings
 

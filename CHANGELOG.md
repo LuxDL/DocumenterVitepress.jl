@@ -2,16 +2,16 @@
 
 ## unreleased
 
+- Switched to `@mdit/plugin-mathjax` from `markdown-it-mathjax3` in order to support labels and referencing equations [#302](https://github.com/LuxDL/DocumenterVitepress.jl/pull/302).
 - Renamed `master` to `main`
 
-Local clones should do
-
-```sh
-git branch -m master main
-git fetch origin
-git branch -u origin/main main
-git remote set-head origin -a
-```
+    Local clones should do
+    ```sh
+    git branch -m master main
+    git fetch origin
+    git branch -u origin/main main
+    git remote set-head origin -a
+    ```
 
 ## v0.2.6 - 2025-06-08
 - Lowers MIME priority for LaTeX rendering.
