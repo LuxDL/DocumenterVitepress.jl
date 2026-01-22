@@ -101,6 +101,8 @@ export default defineConfig({
         '@nolebase/vitepress-plugin-enhanced-readabilities/client',
         'vitepress',
         '@nolebase/ui',
+        '@mathjax/mathjax-newcm-font',
+        'mathjax-full',
       ], 
     }, 
     ssr: { 
@@ -108,6 +110,9 @@ export default defineConfig({
         // If there are other packages that need to be processed by Vite, you can add them here.
         '@nolebase/vitepress-plugin-enhanced-readabilities',
         '@nolebase/ui',
+        '@mathjax/mathjax-newcm-font',
+        'mathjax-full',
+        '@mdit/plugin-mathjax',
       ], 
     },
   },
