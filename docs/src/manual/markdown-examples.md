@@ -584,6 +584,12 @@ Display math:
 \oiiint_{\Omega} f(x,y,z) \, dx\,dy\,dz
 ```
 
+and this is the one that fails
+
+```math
+\mathcal{M}
+```
+
 ## LaTeXStrings
 
 :::tabs
