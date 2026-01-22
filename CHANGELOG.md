@@ -1,7 +1,7 @@
 # Changelog
 
 ## unreleased
-
+- configuring Vite to exclude `@mathjax/mathjax-newcm-font`, `mathjax-full`, and `@mdit/plugin-mathjax` from its dependency optimization and externalization processes [#304](https://github.com/LuxDL/DocumenterVitepress.jl/pull/304).
 - Switched to `@mdit/plugin-mathjax` from `markdown-it-mathjax3` in order to support labels and referencing equations [#302](https://github.com/LuxDL/DocumenterVitepress.jl/pull/302).
 - Renamed `master` to `main`
 
