@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
-// import mathjax3 from "markdown-it-mathjax3";
 import { createMathjaxInstance, mathjax } from '@mdit/plugin-mathjax';
 import footnote from "markdown-it-footnote";
 import path from 'path'
