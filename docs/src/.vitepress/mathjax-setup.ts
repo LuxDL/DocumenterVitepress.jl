@@ -61,5 +61,10 @@ export function renderMath(content: string, displayMode: boolean): string {
 }
 
 export function getMathJaxStyles(): string {
-  return MathJax.startup.output.styleSheet();
+  return adaptor.textContent(MathJax.svgStylesheet()) || '';
+}
+
+export function resetMathJax(): void {
+  MathJax.texReset();
+  MathJax.typesetClear();
 }

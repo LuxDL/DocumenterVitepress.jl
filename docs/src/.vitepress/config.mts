@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import { tex as mdTex } from '@mdit/plugin-tex';
-import { renderMath, getMathJaxStyles } from './mathjax-setup';
+import { renderMath, getMathJaxStyles, resetMathJax } from './mathjax-setup';
 import footnote from "markdown-it-footnote";
 import path from 'path'
 
@@ -52,6 +52,12 @@ export default defineConfig({
       md.use(mdTex, {
         render: renderMath,
       });
+      // Reset MathJax between renders, otherwise labels and numbering get messed up
+      const orig = md.render;
+      md.render = function (...args) {
+        resetMathJax();
+        return orig.apply(this, args);
+      };
     },
     theme: {
       light: "github-light",
