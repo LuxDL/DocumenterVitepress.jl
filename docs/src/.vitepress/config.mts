@@ -1,25 +1,11 @@
 import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
-import { createMathjaxInstance, mathjax } from '@mdit/plugin-mathjax';
+import { tex as mdTex } from '@mdit/plugin-tex';
+import { renderMath } from './mathjax-setup';
 import footnote from "markdown-it-footnote";
 import path from 'path'
 
 // console.log(process.env)
-
-const mathjaxInstance = await createMathjaxInstance({
-  transformer: (content) =>
-    content.replace(/^<mjx-container/, '<mjx-container v-pre'),
-  tex: {
-    tags: 'ams',
-  },
-});
-
-if (!mathjaxInstance) {
-  throw new Error('Failed to create MathJax instance.');
-}
-
-const virtualModuleId = 'virtual:mathjax-styles.css';
-const resolvedVirtualModuleId = '\0' + virtualModuleId;
 
 function getBaseRepository(base: string): string {
   if (!base || base === '/') return '/';
@@ -60,12 +46,9 @@ export default defineConfig({
     config(md) {
       md.use(tabsMarkdownPlugin);
       md.use(footnote);
-      md.use(mathjax, mathjaxInstance);
-      const orig = md.render; // use md.render if you're on vitepress v1, renderAsync if on v2
-      md.render = function (...args) {
-        mathjaxInstance?.reset();
-        return orig.apply(this, args);
-      };
+      md.use(mdTex, {
+        render: renderMath,
+      });
     },
     theme: {
       light: "github-light",
@@ -73,21 +56,6 @@ export default defineConfig({
     },
   },
   vite: {
-    plugins: [
-      {
-        name: 'mathjax-styles',
-        resolveId(id) {
-          if (id === virtualModuleId) {
-            return resolvedVirtualModuleId;
-          }
-        },
-        load(id) {
-          if (id === resolvedVirtualModuleId) {
-            return mathjaxInstance?.outputStyle();
-          }
-        },
-      },
-    ],
     define: {
       __DEPLOY_ABSPATH__: JSON.stringify('REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH'),
     },
