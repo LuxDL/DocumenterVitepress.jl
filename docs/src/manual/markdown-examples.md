@@ -573,6 +573,272 @@ see $\eqref{eq:c}$ ? and what about $\ref{eq:d}$?
 - In multi-line environments, place `\label{}` on the specific line you want to reference.
 :::
 
+### NewCM Fonts
+
+The NewCM fonts provide excellent support for mathematical typography. Here are some examples demonstrating various features.
+
+!!! warning
+    This section demonstrates the typographical capabilities of the NewCM fonts for complex mathematical notation. While care has been taken to ensure accuracy, users should verify equations against authoritative sources before using them in academic or professional contexts. The equations are illustrative and may not reflect all conventions or edge cases.
+
+
+#### Basic Mathematical Notation
+
+Inline math works seamlessly: $\oiint \mathbb{R}^3 \boldsymbol{\alpha} \widehat{AB}$ can be embedded directly in text.
+
+**Input**
+````
+Display math for triple integrals:
+```math
+\oiiint_{\Omega} f(x,y,z) \, dx\,dy\,dz
+```
+````
+
+**Output**
+
+Display math for triple integrals:
+```math
+\oiiint_{\Omega} f(x,y,z) \, dx\,dy\,dz
+```
+
+#### General Relativity
+
+Einstein's field equations describe how matter and energy curve spacetime. The metric tensor $g_{\mu\nu}$ defines distances on the manifold $\mathcal{M}$.
+
+```@raw html
+
+**Input** <Badge type="info">[Einstein 1915](https://en.wikipedia.org/wiki/Einstein_field_equations)</Badge>
+```
+
+````
+```math
+\begin{equation}
+R_{\mu\nu} - \frac{1}{2}Rg_{\mu\nu} + \Lambda g_{\mu\nu} = \frac{8\pi G}{c^4}T_{\mu\nu} \label{eq:einstein}
+\end{equation}
+```
+````
+
+**Output**
+
+```math
+\begin{equation}
+R_{\mu\nu} - \frac{1}{2}Rg_{\mu\nu} + \Lambda g_{\mu\nu} = \frac{8\pi G}{c^4}T_{\mu\nu} \label{eq:einstein}
+\end{equation}
+```
+
+**Input**
+````
+The stress-energy tensor $T_{\mu\nu}$ must satisfy the conservation law with covariant derivative:
+```math
+\begin{equation}
+\nabla_\mu T^{\mu\nu} = 0 \implies \partial_\mu (\sqrt{-g}T^{\mu\nu}) + \Gamma^\nu_{\mu\lambda}\sqrt{-g}T^{\mu\lambda} = 0 \label{eq:conservation}
+\end{equation}
+```
+````
+
+**Output**
+
+The stress-energy tensor $T_{\mu\nu}$ must satisfy the conservation law with covariant derivative:
+```math
+\begin{equation}
+\nabla_\mu T^{\mu\nu} = 0 \implies \partial_\mu (\sqrt{-g}T^{\mu\nu}) + \Gamma^\nu_{\mu\lambda}\sqrt{-g}T^{\mu\lambda} = 0 \label{eq:conservation}
+\end{equation}
+```
+
+#### Quantum Electrodynamics
+
+The QED Lagrangian combines the electromagnetic field tensor with the Dirac equation for fermions.
+
+```@raw html
+
+**Input** <Badge type="info">[Feynman QED](https://en.wikipedia.org/wiki/Quantum_electrodynamics)</Badge>
+```
+
+````
+```math
+\begin{equation}
+\mathcal{L} = -\frac{1}{4}F_{\mu\nu}F^{\mu\nu} + \bar{\psi}(i\hbar c\gamma^\mu D_\mu - mc^2)\psi \label{eq:qed-lagrangian}
+\end{equation}
+```
+````
+
+**Output**
+
+```math
+\begin{equation}
+\mathcal{L} = -\frac{1}{4}F_{\mu\nu}F^{\mu\nu} + \bar{\psi}(i\hbar c\gamma^\mu D_\mu - mc^2)\psi \label{eq:qed-lagrangian}
+\end{equation}
+```
+
+**Input**
+````
+A typical Feynman amplitude for electron-photon vertex involves the coupling to the electromagnetic field:
+```math
+\begin{equation}
+\mathscr{A}_{\text{vertex}} = -ie\bar{u}(p')\gamma^\mu u(p) A_\mu(q) \label{eq:feynman-amplitude}
+\end{equation}
+```
+````
+
+**Output**
+
+A typical Feynman amplitude for electron-photon vertex involves the coupling to the electromagnetic field:
+```math
+\begin{equation}
+\mathscr{A}_{\text{vertex}} = -ie\bar{u}(p')\gamma^\mu u(p) A_\mu(q) \label{eq:feynman-amplitude}
+\end{equation}
+```
+
+#### Gauge Theory and Lie Algebras
+
+The Standard Model gauge group is a direct product of Lie groups with corresponding Lie algebra structure.
+
+```@raw html
+
+**Input** <Badge type="info">[Standard Model](https://en.wikipedia.org/wiki/Standard_Model)</Badge>
+```
+
+````
+```math
+\begin{equation}
+G_{\text{SM}} = \text{SU}(3)_C \times \text{SU}(2)_L \times \text{U}(1)_Y \quad \text{with algebra } \mathfrak{g}_{\text{SM}} = \mathfrak{su}(3) \oplus \mathfrak{su}(2) \oplus \mathfrak{u}(1) \label{eq:gauge-group}
+\end{equation}
+```
+````
+
+**Output**
+
+```math
+\begin{equation}
+G_{\text{SM}} = \text{SU}(3)_C \times \text{SU}(2)_L \times \text{U}(1)_Y \quad \text{with algebra } \mathfrak{g}_{\text{SM}} = \mathfrak{su}(3) \oplus \mathfrak{su}(2) \oplus \mathfrak{u}(1) \label{eq:gauge-group}
+\end{equation}
+```
+
+#### Differential Geometry
+
+Stokes' theorem relates integrals over a manifold to integrals over its boundary.
+
+```@raw html
+
+**Input** <Badge type="info">[Stokes' Theorem](https://en.wikipedia.org/wiki/Stokes%27_theorem)</Badge>
+```
+
+````
+For any differential form $\boldsymbol{\omega}$ on a surface $\Sigma$ in the tangent space $\mathscr{T}(\mathcal{M})$:
+```math
+\begin{equation}
+\oint_{\partial \Sigma} \boldsymbol{\omega} = \iint_{\Sigma} d\boldsymbol{\omega} \quad \forall \, \Sigma \in \mathscr{T}(\mathcal{M}) \label{eq:stokes}
+\end{equation}
+```
+````
+
+**Output**
+
+For any differential form $\boldsymbol{\omega}$ on a surface $\Sigma$ in the tangent space $\mathscr{T}(\mathcal{M})$:
+```math
+\begin{equation}
+\oint_{\partial \Sigma} \boldsymbol{\omega} = \iint_{\Sigma} d\boldsymbol{\omega} \quad \forall \, \Sigma \in \mathscr{T}(\mathcal{M}) \label{eq:stokes}
+\end{equation}
+```
+
+#### Quantum Mechanics
+
+The expectation value of the Hamiltonian operator in quantum mechanics can be expressed as a sum over energy eigenstates.
+
+```@raw html
+
+**Input** <Badge type="info">[Expectation Values](https://en.wikipedia.org/wiki/Expectation_value_(quantum_mechanics))</Badge>
+```
+
+````
+```math
+\begin{equation}
+\langle \Psi | \hat{H} | \Psi \rangle = \sum_{n=0}^{\infty} E_n |\langle \phi_n | \Psi \rangle|^2 = \int_{\mathbb{R}^3} \Psi^*(x) \hat{H} \Psi(x) \, d^3x \label{eq:expectation}
+\end{equation}
+```
+````
+
+**Output**
+
+```math
+\begin{equation}
+\langle \Psi | \hat{H} | \Psi \rangle = \sum_{n=0}^{\infty} E_n |\langle \phi_n | \Psi \rangle|^2 = \int_{\mathbb{R}^3} \Psi^*(x) \hat{H} \Psi(x) \, d^3x \label{eq:expectation}
+\end{equation}
+```
+
+#### Topology and Set Theory
+
+Fiber bundles appear throughout modern physics. The famous Hopf fibration shows how the 3-sphere fibers over the 2-sphere.
+
+```@raw html
+
+**Input** <Badge type="info">[Fiber Bundles](https://en.wikipedia.org/wiki/Fiber_bundle) & [Cardinal Numbers](https://en.wikipedia.org/wiki/Cardinal_number)</Badge>
+```
+
+````
+```math
+\begin{equation}
+\mathbb{S}^1 \hookrightarrow \mathbb{S}^3 \xrightarrow[\text{Hopf fibration}]{\pi} \mathbb{S}^2 \cong \mathbb{CP}^1 \label{eq:fiber-bundle}
+\end{equation}
+```
+````
+
+**Output**
+
+```math
+\begin{equation}
+\mathbb{S}^1 \hookrightarrow \mathbb{S}^3 \xrightarrow[\text{Hopf fibration}]{\pi} \mathbb{S}^2 \cong \mathbb{CP}^1 \label{eq:fiber-bundle}
+\end{equation}
+```
+
+**Input**
+````
+The cardinality of the power set of natural numbers equals the continuum:
+```math
+\begin{equation}
+\wp(\aleph_0) \cong 2^{\aleph_0} = \mathfrak{c} \label{eq:cardinality}
+\end{equation}
+```
+````
+
+**Output**
+
+The cardinality of the power set of natural numbers equals the continuum:
+```math
+\begin{equation}
+\wp(\aleph_0) \cong 2^{\aleph_0} = \mathfrak{c} \label{eq:cardinality}
+\end{equation}
+```
+
+#### Comprehensive Example
+
+Bringing together various mathematical styles and symbols in one expression.
+
+**Input**
+````
+```math
+\begin{align}
+\mathcal{M} &: \text{Spacetime manifold} \label{eq:manifold} \\
+\bigoplus_{i \in I} \mathcal{V}_i &\subseteq \prod_{j=1}^{\infty} \mathbb{K}_j \quad \text{(direct sum of vector spaces)} \label{eq:direct-sum} \\
+\mathfrak{L}[\phi] &= \int_{\mathcal{M}} \mathscr{L}(\phi, \partial_\mu \phi) \sqrt{-g} \, d^4x \label{eq:action} \\
+\boldsymbol{\nabla} \times \boldsymbol{B} &= \mu_0\left(\boldsymbol{J} + \varepsilon_0\frac{\partial \boldsymbol{E}}{\partial t}\right) \label{eq:ampere-maxwell} \\
+\widehat{\mathbb{Q}}_p &\curvearrowright \mathfrak{gl}_n(\mathbb{C}) \rightrightarrows \text{Aut}(\mathcal{H}) \label{eq:group-action}
+\end{align}
+```
+````
+
+**Output**
+
+```math
+\begin{align}
+\mathcal{M} &: \text{Spacetime manifold} \label{eq:manifold} \\
+\bigoplus_{i \in I} \mathcal{V}_i &\subseteq \prod_{j=1}^{\infty} \mathbb{K}_j \quad \text{(direct sum of vector spaces)} \label{eq:direct-sum} \\
+\mathfrak{L}[\phi] &= \int_{\mathcal{M}} \mathscr{L}(\phi, \partial_\mu \phi) \sqrt{-g} \, d^4x \label{eq:action} \\
+\boldsymbol{\nabla} \times \boldsymbol{B} &= \mu_0\left(\boldsymbol{J} + \varepsilon_0\frac{\partial \boldsymbol{E}}{\partial t}\right) \label{eq:ampere-maxwell} \\
+\widehat{\mathbb{Q}}_p &\curvearrowright \mathfrak{gl}_n(\mathbb{C}) \rightrightarrows \text{Aut}(\mathcal{H}) \label{eq:group-action}
+\end{align}
+```
+
+This demonstrates the rich typographical capabilities of NewCM fonts for complex mathematical notation.
 
 ## LaTeXStrings
 

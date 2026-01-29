@@ -1,23 +1,11 @@
 import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
-// import mathjax3 from "markdown-it-mathjax3";
-import { createMathjaxInstance, mathjax } from '@mdit/plugin-mathjax';
+import { tex as mdTex } from '@mdit/plugin-tex';
+import { renderMath, getMathJaxStyles, resetMathJax } from './mathjax-setup';
 import footnote from "markdown-it-footnote";
 import path from 'path'
 
 // console.log(process.env)
-
-const mathjaxInstance = await createMathjaxInstance({
-  transformer: (content) =>
-    content.replace(/^<mjx-container/, '<mjx-container v-pre'),
-  tex: {
-    tags: 'ams',
-  },
-});
-
-if (!mathjaxInstance) {
-  throw new Error('Failed to create MathJax instance.');
-}
 
 const virtualModuleId = 'virtual:mathjax-styles.css';
 const resolvedVirtualModuleId = '\0' + virtualModuleId;
@@ -61,10 +49,13 @@ export default defineConfig({
     config(md) {
       md.use(tabsMarkdownPlugin);
       md.use(footnote);
-      md.use(mathjax, mathjaxInstance);
-      const orig = md.render; // use md.render if you're on vitepress v1, renderAsync if on v2
+      md.use(mdTex, {
+        render: renderMath,
+      });
+      // Reset MathJax between renders, otherwise labels and numbering get messed up
+      const orig = md.render;
       md.render = function (...args) {
-        mathjaxInstance?.reset();
+        resetMathJax();
         return orig.apply(this, args);
       };
     },
@@ -84,7 +75,7 @@ export default defineConfig({
         },
         load(id) {
           if (id === resolvedVirtualModuleId) {
-            return mathjaxInstance?.outputStyle();
+            return getMathJaxStyles();
           }
         },
       },
