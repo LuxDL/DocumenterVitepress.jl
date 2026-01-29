@@ -1,11 +1,14 @@
 import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import { tex as mdTex } from '@mdit/plugin-tex';
-import { renderMath } from './mathjax-setup';
+import { renderMath, getMathJaxStyles } from './mathjax-setup';
 import footnote from "markdown-it-footnote";
 import path from 'path'
 
 // console.log(process.env)
+
+const virtualModuleId = 'virtual:mathjax-styles.css';
+const resolvedVirtualModuleId = '\0' + virtualModuleId;
 
 function getBaseRepository(base: string): string {
   if (!base || base === '/') return '/';
@@ -56,6 +59,21 @@ export default defineConfig({
     },
   },
   vite: {
+    plugins: [
+      {
+        name: 'mathjax-styles',
+        resolveId(id) {
+          if (id === virtualModuleId) {
+            return resolvedVirtualModuleId;
+          }
+        },
+        load(id) {
+          if (id === resolvedVirtualModuleId) {
+            return getMathJaxStyles();
+          }
+        },
+      },
+    ],
     define: {
       __DEPLOY_ABSPATH__: JSON.stringify('REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH'),
     },

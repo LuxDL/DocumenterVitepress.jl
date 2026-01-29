@@ -59,3 +59,7 @@ export function renderMath(content: string, displayMode: boolean): string {
     );
   return html;
 }
+
+export function getMathJaxStyles(): string {
+  return MathJax.startup.output.styleSheet();
+}
