@@ -6,7 +6,7 @@ makedocs(;
     modules=[YourPackage],
     authors="Your Name Here",
     repo="https://github.com/YourGithubUsername/YourPackage.jl",
-    sitename="Chairmarks.jl",
+    sitename="YourPackage.jl",
     format=DocumenterVitepress.MarkdownVitepress(
         repo = "https://github.com/YourGithubUsername/YourPackage.jl",
         devurl = "dev",
@@ -18,7 +18,7 @@ makedocs(;
     warnonly = true,
 )
 
-deploydocs(;
+DocumenterVitepress.deploydocs(;
     repo="github.com/YourGithubUsername/YourPackage.jl",
     push_preview=true,
 )
