@@ -18,7 +18,7 @@ makedocs(;
     warnonly = true,
 )
 
-deploydocs(;
+DocumenterVitepress.deploydocs(;
     repo="github.com/YourGithubUsername/YourPackage.jl",
     push_preview=true,
 )
