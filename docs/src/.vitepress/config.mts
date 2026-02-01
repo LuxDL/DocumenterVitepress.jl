@@ -1,14 +1,11 @@
 import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
-import { tex as mdTex } from '@mdit/plugin-tex';
-import { renderMath, getMathJaxStyles, resetMathJax } from './mathjax-setup';
+import { mathjaxPlugin } from './mathjax-plugin'
 import footnote from "markdown-it-footnote";
 import path from 'path'
 
 // console.log(process.env)
-
-const virtualModuleId = 'virtual:mathjax-styles.css';
-const resolvedVirtualModuleId = '\0' + virtualModuleId;
+const mathjax = mathjaxPlugin()
 
 function getBaseRepository(base: string): string {
   if (!base || base === '/') return '/';
@@ -49,15 +46,7 @@ export default defineConfig({
     config(md) {
       md.use(tabsMarkdownPlugin);
       md.use(footnote);
-      md.use(mdTex, {
-        render: renderMath,
-      });
-      // Reset MathJax between renders, otherwise labels and numbering get messed up
-      const orig = md.render;
-      md.render = function (...args) {
-        resetMathJax();
-        return orig.apply(this, args);
-      };
+      mathjax.markdownConfig(md);
     },
     theme: {
       light: "github-light",
@@ -66,19 +55,7 @@ export default defineConfig({
   },
   vite: {
     plugins: [
-      {
-        name: 'mathjax-styles',
-        resolveId(id) {
-          if (id === virtualModuleId) {
-            return resolvedVirtualModuleId;
-          }
-        },
-        load(id) {
-          if (id === resolvedVirtualModuleId) {
-            return getMathJaxStyles();
-          }
-        },
-      },
+      mathjax.vitePlugin,
     ],
     define: {
       __DEPLOY_ABSPATH__: JSON.stringify('REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH'),
