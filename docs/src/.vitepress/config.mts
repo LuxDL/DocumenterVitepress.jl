@@ -5,12 +5,7 @@ import footnote from "markdown-it-footnote";
 import path from 'path'
 
 // console.log(process.env)
-// Choose output format: 'chtml' (default, better performance) or 'svg' (better quality)
-// const mathjax = mathjaxPlugin({ output: 'svg' })
-const mathjax = mathjaxPlugin({ output: 'chtml', font: 'stix2' })
-
-// Await initialization before config
-// await mathjax.init
+const mathjax = mathjaxPlugin()
 
 function getBaseRepository(base: string): string {
   if (!base || base === '/') return '/';

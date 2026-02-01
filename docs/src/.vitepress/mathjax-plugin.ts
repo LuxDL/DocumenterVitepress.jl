@@ -7,78 +7,64 @@ import { tex as mdTex } from '@mdit/plugin-tex'
 
 const mathjaxStyleModuleID = 'virtual:mathjax-styles.css'
 
-type OutputFormat = 'svg' | 'chtml'
-
 interface MathJaxOptions {
-  output?: OutputFormat
   font?: string
 }
 
-// Initialize MathJax
 async function initializeMathJax(options: MathJaxOptions = {}) {
-  const outputFormat = options.output || 'svg'
   const font = options.font || 'mathjax-newcm'
 
   const config: any = {
     loader: {
-      load: ['input/tex', `output/${outputFormat}`, '[tex]/boldsymbol', '[tex]/braket', '[tex]/mathtools'],
+      load: [
+        'input/tex',
+        'output/svg',
+        '[tex]/boldsymbol',
+        '[tex]/braket',
+        '[tex]/mathtools',
+      ],
     },
     tex: {
       tags: 'ams',
       packages: {
-        '[+]': ['boldsymbol', 'braket', 'mathtools']
-      }
+        '[+]': ['boldsymbol', 'braket', 'mathtools'],
+      },
     },
-  }
-
-  if (outputFormat === 'svg') {
-    config.output = {
-      font: font,
+    output: {
+      font,
       displayOverflow: 'linebreak',
       mtextInheritFont: true,
-    }
-    config.svg = {
-      fontCache: 'none', // must have, fully avoids dynamic loads
-    }
-  } else {
-    config.output = {
-      font: font,
-      displayOverflow: 'scroll',
-      mtextInheritFont: true,
-    }
-    config.chtml = {
-      fontURL: `@mathjax/mathjax-${font}-font/chtml/woff2`,
-    }
+    },
+    svg: {
+      fontCache: 'none', // critical: avoids async font loading
+    },
   }
 
   await MathJax.init(config)
 
-  // Pre-load all dynamic font files
-  const fontData = MathJax.config[outputFormat].fontData
+  const fontData = MathJax.config.svg?.fontData
+
   if (fontData?.dynamicFiles) {
     const dynamicFiles = fontData.dynamicFiles
-    const dynamicFileNames = Object.keys(dynamicFiles)
-    const dynamicPrefix: string = fontData.OPTIONS?.dynamicPrefix || fontData.options?.dynamicPrefix
+    const dynamicPrefix: string =
+      fontData.OPTIONS?.dynamicPrefix || fontData.options?.dynamicPrefix
 
     if (dynamicPrefix) {
       await Promise.all(
-        dynamicFileNames.map(async (name) => {
+        Object.keys(dynamicFiles).map(async (name) => {
           try {
-            await import(/* @vite-ignore */ dynamicPrefix + '/' + name + '.js')
-            if (dynamicFiles[name]?.setup) {
-              dynamicFiles[name].setup(MathJax.startup.output.font)
-            }
+            await import(/* @vite-ignore */ `${dynamicPrefix}/${name}.js`)
+            dynamicFiles[name]?.setup?.(MathJax.startup.output.font)
           } catch {
             // Silently ignore missing dynamic files
           }
-        })
+        }),
       )
     }
   }
 }
 
 export function mathjaxPlugin(options: MathJaxOptions = {}) {
-  const outputFormat = options.output || 'svg'
   let adaptor: any
   let initialized = false
 
@@ -95,44 +81,27 @@ export function mathjaxPlugin(options: MathJaxOptions = {}) {
       throw new Error('MathJax not initialized')
     }
 
-    const convertFunc = outputFormat === 'svg' ? MathJax.tex2svg : MathJax.tex2chtml
-    const node = convertFunc(content, { display: displayMode })
-    
-    // Use adaptor API to add v-pre attribute
+    const node = MathJax.tex2svg(content, { display: displayMode })
+
+    // Prevent Vue from touching MathJax output
     adaptor.setAttribute(node, 'v-pre', '')
-    
-    // Get HTML
+
     let html = adaptor.outerHTML(node)
-    
-    // Only for SVG: handle mjx-break spacing
-    if (outputFormat === 'svg') {
-      html = html.replace(
-        /<mjx-break(.*?)>(.*?)<\/mjx-break>/g,
-        (_: string, attr: string, inner: string) =>
-          `<mjx-break${attr}>${inner.replace(/ /g, '&nbsp;')}</mjx-break>`
-      )
-    }
-    
+
+    // Preserve spaces inside mjx-break (SVG only)
+    html = html.replace(
+      /<mjx-break(.*?)>(.*?)<\/mjx-break>/g,
+      (_: string, attr: string, inner: string) =>
+        `<mjx-break${attr}>${inner.replace(/ /g, '&nbsp;')}</mjx-break>`,
+    )
+
     return html
   }
 
   function getMathJaxStyles(): string {
-    if (!initialized) {
-      return ''
-    }
-    const stylesheetFunc = outputFormat === 'svg' ? MathJax.svgStylesheet : MathJax.chtmlStylesheet
-    let style = adaptor.textContent(stylesheetFunc()) || ''
-    
-    // Fix sqrt top border for CHTML
-    if (outputFormat === 'chtml') {
-      style += `
-mjx-sqrt > mjx-box {
-  border-top-style: solid !important;
-}
-`
-    }
-    
-    return style
+    return initialized
+      ? adaptor.textContent(MathJax.svgStylesheet()) || ''
+      : ''
   }
 
   function resetMathJax(): void {
@@ -143,13 +112,16 @@ mjx-sqrt > mjx-box {
 
   function viteMathJax(): VitePlugin {
     const virtualModuleID = '\0' + mathjaxStyleModuleID
+
     return {
       name: 'mathjax-styles',
+
       resolveId(id) {
         if (id === mathjaxStyleModuleID) {
           return virtualModuleID
         }
       },
+
       async load(id) {
         if (id === virtualModuleID) {
           await ensureInitialized()
@@ -163,8 +135,7 @@ mjx-sqrt > mjx-box {
     mdTex(md, {
       render: renderMath,
     })
-    
-    // Reset MathJax between renders
+
     const orig = md.render
     md.render = function (...args) {
       resetMathJax()
@@ -172,12 +143,12 @@ mjx-sqrt > mjx-box {
     }
   }
 
-  const initPromise = ensureInitialized()
+  const init = ensureInitialized()
 
   return {
     vitePlugin: viteMathJax(),
     markdownConfig: mdMathJax,
     styleModuleID: mathjaxStyleModuleID,
-    init: initPromise,
+    init,
   }
 }
