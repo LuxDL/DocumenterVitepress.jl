@@ -37,18 +37,20 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Make the theme directory
     mkpath(joinpath(build_vitepress_dir, "theme"))
 
-    # Check for the config file
-    vitepress_config_file = joinpath(source_vitepress_dir, "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
-    if !isfile(vitepress_config_file)
-        mkpath(splitdir(vitepress_config_file)[1])
-        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file. Substituting in the default file."
-        # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
-        # which may not be writable.  However, `write` creates a new file for which Julia must have write permissions.
-        write(joinpath(build_vitepress_dir, "config.mts"), read(joinpath(template_vitepress_dir, "config.mts"), String))
-    else # the user has provided a config file
-        # Sometimes this file can get corrupted by makedocs(clean=false),
-        # so we need to copy it over again.
-        write(joinpath(build_vitepress_dir, "config.mts"), read(vitepress_config_file, String))
+    # Check for the config and plugin file
+    for f in ["config.mts", "mathjax-plugin.ts"]
+        vitepress_config_file = joinpath(source_vitepress_dir, f) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
+        if !isfile(vitepress_config_file)   
+            mkpath(splitdir(vitepress_config_file)[1])
+            @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/$(f)` file. Substituting in the default file."
+            # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
+            # which may not be writable.  However, `write` creates a new file for which Julia must have write permissions.
+            write(joinpath(build_vitepress_dir, f), read(joinpath(template_vitepress_dir, f), String))
+        else # the user has provided a config / plugin file
+            # Sometimes this file can get corrupted by makedocs(clean=false),
+            # so we need to copy it over again.
+            write(joinpath(build_vitepress_dir, f), read(vitepress_config_file, String))
+        end
     end
 
     # ? theme / check for index.ts, style.css and docstrings.css files
