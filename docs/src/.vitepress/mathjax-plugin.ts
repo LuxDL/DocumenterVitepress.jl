@@ -1,3 +1,4 @@
+// adapter from https://github.com/orgs/vuepress-theme-hope/discussions/5178#discussioncomment-15642629
 // mathjax-plugin.ts
 // @ts-ignore
 import MathJax from '@mathjax/src'
@@ -93,6 +94,12 @@ export function mathjaxPlugin(options: MathJaxOptions = {}) {
       /<mjx-break(.*?)>(.*?)<\/mjx-break>/g,
       (_: string, attr: string, inner: string) =>
         `<mjx-break${attr}>${inner.replace(/ /g, '&nbsp;')}</mjx-break>`,
+    )
+    
+    // Wrap only display equations (not inline math)
+    html = html.replace(
+      /(<mjx-container[^>]*display="true"[^>]*>)([\s\S]*?)(<\/mjx-container>)/,
+      '<div class="mjx-scroll-wrapper">$1$2$3</div>'
     )
 
     return html
