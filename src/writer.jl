@@ -967,15 +967,11 @@ end
 const EQREF_REGEX = r"(?<![$\\])\\(eqref|ref)\{[^}]+\}"
 
 function autowrap_eqref(text::AbstractString)
-    # matches = collect(eachmatch(EQREF_REGEX, text))
-    # @info "Found $(length(matches)) matches in: $(repr(text))"
     replace(text, EQREF_REGEX => m -> "\$$(m)\$")
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
-    # @info "Processing text: $(repr(text.text))"
     wrapped = autowrap_eqref(text.text)
-    # @info "After wrapping: $(repr(wrapped))"
     print(io, escapehtml(wrapped))
 end
 # Heading
