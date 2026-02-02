@@ -458,7 +458,7 @@ Don't type anything after the last double dollar sign, and make sure there are n
 You can also use fenced code blocks with the `math` tag for equations!
 
 !!! note
-    Inline $$ delimiters like $$x=1+2$$ will render as inline math when written within a paragraph. For display/block math, place the `$$` delimiters on their own lines.
+    Inline `$$` delimiters like `$$x=1+2$$` will render as inline math when written within a paragraph. For display/block math, place the `$$` delimiters on their own lines.
 
     $$f(x, y) = 2y$$
 
@@ -480,7 +480,7 @@ Don't type anything after the last double dollar sign, and make sure there are n
 You can also use fenced code blocks with the `math` tag for equations!
 
 !!! note
-    Inline `$$` delimiters like `$$x=1+2$$` will render as inline math when written within a paragraph. For display/block math, place the $$ delimiters on their own lines.
+    Inline `$$` delimiters like `$$x=1+2$$` will render as inline math when written within a paragraph. For display/block math, place the `$$` delimiters on their own lines.
 
     $$f(x, y) = 2y$$
 
