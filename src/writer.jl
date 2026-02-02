@@ -964,8 +964,15 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io)
 end
 # Plain text
+const EQREF_REGEX = r"(?<![$\\])\\(eqref|ref)\{[^}]+\}"
+
+function autowrap_eqref(text::AbstractString)
+    replace(text, EQREF_REGEX => m -> "\$$(m)\$")
+end
+
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
-    print(io, escapehtml(text.text))
+    wrapped = autowrap_eqref(text.text)
+    print(io, escapehtml(wrapped))
 end
 # Heading
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Heading, page, doc; kwargs...)

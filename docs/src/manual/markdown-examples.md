@@ -457,6 +457,13 @@ Don't type anything after the last double dollar sign, and make sure there are n
 
 You can also use fenced code blocks with the `math` tag for equations!
 
+!!! note
+    Inline `$$` delimiters like `$$x=1+2$$` will render as inline math when written within a paragraph. For display/block math, place the `$$` delimiters on their own lines.
+
+    $$f(x, y) = 2y$$
+
+Alternatively, use fenced code blocks:
+
 ```math
 \nabla^2 \Phi = \rho
 ```
@@ -471,6 +478,13 @@ $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$$
 Don't type anything after the last double dollar sign, and make sure there are no spaces after the opening double dollar sign in the display math!
 
 You can also use fenced code blocks with the `math` tag for equations!
+
+!!! note
+    Inline `$$` delimiters like `$$x=1+2$$` will render as inline math when written within a paragraph. For display/block math, place the `$$` delimiters on their own lines.
+
+    $$f(x, y) = 2y$$
+
+Alternatively, use fenced code blocks:
 
 ```math
 \nabla^2 \Phi = \rho
@@ -549,7 +563,9 @@ see Eq. $\eqref{eq:b}$.
 \end{align}
 ```
 
-see $\eqref{eq:c}$ ? and what about $\ref{eq:d}$?
+See $\eqref{eq:c}$? And what about $\ref{eq:d}$? Or simply typed as \eqref{eq:c} and \ref{eq:d}!
+
+Also works using $$\ref{eq:c}$$ or without spaces: equation\eqref{eq:d}goes here!
 ````
 
 **Output**
@@ -564,7 +580,9 @@ see $\eqref{eq:c}$ ? and what about $\ref{eq:d}$?
 \end{align}
 ```
 
-see $\eqref{eq:c}$ ? and what about $\ref{eq:d}$?
+See $\eqref{eq:c}$? And what about $\ref{eq:d}$? Or simply typed as \eqref{eq:c} and \ref{eq:d}!
+
+Also works using $$\ref{eq:c}$$ or without spaces: equation\eqref{eq:d}goes here!
 
 ::: tip
 - Use `\eqref{...}` to automatically include parentheses around the equation number.
