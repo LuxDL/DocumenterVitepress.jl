@@ -1,130 +1,130 @@
-# Upgrading docs from Documenter.jl to DocumenterVitepress.jl
+# Upgrading from Documenter.jl to DocumenterVitepress.jl
 
-**Assuming that your current documentation is based on Documenter.jl, you can upgrade to DocumenterVitepress.jl by following these steps:**
+**Migrate your existing Documenter.jl documentation to DocumenterVitepress.jl in a few steps.**
 
-Let us suppose that you are working on a package named `Example.jl` that is part of a GitHub organization named `ExampleOrg`.
+Assuming you're working on a package named `Example.jl` in the `ExampleOrg` organization:
 
-Then the very first step here is to update the `make.jl` file to follow the DocumenterVitepress.jl format.
+## 1. Update `make.jl`
 
-1. Go the the `make.jl` file in your `docs` folder and do the following necessary changes to upgrade to DocumenterVitepress.jl:
+:::tabs
 
-   :::tabs
+== From Documenter.jl
 
-   == From Documenter.jl
-
-   The `make.jl` file with `Documenter.jl` should look like this:
-
-   ```julia
-   using Example
-   using Documenter
-
-   DocMeta.setdocmeta!(Example, :DocTestSetup, :(using Example); recursive=true)
-
-   makedocs(;
-       modules = [Example],
-       repo = Remotes.GitHub("ExampleOrg", "Example.jl"),
-       authors = "Jay-sanjay <landgejay124@gmail.com>, and contributors",
-       sitename = "Example.jl",
-       format = Documenter.HTML(;
-           canonical = "https://github.com/ExampleOrg/Example.jl",
-           edit_link = "main",
-           assets = String[],
-       ),
-       pages = [
-           "Home" => "index.md",
-           "Tutorials" => "tutorials.md",
-           "API" => "api.md",
-           "Contributing" => "contributing.md"
-       ],
-   )
-
-   deploydocs(;
-       repo = "github.com/jay-sanjay/Example.jl",
-       devbranch = "main",
-   )
-   ```
-
-   == to DocumenterVitepress.jl
-
-   The same `make.jl` file with `DocumenterVitepress.jl` will look like this:
-
-   ```julia
-   using Example
-   using Documenter
-   using DocumenterVitepress
-
-   DocMeta.setdocmeta!(Example, :DocTestSetup, :(using Example); recursive=true)
-
-   makedocs(;
-       modules = [Example],
-       repo = Remotes.GitHub("ExampleOrg", "Example.jl"),
-       authors = "Jay-sanjay <landgejay124@gmail.com>, and contributors",
-       sitename = "Example.jl",
-       format = DocumenterVitepress.MarkdownVitepress(
-           repo = "https://github.com/ExampleOrg/Example.jl",
-       ),
-       pages = [
-           "Home" => "index.md",
-           "Tutorials" => "tutorials.md",
-           "API" => "api.md",
-           "Contributing" => "contributing.md"
-       ],
-   )
-
-   DocumenterVitepress.deploydocs(;
-       repo = "github.com/ExampleOrg/Example.jl",
-       target = "build", # this is where Vitepress stores its output
-       devbranch = "main",
-       branch = "gh-pages",
-       push_preview = true,
-   )
-   ```
-
-   :::
-
-::: details stop any vitepress session
+The `make.jl` file with `Documenter.jl` should look like this:
 
 ```julia
-# you might need to stop the Vitepress server if it's running before
-# updating or creating new files
-try run(`pkill -f vitepress`) catch end # [!code error]
+using Example
+using Documenter
+
+DocMeta.setdocmeta!(Example, :DocTestSetup, :(using Example); recursive=true)
+
+makedocs(;
+    modules = [Example],
+    authors = "Author Name",
+    sitename = "Example.jl",
+    format = Documenter.HTML(;
+        canonical = "https://github.com/ExampleOrg/Example.jl",
+        edit_link = "main",
+    ),
+    pages = [
+        "Home" => "index.md",
+        "API" => "api.md",
+    ],
+)
+
+deploydocs(;
+    repo = "github.com/ExampleOrg/Example.jl",
+    devbranch = "main",
+)
+```
+
+== To DocumenterVitepress.jl
+
+The same `make.jl` file with `DocumenterVitepress.jl` will look like this:
+
+```julia
+using Example
+using Documenter
+using DocumenterVitepress
+
+DocMeta.setdocmeta!(Example, :DocTestSetup, :(using Example); recursive=true)
+
+makedocs(;
+    modules = [Example],
+    authors = "Author Name",
+    sitename = "Example.jl",
+    format = DocumenterVitepress.MarkdownVitepress(
+        repo = "github.com/ExampleOrg/Example.jl",
+        devbranch = "main",
+        devurl = "dev",
+    ),
+    pages = [
+        "Home" => "index.md",
+        "API" => "api.md",
+    ],
+)
+
+DocumenterVitepress.deploydocs(;
+    repo = "github.com/ExampleOrg/Example.jl",
+    target = joinpath(@__DIR__, "build"),
+    branch = "gh-pages",
+    devbranch = "main",
+    push_preview = true,
+)
 ```
 
 :::
 
-2. Next, to build new docs from docs/src,
-   ```sh
-   $ cd docs
-   docs $
-   ```
-3. Then, in docs/, start a julia session and activate a new environment.
-   ```sh
-   docs $ julia
-   julia> ]
-   pkg> activate .
-   ```
-4. Add packages as necessary. Here, we will need
 
-   ```julia-repl
-   pkg> add DocumenterVitepress, Documenter
-   ```
+## 2. Install DocumenterVitepress
 
-5. Then run the `make.jl` file to build the documentation.
+```sh
+$ cd docs
+docs $ julia
+julia> ]
+pkg> activate .
+pkg> add DocumenterVitepress Documenter
+```
 
-   ```julia-repl
-   julia> include("make.jl")
-   ```
+## 3. Build and View
 
-6. Finally, hit `;` to enter the shell mode and run:
+Build your documentation:
+```julia
+julia> include("make.jl")
+```
 
-   ```sh
-   shell> npm i
-   ```
-   The above command shall create a folder named `node_modules` and `package-lock.json` in your docs folder.
+View locally with `LiveServer`:
+```julia
+using LiveServer
+LiveServer.serve(dir = "build/1")
+```
 
-7. Next, hit 'Backspace' to get back to the Julia REPL and run:
-   ```julia-repl
-   julia> DocumenterVitepress.dev_docs("build")
-   ```
+Open your browser typically at `http://localhost:8000/`, your should see the address in the terminal.
 
-8. Finally the live preview of your documentation at `http://localhost:5173/Example.jl/` in your browser.
+::: details Using Vitepress dev server instead
+
+If you prefer Vitepress's hot-reload server:
+
+1. Add a `package.json` to your `docs` folder ([example here](https://github.com/LuxDL/DocumenterVitepress.jl/blob/main/docs/package.json))
+2. Install dependencies: `npm install`
+3. Run: `npm run docs:dev`
+
+Stop the server when needed:
+```julia
+try run(`pkill -f vitepress`) catch end
+```
+
+:::
+
+## 4. Remove Symlinks from gh-pages
+
+> [!CAUTION]
+> Before deploying, delete any symlinks on your `gh-pages` branch (e.g., `stable`, `v1`). DocumenterVitepress cannot write to symlinks.
+> 
+> Delete them via GitHub's web interface at `https://github.com/ExampleOrg/Example.jl/tree/gh-pages`
+
+## 5. Deploy
+
+Push your changes. Your CI will now deploy using DocumenterVitepress.
+
+For more details, see [Get Started](./get_started.md).
