@@ -93,7 +93,7 @@ Build your documentation:
 julia> include("make.jl")
 ```
 
-View locally with LiveServer:
+View locally with `LiveServer`:
 ```julia
 using LiveServer
 LiveServer.serve(dir = "build/1")

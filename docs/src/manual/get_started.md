@@ -55,7 +55,7 @@ This will generate documentation in `docs/build/1`.
 
 ### 4. View Your Documentation Locally
 
-To preview your documentation, serve the `docs/build/1` folder using LiveServer, but first, `install LiveServer` in your docs environment if you haven't already:
+To preview your documentation, serve the `docs/build/1` folder using `LiveServer`, but first, `install LiveServer` in your docs environment if you haven't already:
 
 ```julia
 pkg> add LiveServer
@@ -107,7 +107,7 @@ For active documentation development, you have two options:
 
 ### Option A: Simple Rebuild (Recommended)
 
-First, install LiveServer in your docs environment if you haven't already:
+First, install `LiveServer` in your docs environment if you haven't already:
 
 ```julia
 pkg> add LiveServer
@@ -214,7 +214,7 @@ For detailed Vitepress configuration options, see the [Vitepress documentation](
 
 **Cause**: Trying to access the documentation at a URL path that doesn't exist locally (e.g., `/Example.jl/` instead of `/`).
 
-**Solution**: When using LiveServer to view docs locally, the documentation is always at the root (`http://localhost:8000/`), not at a subdirectory.
+**Solution**: When using `LiveServer` to view docs locally, the documentation is always at the root (`http://localhost:8000/`), not at a subdirectory.
 
 ### Issue: Deployment Fails with Symlink Errors
 
@@ -224,11 +224,11 @@ For detailed Vitepress configuration options, see the [Vitepress documentation](
 
 ### Issue: Changes Not Showing Up
 
-**Cause**: Browser cache or LiveServer not refreshing.
+**Cause**: Browser cache or `LiveServer` not refreshing.
 
 **Solution**: 
 1. Hard refresh your browser (Ctrl+Shift+R or Cmd+Shift+R)
-2. Or rebuild with `include("make.jl")` and restart LiveServer
+2. Or rebuild with `include("make.jl")` and restart `LiveServer`
 
 ### Issue: Vitepress Errors About Missing Dependencies
 
