@@ -330,8 +330,10 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings)
                 end
             end
         end
+        basedir = joinpath(builddir, "$i_base")
+        mkpath(basedir)
         # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
-        open(joinpath(builddir, "$i_base", "siteinfo.js"), "w") do io
+        open(joinpath(basedir, "siteinfo.js"), "w") do io
             println(io, """var DOCUMENTER_CURRENT_VERSION = "$(subfolder)";""")
         end
     catch e
