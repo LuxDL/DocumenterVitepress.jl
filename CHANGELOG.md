@@ -1,5 +1,8 @@
 # Changelog
 
+## unreleased changes
+- wraps standard image-like markdown syntax for videos into <video /> tags [#318](https://github.com/LuxDL/DocumenterVitepress.jl/pull/318)
+
 ## v0.3.0 - 2026-01-02
 - updates get started section, now is consistent with README [#313](https://github.com/LuxDL/DocumenterVitepress.jl/pull/313)
 - parses plain \eqref and \ref. [#312](https://github.com/LuxDL/DocumenterVitepress.jl/pull/312).

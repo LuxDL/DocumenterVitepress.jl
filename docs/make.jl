@@ -59,6 +59,7 @@ makedocs(;
             "Code" => "manual/code_example.md",
             "Markdown" => "manual/markdown-examples.md",
             "MIME output" => "manual/mime_examples.md",
+            "Video Embedding" => "manual/video_embedding.md",
             "DocumenterCitations integration" => "manual/citations.md",
             "CSS Styling" => "manual/style_css.md",
             "Authors' badge" => "manual/author_badge.md",
