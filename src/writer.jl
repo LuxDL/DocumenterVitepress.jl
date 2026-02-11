@@ -1160,7 +1160,7 @@ end
 # Images
 # Here, we are rendering images as HTML.  It is my hope that at some point we figure out how to render them in Markdown, but for now, this is also perfectly sufficient.
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc; kwargs...)
-    println()
+    println(io)
     url = replace(image.destination, "\\" => "/")
     print(io, "<img src=\"", url, "\" alt=\"")
     render(io, mime, node, node.children, page, doc; kwargs...)
@@ -1233,14 +1233,45 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     print(io, "]($(replace(path, " " => "%20")))")
 end
 
+function is_video_file(video_path::AbstractString)
+    video_extensions = (".mp4", ".webm", ".ogg", ".ogv", ".m4v", ".avi", ".mov", ".mkv")
+    return any(ext -> endswith(lowercase(video_path), ext), video_extensions)
+end
+
+function render_video_tag(io::IO, mime, node, video_path, page, doc; kwargs...)
+    title = ""
+    if hasproperty(node.element, :title) && !isempty(node.element.title)
+        title = node.element.title
+    elseif !isempty(node.children)
+        title = strip(sprint() do io_alt
+            render(io_alt, mime, node, node.children, page, doc; kwargs...)
+        end)
+    end
+
+    print(io, "<video src=\"", video_path, "\" controls")
+    if !isempty(title)
+        print(io, " title=\"", escapehtml(title), "\"")
+    end
+    println(io, "></video>")
+end
+
 # Documenter.jl local images
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::Documenter.LocalImage, page, doc; kwargs...)
     # Main.@infiltrate
-    image_path = relpath(joinpath(doc.user.build, image.path), dirname(page.build))
+    abs_path = joinpath(doc.user.build, image.path)
+    image_path = relpath(abs_path, dirname(page.build))
     println(io)
-    println(io, "![]($image_path)")
+    if is_video_file(image_path)
+        # only fix the "same directory" case
+        if !occursin("/", image_path)
+            image_path = "./" * image_path
+        end
+        # println(io, "<video src=\"", image_path, "\" controls></video>") # minimal
+        render_video_tag(io, mime, node, image_path, page, doc; kwargs...)
+    else
+        println(io, "![]($image_path)")
+    end
 end
-
 
 function _get_inventory_version(project_toml)
     version = ""
