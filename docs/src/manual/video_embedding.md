@@ -23,6 +23,17 @@ DocumenterVitepress automatically converts Markdown image syntax to HTML5 video 
 
 ![Click to play](my_video.mp4)
 
+### Title Attribute
+
+**Input**
+````
+![Click to play](./my_video.mp4 "Also my title")
+````
+
+**Output**
+
+![Click to play](./my_video.mp4 "Also my title")
+
 ### Using @raw html Blocks
 
 `@raw html` blocks preserve HTML content exactly as written, without any markdown processing or conversion.

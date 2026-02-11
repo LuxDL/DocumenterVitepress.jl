@@ -1157,14 +1157,44 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io, Markdown.plain(Markdown.MD(Markdown.Table(cell_strings, alignment_style))))
 
 end
+
+const VIDEO_EXTENSIONS = [".mp4", ".webm", ".ogg", ".ogv", ".m4v", ".avi", ".mov", ".mkv"]
+function is_video_file(video_path::AbstractString)
+    return any(ext -> endswith(lowercase(video_path), ext), VIDEO_EXTENSIONS)
+end
+
+function render_video_tag(io::IO, mime, node, video_path, page, doc; kwargs...)
+    vp_parts = split(video_path, '"', limit=2)
+    actual_path = strip(vp_parts[1])
+    title = ""
+    if length(vp_parts) > 1
+        title = strip(vp_parts[2])  # Title is in the second part (after the first quote)
+        title = strip(title, ['"', ' ']) # Remove any remaining quotes or whitespace
+    elseif !isempty(node.children)
+        title = strip(sprint() do io_alt
+            render(io_alt, mime, node, node.children, page, doc; kwargs...)
+        end)
+    end
+
+    print(io, "<video src=\"", escapehtml(actual_path), "\" controls")
+    if !isempty(title)
+        print(io, " title=\"", escapehtml(title), "\"")
+    end
+    println(io, "></video>")
+end
 # Images
 # Here, we are rendering images as HTML.  It is my hope that at some point we figure out how to render them in Markdown, but for now, this is also perfectly sufficient.
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc; kwargs...)
     println(io)
     url = replace(image.destination, "\\" => "/")
-    print(io, "<img src=\"", url, "\" alt=\"")
-    render(io, mime, node, node.children, page, doc; kwargs...)
-    println(io, "\">")
+    url_video_check = strip(first(split(url, '"', limit=2)))
+    if is_video_file(url_video_check)
+        render_video_tag(io, mime, node, url, page, doc; kwargs...)
+    else
+        print(io, "<img src=\"", url, "\" alt=\"")
+        render(io, mime, node, node.children, page, doc; kwargs...)
+        println(io, "\">")
+    end
 end
 
 # ### Footnote Links
@@ -1232,41 +1262,14 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")
 end
-
-function is_video_file(video_path::AbstractString)
-    video_extensions = (".mp4", ".webm", ".ogg", ".ogv", ".m4v", ".avi", ".mov", ".mkv")
-    return any(ext -> endswith(lowercase(video_path), ext), video_extensions)
-end
-
-function render_video_tag(io::IO, mime, node, video_path, page, doc; kwargs...)
-    title = ""
-    if hasproperty(node.element, :title) && !isempty(node.element.title)
-        title = node.element.title
-    elseif !isempty(node.children)
-        title = strip(sprint() do io_alt
-            render(io_alt, mime, node, node.children, page, doc; kwargs...)
-        end)
-    end
-
-    print(io, "<video src=\"", video_path, "\" controls")
-    if !isempty(title)
-        print(io, " title=\"", escapehtml(title), "\"")
-    end
-    println(io, "></video>")
-end
-
 # Documenter.jl local images
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::Documenter.LocalImage, page, doc; kwargs...)
-    # Main.@infiltrate
+
     abs_path = joinpath(doc.user.build, image.path)
     image_path = relpath(abs_path, dirname(page.build))
     println(io)
     if is_video_file(image_path)
-        # only fix the "same directory" case
-        if !occursin("/", image_path)
-            image_path = "./" * image_path
-        end
-        # println(io, "<video src=\"", image_path, "\" controls></video>") # minimal
+        image_path = dirname(image_path) == "" ? "./" * image_path : image_path
         render_video_tag(io, mime, node, image_path, page, doc; kwargs...)
     else
         println(io, "![]($image_path)")
