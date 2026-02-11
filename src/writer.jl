@@ -1267,6 +1267,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 
     abs_path = joinpath(doc.user.build, image.path)
     image_path = relpath(abs_path, dirname(page.build))
+    image_path = replace(image_path, "\\" => "/") # windows paths are the worst
     println(io)
     if is_video_file(image_path)
         image_path = dirname(image_path) == "" ? "./" * image_path : image_path
