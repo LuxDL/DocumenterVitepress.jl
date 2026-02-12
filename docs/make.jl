@@ -4,6 +4,45 @@ using DocumenterCitations
 using DocumenterInterLinks
 using LaTeXStrings
 
+struct DecomposeInSidebar
+    path::String
+    pages::Any
+end
+
+# So you can only really pull this trick once in a Julia session
+# But because doc.user.pages is a Vector{Any}, we can't really do anything about it.
+function DocumenterVitepress.pagelist2str(doc, ds::Vector{<: Any}, ::Val{:sidebar})
+    println("Hello World!!!")
+    if !all(x -> x isa DecomposeInSidebar, ds)
+        # if this is false, invoke the default method.
+        return invoke(pagelist2str, Tuple{Any, Any, Val{:sidebar}}, doc, ds, Val(:sidebar))
+    end
+    contents = DocumenterVitepress.pagelist2str.((doc,), ds, (Val(:sidebar),))
+    ret = "{\n" * join(contents, ",\n") * "\n}"
+    println(ret)
+    return ret
+end
+
+function DocumenterVitepress.pagelist2str(doc, ds::DecomposeInSidebar, ::Val{:sidebar})
+    raw_contents = DocumenterVitepress.pagelist2str(doc, ds.pages, Val(:sidebar))
+    contents = if raw_contents isa String
+        raw_contents
+    else
+        join(raw_contents, ",\n")
+    end
+
+    return "\"/$(ds.path)/\": {\n$(contents)\n}"
+end
+
+function DocumenterVitepress.pagelist2str(doc, ds::DecomposeInSidebar, ::Val{:navbar})
+    return DocumenterVitepress.pagelist2str(doc, ds.pages, Val(:sidebar))
+end
+
+function Documenter.walk_navpages(ds::DecomposeInSidebar, parent, doc)
+    return Documenter.walk_navpages(ds.pages, parent, doc)
+end
+
+
 # Handle DocumenterCitations integration - if you're running this, then you don't need anything here!!
 documenter_citations_dir = dirname(dirname(pathof(DocumenterCitations)))
 documenter_citations_docs_dir = joinpath(documenter_citations_dir, "docs")
@@ -53,7 +92,7 @@ makedocs(;
     source = "src",
     build = "build",
     pages = [
-        "Manual" => [
+        DecomposeInSidebar("manual", "Manual" => [
             "Get Started" => "manual/get_started.md",
             "Updating to DocumenterVitepress" => "manual/documenter_to_vitepress_docs_example.md",
             "Code" => "manual/code_example.md",
@@ -64,12 +103,11 @@ makedocs(;
             "CSS Styling" => "manual/style_css.md",
             "Authors' badge" => "manual/author_badge.md",
             "GitHub Icon with Stars" => "manual/repo_stars.md",
-        ],
-        "Developers' documentation" => [
+        ]),
+        DecomposeInSidebar("devs", "Developers' documentation" => [
             "The rendering process" => "devs/render_pipeline.md",
             "Internal API" => "devs/internal_api.md",
-        ],
-        "api.md",
+        ]),
     ],
     plugins = [bib, links],
 )
