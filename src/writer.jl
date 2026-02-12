@@ -331,7 +331,7 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings)
             end
         end
         basedir = joinpath(builddir, "$i_base")
-        # this check is for windows, where the build is never done automatically but rather the user is expected to run it themselves, so we don't want to create empty folders for each base if the user hasn't built them yet.
+        # On Windows, the build is manual. This check ensures we only write `siteinfo.js` if the build output directory exists and is not empty. This also handles cases where an automated build might fail on other systems.
         if isdir(basedir) && !isempty(readdir(basedir))
             # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
             open(joinpath(basedir, "siteinfo.js"), "w") do io
