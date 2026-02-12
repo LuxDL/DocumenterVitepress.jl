@@ -316,13 +316,13 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings)
                     # On Windows systems
                     if Sys.iswindows()
                         # system_npm = "C:\\Program Files\\nodejs\\npm.cmd"
-                        @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
-                        @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
                         # install dependecies
                         run(`cmd /c $npm install`)
                         # run(`cmd /c $npm exec vitepress build $build_output_path`) # activate once a new > NodeJS_20_jll artifact is available.
                         # Debugging alternative
                         # run(`cmd /c "set DEBUG=vitepress:* & $npm exec vitepress build $build_output_path"`)
+                        @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
+                        @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
                     else
                         run(`$(npm) install`)
                         run(`$(npm) run env -- vitepress build $(build_output_path)`)
@@ -331,11 +331,14 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings)
             end
         end
         basedir = joinpath(builddir, "$i_base")
-        mkpath(basedir)
-        # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
-        open(joinpath(basedir, "siteinfo.js"), "w") do io
-            println(io, """var DOCUMENTER_CURRENT_VERSION = "$(subfolder)";""")
+        # this check is for windows, where the build is never done automatically but rather the user is expected to run it themselves, so we don't want to create empty folders for each base if the user hasn't built them yet.
+        if isdir(basedir) && !isempty(readdir(basedir))
+            # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
+            open(joinpath(basedir, "siteinfo.js"), "w") do io
+                println(io, """var DOCUMENTER_CURRENT_VERSION = "$(subfolder)";""")
+            end
         end
+
     catch e
         rethrow(e)
     finally
