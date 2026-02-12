@@ -1,6 +1,7 @@
 # Changelog
 
 ## unreleased changes
+- don't try open siteinfo.js on local windows builds, there are not automatic builds here [#319](https://github.com/LuxDL/DocumenterVitepress.jl/pull/319)
 - wraps standard image-like markdown syntax for videos into <video /> tags [#318](https://github.com/LuxDL/DocumenterVitepress.jl/pull/318)
 
 ## v0.3.0 - 2026-01-02
