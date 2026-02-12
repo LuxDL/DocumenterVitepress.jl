@@ -46,7 +46,7 @@ makedocs(;
     checkdocs=:all,
     format=DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
-        devbranch = "master",
+        devbranch = "main",
         devurl = "dev";
     ),
     draft = false,
@@ -59,6 +59,7 @@ makedocs(;
             "Code" => "manual/code_example.md",
             "Markdown" => "manual/markdown-examples.md",
             "MIME output" => "manual/mime_examples.md",
+            "Video Embedding" => "manual/video_embedding.md",
             "DocumenterCitations integration" => "manual/citations.md",
             "CSS Styling" => "manual/style_css.md",
             "Authors' badge" => "manual/author_badge.md",
@@ -75,6 +76,6 @@ makedocs(;
 
 DocumenterVitepress.deploydocs(;
     repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
-    devbranch = "master",
+    devbranch = "main",
     push_preview = true,
 )

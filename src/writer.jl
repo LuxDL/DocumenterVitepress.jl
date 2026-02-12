@@ -966,8 +966,15 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io)
 end
 # Plain text
+const EQREF_REGEX = r"(?<![$\\])\\(eqref|ref)\{[^}]+\}"
+
+function autowrap_eqref(text::AbstractString)
+    replace(text, EQREF_REGEX => m -> "\$$(m)\$")
+end
+
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
-    print(io, escapehtml(text.text))
+    wrapped = autowrap_eqref(text.text)
+    print(io, escapehtml(wrapped))
 end
 # Heading
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Heading, page, doc; kwargs...)
@@ -1152,14 +1159,44 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io, Markdown.plain(Markdown.MD(Markdown.Table(cell_strings, alignment_style))))
 
 end
+
+const VIDEO_EXTENSIONS = [".mp4", ".webm", ".ogg", ".ogv", ".m4v", ".avi", ".mov", ".mkv"]
+function is_video_file(video_path::AbstractString)
+    return any(ext -> endswith(lowercase(video_path), ext), VIDEO_EXTENSIONS)
+end
+
+function render_video_tag(io::IO, mime, node, video_path, page, doc; kwargs...)
+    vp_parts = split(video_path, '"', limit=2)
+    actual_path = strip(vp_parts[1])
+    title = ""
+    if length(vp_parts) > 1
+        title = strip(vp_parts[2])  # Title is in the second part (after the first quote)
+        title = strip(title, ['"', ' ']) # Remove any remaining quotes or whitespace
+    elseif !isempty(node.children)
+        title = strip(sprint() do io_alt
+            render(io_alt, mime, node, node.children, page, doc; kwargs...)
+        end)
+    end
+
+    print(io, "<video src=\"", escapehtml(actual_path), "\" controls")
+    if !isempty(title)
+        print(io, " title=\"", escapehtml(title), "\"")
+    end
+    println(io, "></video>")
+end
 # Images
 # Here, we are rendering images as HTML.  It is my hope that at some point we figure out how to render them in Markdown, but for now, this is also perfectly sufficient.
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc; kwargs...)
-    println()
+    println(io)
     url = replace(image.destination, "\\" => "/")
-    print(io, "<img src=\"", url, "\" alt=\"")
-    render(io, mime, node, node.children, page, doc; kwargs...)
-    println(io, "\">")
+    url_video_check = strip(first(split(url, '"', limit=2)))
+    if is_video_file(url_video_check)
+        render_video_tag(io, mime, node, url, page, doc; kwargs...)
+    else
+        print(io, "<img src=\"", url, "\" alt=\"")
+        render(io, mime, node, node.children, page, doc; kwargs...)
+        println(io, "\">")
+    end
 end
 
 # ### Footnote Links
@@ -1227,15 +1264,20 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")
 end
-
 # Documenter.jl local images
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::Documenter.LocalImage, page, doc; kwargs...)
-    # Main.@infiltrate
-    image_path = relpath(joinpath(doc.user.build, image.path), dirname(page.build))
-    println(io)
-    println(io, "![]($image_path)")
-end
 
+    abs_path = joinpath(doc.user.build, image.path)
+    image_path = relpath(abs_path, dirname(page.build))
+    image_path = replace(image_path, "\\" => "/") # windows paths are the worst
+    println(io)
+    if is_video_file(image_path)
+        image_path = dirname(image_path) == "" ? "./" * image_path : image_path
+        render_video_tag(io, mime, node, image_path, page, doc; kwargs...)
+    else
+        println(io, "![]($image_path)")
+    end
+end
 
 function _get_inventory_version(project_toml)
     version = ""

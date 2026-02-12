@@ -1,5 +1,24 @@
 # Changelog
 
+## unreleased changes
+- wraps standard image-like markdown syntax for videos into <video /> tags [#318](https://github.com/LuxDL/DocumenterVitepress.jl/pull/318)
+
+## v0.3.0 - 2026-01-02
+- updates get started section, now is consistent with README [#313](https://github.com/LuxDL/DocumenterVitepress.jl/pull/313)
+- parses plain \eqref and \ref. [#312](https://github.com/LuxDL/DocumenterVitepress.jl/pull/312).
+- template updates and mathjax-plugin cleanup. Fixes equations width overflow. Added smooth scroll to targets. [#310](https://github.com/LuxDL/DocumenterVitepress.jl/pull/310).
+- Custom script to preload tex fonts [#305](https://github.com/LuxDL/DocumenterVitepress.jl/pull/305).
+- Switched to `@mdit/plugin-mathjax` from `markdown-it-mathjax3` in order to support labels and referencing equations [#302](https://github.com/LuxDL/DocumenterVitepress.jl/pull/302).
+- Renamed `master` to `main`
+
+    Local clones should do
+    ```sh
+    git branch -m master main
+    git fetch origin
+    git branch -u origin/main main
+    git remote set-head origin -a
+    ```
+
 ## v0.2.6 - 2025-06-08
 - Lowers MIME priority for LaTeX rendering.
 

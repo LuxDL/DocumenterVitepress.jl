@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
-import mathjax3 from "markdown-it-mathjax3";
+import { mathjaxPlugin } from './mathjax-plugin'
 import footnote from "markdown-it-footnote";
 import path from 'path'
+
+const mathjax = mathjaxPlugin()
 
 function getBaseRepository(base: string): string {
   if (!base || base === '/') return '/';
@@ -40,7 +42,21 @@ export default defineConfig({
     ['script', {src: `${baseTemp.base}siteinfo.js`}]
   ],
   
+  markdown: {
+    config(md) {
+      md.use(tabsMarkdownPlugin);
+      md.use(footnote);
+      mathjax.markdownConfig(md);
+    },
+    theme: {
+      light: "github-light",
+      dark: "github-dark"
+    },
+  },
   vite: {
+    plugins: [
+      mathjax.vitePlugin,
+    ],
     define: {
       __DEPLOY_ABSPATH__: JSON.stringify('REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH'),
     },
@@ -63,17 +79,6 @@ export default defineConfig({
         '@nolebase/ui',
       ], 
     },
-  },
-  markdown: {
-    math: true,
-    config(md) {
-      md.use(tabsMarkdownPlugin),
-      md.use(mathjax3),
-      md.use(footnote)
-    },
-    theme: {
-      light: "github-light",
-      dark: "github-dark"}
   },
   themeConfig: {
     outline: 'deep',
