@@ -15,6 +15,7 @@
   "dependencies": {
     "@mdit/plugin-mathjax": "^0.25.0",
     "@mdit/plugin-tex": "^0.23.1",
+    "@types/markdown-it-footnote": "^3.0.4",
     "d3-format": "^3.1.0",
     "markdown-it-footnote": "^4.0.0"
   }
