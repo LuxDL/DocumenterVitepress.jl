@@ -1,6 +1,7 @@
 # Changelog
 
-## unreleased changes
+## v0.3.1 - 2026-02-16
+- fixed load path for mathjax [#320](https://github.com/LuxDL/DocumenterVitepress.jl/pull/320)
 - don't try open siteinfo.js on local windows builds, there are not automatic builds here [#319](https://github.com/LuxDL/DocumenterVitepress.jl/pull/319)
 - wraps standard image-like markdown syntax for videos into <video /> tags [#318](https://github.com/LuxDL/DocumenterVitepress.jl/pull/318)
 
