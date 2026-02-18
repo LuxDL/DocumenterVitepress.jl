@@ -5,15 +5,14 @@ type PromptKind = "julia" | "pkg" | "help" | "shell" | null
 export function juliaReplTransformer(): ShikiTransformer {
   let promptInfoByLine: Array<{ len: number; kind: PromptKind }> = []
   let isJuliaBlock = false
+  const rules: Array<{ kind: PromptKind; re: RegExp }> = [
+    { kind: "julia", re: /^julia>/ },
+    { kind: "pkg", re: /^(\([^)]*\)\s*)?pkg>/ },  // handles (@v1.9) pkg>
+    { kind: "help", re: /^help\?>/ },
+    { kind: "shell", re: /^shell>/ },
+  ]
 
   function classify(line: string): { len: number; kind: PromptKind } {
-    const rules: Array<{ kind: PromptKind; re: RegExp }> = [
-      { kind: "julia", re: /^julia>/ },
-      { kind: "pkg", re: /^(\([^)]*\)\s*)?pkg>/ },  // handles (@v1.9) pkg>
-      { kind: "help", re: /^help\?>/ },
-      { kind: "shell", re: /^shell>/ },
-    ]
-
     for (const r of rules) {
       const m = line.match(r.re)
       if (m) return { len: m[0].length, kind: r.kind }

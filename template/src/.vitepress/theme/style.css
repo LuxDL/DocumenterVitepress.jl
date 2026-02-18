@@ -204,7 +204,7 @@ mjx-container svg path {
 }
 
 /* Julia REPL prompt syntax highlighting */
-/* de-emphasize prompts */
+/* prompt token behavior */
 .vp-doc .shiki .repl-prompt {
   opacity: 1.0;
   user-select: none;
