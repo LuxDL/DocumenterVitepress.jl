@@ -579,27 +579,32 @@ function vitepress_anchor(anchor::String)
 end
 
 function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, contents::Documenter.ContentsNode, page, doc; kwargs...)
-    current_path = nothing
-    for (count, path, anchor) in contents.elements
-        path = mdext(path)
-        header = anchor.object
-        anchor_frag = Documenter.anchor_fragment(anchor)
-        anchor_frag = vitepress_anchor(anchor_frag)
-        url = replace(string(path, anchor_frag), " " => "%20")
-        anchor_id = replace(anchor.id, "-" => " ")
-        link = Markdown.Link(anchor_id, url)
-        level = header.level
-        # Reset level to 1 if this is a new path
-        if path != current_path
-            level = 1
-            current_path = path
-        end
+    # contents of this method copied from `latex` function in `Documenter.jl`
+    # Having an empty itemize block in LaTeX throws an error, so we bail early
+    # in that situation:
+    isempty(contents.elements) && (_println(io); return)
 
-        print(io, "    "^(level - 1), "- ")
-        linkfix = ".md#"
-        println(io, replace(Markdown.plaininline(link), linkfix => "#"))
+    depth = 1
+    _println(io, "") # add empty line
+    for (count, path, anchor) in contents.elements
+        @assert length(anchor.node.children) == 1
+        header = first(anchor.node.children)
+        level = header.element.level
+        # Filter out header levels smaller than the requested mindepth
+        level = level - contents.mindepth + 1
+        level < 1 && continue
+        # If we're changing depth, we need to make sure we always print the
+        # correct number of \begin{itemize} and \end{itemize} statements.
+        
+        # Print the corresponding \item statement
+        id = _hash(Documenter.anchor_label(anchor))
+        _print(io, "  "^(level-1) * "[", id, "](")
+        latex(io, header.children)
+        _println(io, ")")
     end
-    return println(io)
+
+    _println(io)
+    return
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, evalnode::Documenter.EvalNode, page, doc; kwargs...)
