@@ -1070,12 +1070,6 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         category = "tip"
     end
     title = admonition.title
-    if !(category ∈ ("tip", "warning", "danger", "caution"))
-        if isempty(admonition.title)
-            admonition.title = category
-        end
-        category = "tip"
-    end
     println(io, "\n::: $(category) $(title)")
     render(io, mime, node, node.children, page, doc; kwargs...)
     println(io, "\n:::")
