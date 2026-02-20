@@ -64,6 +64,8 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     assets = nothing
     "A version string to write to the header of the objects.inv inventory file. This should be a valid version number without a v prefix. Defaults to the version defined in the Project.toml file in the parent folder of the documentation root"
     inventory_version::Union{String,Nothing} = nothing
+    "Whether to write inventory or not"
+    write_inventory = true
     """
     Sets the granularity of versions which should be kept. Options are :patch, :minor or :breaking (the default).
     You can use this to reduce the number of docs versions that coexist on your dev branch. With :patch, every patch
@@ -217,34 +219,47 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
 
-    version = settings.inventory_version
-    if isnothing(version)
-        project_toml = joinpath(dirname(doc.user.root), "Project.toml")
-        version = _get_inventory_version(project_toml)
+    inventory = if settings.write_inventory
+        version = settings.inventory_version
+        if isnothing(version)
+            project_toml = joinpath(dirname(doc.user.root), "Project.toml")
+            version = _get_inventory_version(project_toml)
+        end
+        Inventory(; project=doc.user.sitename, version)
+    else
+        nothing
     end
-    inventory = Inventory(; project=doc.user.sitename, version)
 
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
         open(docpath(page.build, builddir, settings.md_output_path), "w") do io
+            merge_and_render_frontmatter(io, MIME("text/yaml"), page, doc)
             for node in page.mdast.children
-                render(io, mime, node, page, doc; inventory)
+                kwargs = if settings.write_inventory
+                    (; inventory = inventory)
+                else
+                    (;)
+                end
+                render(io, mime, node, page, doc; kwargs...)
             end
         end
-        item = InventoryItem(
-            name = replace(splitext(src)[1], "\\" => "/"),
-            domain = "std",
-            role = "doc",
-            dispname = _pagetitle(page),
-            priority = -1,
-            uri = _get_inventory_uri(doc, page, nothing)
-        )
-        push!(inventory, item)
+        if settings.write_inventory
+            item = InventoryItem(
+                name = replace(splitext(src)[1], "\\" => "/"),
+                domain = "std",
+                role = "doc",
+                dispname = _pagetitle(page),
+                priority = -1,
+                uri = _get_inventory_uri(doc, page, nothing)
+            )
+            push!(inventory, item)
+        end
     end
-
-    objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
-    DocInventories.save(objects_inv, inventory)
+    if settings.write_inventory
+        objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
+        DocInventories.save(objects_inv, inventory)
+    end
 
     bases = determine_bases(deploy_decision.subfolder; settings.keep)
 
@@ -957,6 +972,9 @@ render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, ::Documenter.Setu
 # Raw nodes are used to insert raw HTML into the output. We just print it as is.
 # TODO: what if the `raw` is not HTML?  That is not addressed here but we ought to address it...
 function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, raw::Documenter.RawNode, page, doc; kwargs...)
+    if startswith(raw.text, "---")
+        return # this was already handled by frontmatter.
+    end
     return raw.name === :html ? println(io, raw.text, "\n") : nothing
 end
 
