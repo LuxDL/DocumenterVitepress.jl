@@ -1102,18 +1102,21 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io, "\$\$", math.math, "\$\$")
 end
 # Lists
-# TODO: list ordering is broken!
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc; kwargs...)
-    # @infiltrate
-    k = 0
-    bullet() = list.type === :ordered ? "$(k+=1). " : "- "
+    bullet(i) = list.type === :ordered ? "$(i+1). " : "- "
+    # `iob` is reset at `take!` and then reused in the next loop
     iob = IOBuffer()
-    for item in node.children
+    # Loop through all items of the list
+    for (i, item) in enumerate(node.children)
         render(iob, mime, item, item.children, page, doc; prenewline = false, kwargs...)
         eachline = split(String(take!(iob)), '\n')
         eachline[2:end] .= "  " .* eachline[2:end]
-        print(io, bullet())
-        println.((io,), eachline)
+        final_string = join(eachline, '\n')
+        if !endswith(final_string, '\n')
+            final_string = final_string * "\n"
+        end
+        print(io, bullet(i))
+        print(io, final_string)
     end
 end
 # HTMLInline
