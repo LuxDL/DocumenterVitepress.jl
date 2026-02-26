@@ -210,10 +210,18 @@ mjx-container svg path {
   user-select: none;
 }
 
-.vp-doc .shiki .repl-prompt-julia {
-  color: var(--julia-green);
+:root:not(.dark) .vp-doc .shiki .repl-prompt-julia {
+  color: var(--vp-dark-green);
 }
 
-.vp-doc .shiki .repl-prompt-pkg {
-  color: var(--julia-blue);
+:root:not(.dark) .vp-doc .shiki .repl-prompt-pkg {
+  color: var(--vp-c-brand-light);
+}
+
+.dark .vp-doc .shiki .repl-prompt-julia {
+  color: var(--vp-dark-green-light);
+}
+
+.dark .vp-doc .shiki .repl-prompt-pkg {
+  color: var(--vp-c-brand-dark);
 }
