@@ -1,7 +1,10 @@
 # Changelog
 
-## v0.3.2 - 2026-02-26
+## v0.3.3 - 2026-02-26
 - Adds syntax highlighting for `julia>` and `pkg>` Julia REPL mode prompts using Shiki transformer with regex matching [#322](https://github.com/LuxDL/DocumenterVitepress.jl/pull/322)
+
+## v0.3.2 - 2026-02-16
+- use loadDynamicFiles official API [#325](https://github.com/LuxDL/DocumenterVitepress.jl/pull/325)
 
 ## v0.3.1 - 2026-02-16
 - fixed load path for mathjax [#320](https://github.com/LuxDL/DocumenterVitepress.jl/pull/320)
