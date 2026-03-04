@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.3 - 2026-02-26
+## unreleased
 - Adds syntax highlighting for `julia>` and `pkg>` Julia REPL mode prompts using Shiki transformer with regex matching [#322](https://github.com/LuxDL/DocumenterVitepress.jl/pull/322)
 
 ## v0.3.2 - 2026-02-16
