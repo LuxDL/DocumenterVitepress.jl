@@ -48,9 +48,8 @@ onMounted(() => {
     :title="collapsed ? 'Show sidebar' : 'Hide sidebar'"
     :aria-label="collapsed ? 'Show sidebar' : 'Hide sidebar'"
   >
-    <!-- Open state: "panel left close" icon — sidebar panel with arrow pointing left -->
+    <!-- "panel left close/open" icon -->
     <svg
-      v-if="!collapsed"
       xmlns="http://www.w3.org/2000/svg"
       width="20"
       height="20"
@@ -66,30 +65,8 @@ onMounted(() => {
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <!-- Vertical divider -->
       <line x1="9" y1="3" x2="9" y2="21" />
-      <!-- Left-pointing arrow in main area (collapse) -->
-      <polyline points="16 15 13 12 16 9" />
-    </svg>
-
-    <!-- Closed state: "panel left open" icon — sidebar panel with arrow pointing right -->
-    <svg
-      v-else
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      class="sidebar-drawer-icon"
-    >
-      <!-- Outer frame -->
-      <rect x="3" y="3" width="18" height="18" rx="2" />
-      <!-- Vertical divider -->
-      <line x1="9" y1="3" x2="9" y2="21" />
-      <!-- Right-pointing arrow in main area (expand) -->
-      <polyline points="13 9 16 12 13 15" />
+      <!-- Arrow (collapse/expand) -->
+      <polyline :points="collapsed ? '13 9 16 12 13 15' : '16 15 13 12 16 9'" />
     </svg>
   </button>
 </template>
@@ -118,14 +95,6 @@ onMounted(() => {
 
 .sidebar-drawer-btn:active {
   transform: scale(0.92);
-}
-
-.sidebar-drawer-btn.is-collapsed {
-  color: var(--vp-c-text-1);
-}
-
-.sidebar-drawer-btn.is-collapsed:hover {
-  color: var(--vp-c-text-2);
 }
 
 .sidebar-drawer-icon {
