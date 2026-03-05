@@ -66,6 +66,17 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file."
         write(joinpath(build_vitepress_dir, "theme", "docstrings.css"), read(joinpath(template_vitepress_dir, "theme", "docstrings.css"), String))
     end
+    # Copy SidebarDrawerToggle.vue if user hasn't provided one
+    sidebar_toggle_source = joinpath(sourcedir, "components", "SidebarDrawerToggle.vue")
+    sidebar_toggle_build = joinpath(builddir, settings.md_output_path, "components", "SidebarDrawerToggle.vue")
+    if !isfile(sidebar_toggle_source) && !isfile(sidebar_toggle_build)
+        template_component = joinpath(dirname(@__DIR__), "template", "src", "components", "SidebarDrawerToggle.vue")
+        if isfile(template_component)
+            mkpath(joinpath(builddir, settings.md_output_path, "components"))
+            write(sidebar_toggle_build, read(template_component, String))
+        end
+    end
+
     # We have already rewritten the config file, so we can't get burned by clean=false
     # again.
     vitepress_config_file = joinpath(build_vitepress_dir, "config.mts")
@@ -138,6 +149,9 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
             push!(replacers, "logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS'," => "")
         end
     end
+
+    # # Sidebar drawer toggle
+    push!(replacers, "sidebarDrawer: 'REPLACE_ME_DOCUMENTER_VITEPRESS_SIDEBAR_DRAWER'" => "sidebarDrawer: $(settings.sidebar_drawer)")
 
     # # Favicon
 

@@ -47,7 +47,8 @@ makedocs(;
     format=DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/LuxDL/DocumenterVitepress.jl", # this must be the full URL!
         devbranch = "main",
-        devurl = "dev";
+        devurl = "dev",
+        sidebar_drawer = true;
     ),
     draft = false,
     source = "src",
