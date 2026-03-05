@@ -64,6 +64,8 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     assets = nothing
     "A version string to write to the header of the objects.inv inventory file. This should be a valid version number without a v prefix. Defaults to the version defined in the Project.toml file in the parent folder of the documentation root"
     inventory_version::Union{String,Nothing} = nothing
+    """Enables a sidebar drawer toggle button on desktop. When enabled, a small chevron button appears at the edge of the sidebar, allowing users to collapse and expand it. The collapsed state is persisted in `localStorage`. Defaults to `false`."""
+    sidebar_drawer::Bool = false
     """
     Sets the granularity of versions which should be kept. Options are :patch, :minor or :breaking (the default).
     You can use this to reduce the number of docs versions that coexist on your dev branch. With :patch, every patch
