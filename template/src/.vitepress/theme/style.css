@@ -276,7 +276,6 @@ mjx-container svg path {
     overflow: hidden;
     opacity: 0;
     padding: 0 !important;
-    padding-left: 0 !important;
     pointer-events: none;
   }
 
