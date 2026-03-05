@@ -235,7 +235,8 @@ mjx-container svg path {
   }
 
   .VPContent.has-sidebar {
-    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                padding-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* Smooth transitions for navbar elements (needed for expand-back too) */
@@ -253,19 +254,30 @@ mjx-container svg path {
                 opacity 0.25s ease !important;
   }
 
-  /* Collapsed state */
+  /* Collapsed state: zero the sidebar width variable so all layout formulas
+     (VitePress defaults + Enhanced Readabilities plugin) adjust automatically */
+  html.sidebar-drawer-collapsed {
+    --vp-sidebar-width: 0px !important;
+  }
+
   html.sidebar-drawer-collapsed .VPSidebar {
     transform: translateX(-100%);
     opacity: 0;
     pointer-events: none;
   }
 
-  html.sidebar-drawer-collapsed .VPContent.has-sidebar {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+  /* Original width mode only: let content fill space up to the aside */
+  html.sidebar-drawer-collapsed
+    body:not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchFullWidth):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchSidebarWidthAdjustableOnly):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchBothWidthAdjustable)
+    .VPDoc.has-sidebar .container {
+    display: flex;
+    justify-content: center;
+    max-width: 992px;
   }
 
-  html.sidebar-drawer-collapsed .VPDoc.has-sidebar .content-container {
+  html.sidebar-drawer-collapsed
+    body:not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchFullWidth):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchSidebarWidthAdjustableOnly):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchBothWidthAdjustable)
+    .VPDoc.has-sidebar .content-container {
     max-width: none;
   }
 
@@ -279,15 +291,9 @@ mjx-container svg path {
     pointer-events: none;
   }
 
-  /* Move navbar content (drawer button, search, etc.) to the left edge */
+  /* Move drawer button closer to the edge */
   html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .content,
   html.sidebar-drawer-collapsed .VPNavBar.has-sidebar > .wrapper > .container > .content {
     padding-left: 8px !important;
-  }
-
-  /* Extend separator line to full page width */
-  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .divider,
-  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar > .divider {
-    padding-left: 0 !important;
   }
 }
