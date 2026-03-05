@@ -262,32 +262,33 @@ mjx-container svg path {
 
   html.sidebar-drawer-collapsed .VPContent.has-sidebar {
     padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   html.sidebar-drawer-collapsed .VPDoc.has-sidebar .content-container {
     max-width: none;
   }
 
-  html.sidebar-drawer-collapsed .VPDoc.has-sidebar.has-aside .content {
-    padding-left: calc((100% - var(--vp-layout-max-width, 1440px)) / 2);
-  }
-
   /* Collapse the navbar title area (site logo + name) */
-  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .title {
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .title,
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar > .wrapper > .container > .title {
     width: 0 !important;
     overflow: hidden;
     opacity: 0;
     padding: 0 !important;
+    padding-left: 0 !important;
     pointer-events: none;
   }
 
   /* Move navbar content (drawer button, search, etc.) to the left edge */
-  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .content {
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .content,
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar > .wrapper > .container > .content {
     padding-left: 8px !important;
   }
 
   /* Extend separator line to full page width */
-  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .divider {
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .divider,
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar > .divider {
     padding-left: 0 !important;
   }
 }
