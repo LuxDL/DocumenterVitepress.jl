@@ -203,39 +203,26 @@ mjx-container svg path {
   cursor: pointer;
 }
 
-/* ===== Code Output Blocks ===== */
-/* Use outline (not border) so it isn't clipped by overflow-x:auto.
-   Reset the -8px margin-top VitePress applies to consecutive code blocks so the
-   top of the outline is fully visible. */
-.vp-doc div.language-julia + div.language- {
-  /* Light mode: visible gray tint vs github-light's pure white (#fff) input */
-  --output-bg: #e8ecf0;
-  --output-outline: #8a9ab0;
-
-  margin-top: 4px !important;
-  outline: 1px solid var(--output-outline);
-  outline-offset: 0px;
-  background-color: var(--output-bg) !important;
+/* ===== Custom colors for input and output code blocks ===== */
+:root {
+  --vp-c-bg-input: #eef0f3;
+  --vp-c-bg-output: #e8ecf0;
+  --vp-c-bg-output-outline: #8a9ab0;
 }
 
-.dark .vp-doc div.language-julia + div.language- {
-  /* Dark mode: very slightly lighter than github-dark input (#24292e) */
-  --output-bg: #2a2f38;
-  --output-outline: #3e4a5c;
+.dark {
+  --vp-c-bg-input: #1a1a1a;
+  --vp-c-bg-output: #2a2f38;
+  --vp-c-bg-output-outline: #3e4a5c;
 }
 
-.vp-doc div.language-julia + div.language- pre {
-  background-color: var(--output-bg) !important;
+.language-julia {
+  background-color: var(--vp-c-bg-input) !important;
 }
 
-.vp-doc div.language-julia + div.language- .lang {
-  font-size: 0;
-}
-.vp-doc div.language-julia + div.language- .lang::after {
-  content: "output";
-  font-size: 12px;
-  letter-spacing: 0.05em;
-  color: var(--vp-c-text-3);
+.language- {
+  background-color: var(--vp-c-bg-output) !important;
+  outline: 1px solid var(--vp-c-bg-output-outline);
 }
 
 /* Julia REPL prompt syntax highlighting */
