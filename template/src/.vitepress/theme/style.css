@@ -204,9 +204,6 @@ mjx-container svg path {
 }
 
 /* ===== Code Output Blocks ===== */
-/* Shiki renders `ansi` blocks with class="language-" (empty language).
-   Output blocks always directly follow julia input blocks, so we use the adjacent
-   sibling selector to target them without modifying the writer. */
 
 /* Light mode: visible gray tint vs github-light's pure white (#fff) input */
 :root:not(.dark) .vp-doc div.language-julia + div.language-,
@@ -220,9 +217,7 @@ mjx-container svg path {
   background-color: #2a2f38 !important;
 }
 
-/* Border + label. Use outline (not border) so it isn't clipped by overflow-x:auto.
-   Reset the -8px margin-top VitePress applies to consecutive code blocks so the
-   top of the outline is fully visible. */
+/* Border + label. */
 .vp-doc div.language-julia + div.language- {
   margin-top: 4px !important;
   outline: 1px solid #8a9ab0;
