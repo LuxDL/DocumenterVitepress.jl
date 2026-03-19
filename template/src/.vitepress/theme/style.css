@@ -205,20 +205,22 @@ mjx-container svg path {
 
 /* ===== Custom colors for input and output code blocks ===== */
 :root {
-  --vp-c-bg-input: #eef0f3;
+  /* --vp-c-bg-input: #eef0f3; */
   --vp-c-bg-output: #e8ecf0;
   --vp-c-bg-output-outline: #8a9ab0;
 }
 
 .dark {
-  --vp-c-bg-input: #1a1a1a;
+  /* --vp-c-bg-input: #1a1a1a; */
   --vp-c-bg-output: #2a2f38;
   --vp-c-bg-output-outline: #3e4a5c;
 }
 
+/*
 .language-julia {
   background-color: var(--vp-c-bg-input) !important;
 }
+*/
 
 .language- {
   background-color: var(--vp-c-bg-output) !important;
