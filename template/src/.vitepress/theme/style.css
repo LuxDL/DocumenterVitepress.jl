@@ -203,6 +203,44 @@ mjx-container svg path {
   cursor: pointer;
 }
 
+/* ===== Code Output Blocks ===== */
+/* Shiki renders `ansi` blocks with class="language-" (empty language).
+   Output blocks always directly follow julia input blocks, so we use the adjacent
+   sibling selector to target them without modifying the writer. */
+
+/* Light mode: visible gray tint vs github-light's pure white (#fff) input */
+:root:not(.dark) .vp-doc div.language-julia + div.language-,
+:root:not(.dark) .vp-doc div.language-julia + div.language- pre {
+  background-color: #e8ecf0 !important;
+}
+
+/* Dark mode: very slightly lighter than github-dark input (#24292e) */
+.dark .vp-doc div.language-julia + div.language-,
+.dark .vp-doc div.language-julia + div.language- pre {
+  background-color: #2a2f38 !important;
+}
+
+/* Border + label. Use outline (not border) so it isn't clipped by overflow-x:auto.
+   Reset the -8px margin-top VitePress applies to consecutive code blocks so the
+   top of the outline is fully visible. */
+.vp-doc div.language-julia + div.language- {
+  margin-top: 4px !important;
+  outline: 1px solid #8a9ab0;
+  outline-offset: 0px;
+}
+.dark .vp-doc div.language-julia + div.language- {
+  outline-color: #3e4a5c;
+}
+.vp-doc div.language-julia + div.language- .lang {
+  font-size: 0;
+}
+.vp-doc div.language-julia + div.language- .lang::after {
+  content: "output";
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--vp-c-text-3);
+}
+
 /* Julia REPL prompt syntax highlighting */
 /* prompt token behavior */
 .vp-doc .shiki .repl-prompt {
