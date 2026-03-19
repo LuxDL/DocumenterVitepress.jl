@@ -40,7 +40,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Check for the config and plugin files
     for f in ["config.mts", "mathjax-plugin.ts", "julia-repl-transformer.ts"]
         vitepress_config_file = joinpath(source_vitepress_dir, f) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
-        if !isfile(vitepress_config_file)   
+        if !isfile(vitepress_config_file)
             mkpath(splitdir(vitepress_config_file)[1])
             @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/$(f)` file. Substituting in the default file."
             # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
@@ -121,6 +121,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     provided_page_list = doc.user.pages
     sidebar_navbar_info = pagelist2str.((doc,), provided_page_list)
     sidebar_navbar_string = join(sidebar_navbar_info, ",\n")
+    sidebar_navbar_string = replace(sidebar_navbar_string, "\\" => "/")
     push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: [\n$sidebar_navbar_string\n]\n")
     push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
 
