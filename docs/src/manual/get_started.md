@@ -103,7 +103,7 @@ That's it! Your documentation should now build and deploy with DocumenterVitepre
 
 ## Live Development Workflow
 
-For active documentation development, you have two options:
+For active documentation development, you have three options:
 
 ### Option A: Simple Rebuild (Recommended)
 
@@ -125,7 +125,24 @@ Then, after making changes to your markdown files:
 
 This is the most reliable method.
 
-### Option B: Using Vitepress Development Server (Advanced)
+### Option B: Automatic Rebuild with `servedocs`
+
+`LiveServer.servedocs` watches your source files and automatically triggers a full Documenter rebuild whenever they change, then refreshes the browser. This is more convenient than Option A since you don't have to manually re-run `make.jl`.
+
+```julia
+using LiveServer
+
+servedocs(buildfoldername="build/1")
+```
+
+Then open your browser to `http://localhost:8000/`.
+
+> [!WARNING]
+> **Hot-reload timing issues on small documentation sites**
+>
+> For larger documentation projects, `servedocs` may be unreliable.
+
+### Option C: Using Vitepress Development Server (Advanced)
 
 If you want to use Vitepress's built-in development server with hot-reload, you can run:
 
