@@ -137,7 +137,7 @@ servedocs(buildfoldername="build/1")
 
 Then open your browser to `http://localhost:8000/`.
 
-> [!WARNING]
+> [!NOTE]
 > 
 > For larger documentation projects, `servedocs` may be unreliable.
 
