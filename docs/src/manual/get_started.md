@@ -138,7 +138,7 @@ servedocs(buildfoldername="build/1")
 Then open your browser to `http://localhost:8000/`.
 
 > [!WARNING]
-> **Hot-reload timing issues on small documentation sites**
+> **Hot-reload issues on larger documentation sites**
 >
 > For larger documentation projects, `servedocs` may be unreliable.
 
