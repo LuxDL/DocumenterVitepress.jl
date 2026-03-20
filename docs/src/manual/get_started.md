@@ -138,8 +138,7 @@ servedocs(buildfoldername="build/1")
 Then open your browser to `http://localhost:8000/`.
 
 > [!WARNING]
-> **Hot-reload issues on larger documentation sites**
->
+> 
 > For larger documentation projects, `servedocs` may be unreliable.
 
 ### Option C: Using Vitepress Development Server (Advanced)
