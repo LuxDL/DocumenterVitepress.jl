@@ -121,7 +121,6 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     provided_page_list = doc.user.pages
     sidebar_navbar_info = pagelist2str.((doc,), provided_page_list)
     sidebar_navbar_string = join(sidebar_navbar_info, ",\n")
-    sidebar_navbar_string = replace(sidebar_navbar_string, "\\" => "/")
     push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: [\n$sidebar_navbar_string\n]\n")
     push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
 
@@ -191,7 +190,8 @@ function pagelist2str(doc, page::String)
     else
         Documenter.MDFlatten.mdflatten(elements[idx])
     end
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(path)' }" # , $(sidebar_items(doc, page)) }"
 end
 
 pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
@@ -199,7 +199,8 @@ pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(path)' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
