@@ -1252,6 +1252,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     else
         resolve_relative_path(page.build, link.page, doc)
     end
+    path = replace(path, "\\" => "/")
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")
@@ -1265,6 +1266,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         relative_path = resolve_relative_path(page.build, page.build, doc)
         replace(relative_path, ".md" => "") * "#" * link.fragment
     end
+    path = replace(path, "\\" => "/")
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")
