@@ -203,6 +203,30 @@ mjx-container svg path {
   cursor: pointer;
 }
 
+/* ===== Custom colors for input and output code blocks ===== */
+:root {
+  /* --vp-c-bg-input: #eef0f3; */
+  --vp-c-bg-output: #fbfbfb;
+  --vp-c-bg-output-outline: #e2e2e3;
+}
+
+.dark {
+  /* --vp-c-bg-input: #1a1a1a; */
+  --vp-c-bg-output: #1a1a1a;
+  --vp-c-bg-output-outline: #2e2e32;
+}
+
+/*
+.language-julia {
+  background-color: var(--vp-c-bg-input) !important;
+}
+*/
+
+.language- {
+  background-color: var(--vp-c-bg-output) !important;
+  outline: 1px solid var(--vp-c-bg-output-outline);
+}
+
 /* Julia REPL prompt syntax highlighting */
 /* prompt token behavior */
 .vp-doc .shiki .repl-prompt {

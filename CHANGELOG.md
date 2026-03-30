@@ -3,6 +3,7 @@
 ## unreleased
 - Added `sidebar_drawer` config option to `MarkdownVitepress` and a `SidebarDrawerToggle` Vue component for toggling sidebar visibility
 - Adds syntax highlighting for `julia>` and `pkg>` Julia REPL mode prompts using Shiki transformer with regex matching [#322](https://github.com/LuxDL/DocumenterVitepress.jl/pull/322)
+- Improved visual distinction between code input and output blocks: output blocks now have a distinct background and a surrounding border
 
 ## v0.3.2 - 2026-02-16
 - use loadDynamicFiles official API [#325](https://github.com/LuxDL/DocumenterVitepress.jl/pull/325)
