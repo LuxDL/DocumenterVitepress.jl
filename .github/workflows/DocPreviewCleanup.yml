@@ -13,18 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout gh-pages branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: gh-pages
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
       - name: Check for stale PR previews
-        shell: julia {0}
+        shell: julia --color=yes --project=@temp {0}
         run: |
           using Pkg
-          pkg"activate --temp"
-          pkg"add HTTP JSON3"
+          Pkg.add(["HTTP", "JSON3"])
 
           using HTTP
           using JSON3

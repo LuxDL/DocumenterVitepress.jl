@@ -37,18 +37,20 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Make the theme directory
     mkpath(joinpath(build_vitepress_dir, "theme"))
 
-    # Check for the config file
-    vitepress_config_file = joinpath(source_vitepress_dir, "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
-    if !isfile(vitepress_config_file)
-        mkpath(splitdir(vitepress_config_file)[1])
-        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file. Substituting in the default file."
-        # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
-        # which may not be writable.  However, `write` creates a new file for which Julia must have write permissions.
-        write(joinpath(build_vitepress_dir, "config.mts"), read(joinpath(template_vitepress_dir, "config.mts"), String))
-    else # the user has provided a config file
-        # Sometimes this file can get corrupted by makedocs(clean=false),
-        # so we need to copy it over again.
-        write(joinpath(build_vitepress_dir, "config.mts"), read(vitepress_config_file, String))
+    # Check for the config and plugin files
+    for f in ["config.mts", "mathjax-plugin.ts", "julia-repl-transformer.ts"]
+        vitepress_config_file = joinpath(source_vitepress_dir, f) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
+        if !isfile(vitepress_config_file)
+            mkpath(splitdir(vitepress_config_file)[1])
+            @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/$(f)` file. Substituting in the default file."
+            # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
+            # which may not be writable.  However, `write` creates a new file for which Julia must have write permissions.
+            write(joinpath(build_vitepress_dir, f), read(joinpath(template_vitepress_dir, f), String))
+        else # the user has provided a config / plugin file
+            # Sometimes this file can get corrupted by makedocs(clean=false),
+            # so we need to copy it over again.
+            write(joinpath(build_vitepress_dir, f), read(vitepress_config_file, String))
+        end
     end
 
     # ? theme / check for index.ts, style.css and docstrings.css files
@@ -64,6 +66,17 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file."
         write(joinpath(build_vitepress_dir, "theme", "docstrings.css"), read(joinpath(template_vitepress_dir, "theme", "docstrings.css"), String))
     end
+    # Copy SidebarDrawerToggle.vue if user hasn't provided one
+    sidebar_toggle_source = joinpath(sourcedir, "components", "SidebarDrawerToggle.vue")
+    sidebar_toggle_build = joinpath(builddir, settings.md_output_path, "components", "SidebarDrawerToggle.vue")
+    if !isfile(sidebar_toggle_source) && !isfile(sidebar_toggle_build)
+        template_component = joinpath(dirname(@__DIR__), "template", "src", "components", "SidebarDrawerToggle.vue")
+        if isfile(template_component)
+            mkpath(joinpath(builddir, settings.md_output_path, "components"))
+            write(sidebar_toggle_build, read(template_component, String))
+        end
+    end
+
     # We have already rewritten the config file, so we can't get burned by clean=false
     # again.
     vitepress_config_file = joinpath(build_vitepress_dir, "config.mts")
@@ -137,6 +150,9 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
+    # # Sidebar drawer toggle
+    push!(replacers, "sidebarDrawer: 'REPLACE_ME_DOCUMENTER_VITEPRESS_SIDEBAR_DRAWER'" => "sidebarDrawer: $(settings.sidebar_drawer)")
+
     # # Favicon
 
     if occursin("rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'", config)
@@ -174,7 +190,8 @@ function pagelist2str(doc, page::String)
     else
         Documenter.MDFlatten.mdflatten(elements[idx])
     end
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(path)' }" # , $(sidebar_items(doc, page)) }"
 end
 
 pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
@@ -182,7 +199,8 @@ pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(path)' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})

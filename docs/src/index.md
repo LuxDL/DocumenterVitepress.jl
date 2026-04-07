@@ -59,8 +59,19 @@ It is meant to be used in conjunction with the `vitepress` Node.js package, whic
 using Documenter
 using DocumenterVitepress
 makedocs(;
-    format=DocumenterVitepress.MarkdownVitepress(repo = "...", devbranch = "...", devurl = "dev"),
+    format=DocumenterVitepress.MarkdownVitepress(
+      repo = "...",
+      devbranch = "...",
+      devurl = "dev"),
     )
+# and for deploying use
+DocumenterVitepress.deploydocs(;
+    repo = "...",
+    target = joinpath(@__DIR__, "build"),
+    branch = "gh-pages",
+    devbranch = "...",
+    push_preview = true,
+)
 ```
 and enjoy the fruits of your labour!
 

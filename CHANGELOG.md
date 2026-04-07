@@ -1,5 +1,38 @@
 # Changelog
 
+## unreleased
+- Fixed Windows paths for `Documenter`-crosslinks (`Documenter.PageLink` and `Documenter.LocalLink`) and for the nav/sidebar (via `pagelist2str`) [#340](https://github.com/LuxDL/DocumenterVitepress.jl/pull/340)
+- Improved visual distinction between code input and output blocks: output blocks now have a distinct background and a surrounding border [#338](https://github.com/LuxDL/DocumenterVitepress.jl/pull/338)
+- Added `sidebar_drawer` config option to `MarkdownVitepress` and a `SidebarDrawerToggle` Vue component for toggling sidebar visibility [#329](https://github.com/LuxDL/DocumenterVitepress.jl/pull/329)
+- Adds syntax highlighting for `julia>` and `pkg>` Julia REPL mode prompts using Shiki transformer with regex matching [#322](https://github.com/LuxDL/DocumenterVitepress.jl/pull/322)
+
+## v0.3.2 - 2026-02-16
+- use loadDynamicFiles official API [#325](https://github.com/LuxDL/DocumenterVitepress.jl/pull/325)
+
+## v0.3.1 - 2026-02-16
+- fixed load path for mathjax [#320](https://github.com/LuxDL/DocumenterVitepress.jl/pull/320)
+- don't try open siteinfo.js on local windows builds, there are not automatic builds here [#319](https://github.com/LuxDL/DocumenterVitepress.jl/pull/319)
+- wraps standard image-like markdown syntax for videos into <video /> tags [#318](https://github.com/LuxDL/DocumenterVitepress.jl/pull/318)
+
+## v0.3.0 - 2026-01-02
+- updates get started section, now is consistent with README [#313](https://github.com/LuxDL/DocumenterVitepress.jl/pull/313)
+- parses plain \eqref and \ref. [#312](https://github.com/LuxDL/DocumenterVitepress.jl/pull/312).
+- template updates and mathjax-plugin cleanup. Fixes equations width overflow. Added smooth scroll to targets. [#310](https://github.com/LuxDL/DocumenterVitepress.jl/pull/310).
+- Custom script to preload tex fonts [#305](https://github.com/LuxDL/DocumenterVitepress.jl/pull/305).
+- Switched to `@mdit/plugin-mathjax` from `markdown-it-mathjax3` in order to support labels and referencing equations [#302](https://github.com/LuxDL/DocumenterVitepress.jl/pull/302).
+- Renamed `master` to `main`
+
+    Local clones should do
+    ```sh
+    git branch -m master main
+    git fetch origin
+    git branch -u origin/main main
+    git remote set-head origin -a
+    ```
+
+## v0.2.6 - 2025-06-08
+- Lowers MIME priority for LaTeX rendering.
+
 ## v0.2.5 - 2025-05-29
 - Add LaTeX rendering support on outputs from Documenter blocks.
 - Fix a bug with `@ansi` blocks in draft mode.

@@ -15,6 +15,7 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
 }
 
 :root {
+scroll-behavior: smooth;
 /* Typography */
 --vp-font-family-base: "Barlow", "Inter var experimental", "Inter var",
   -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
@@ -155,21 +156,168 @@ font-feature-settings: "calt" off;
 }
 /* Component: MathJax */
 
-mjx-container > svg {
+
+.mjx-scroll-wrapper {
   display: block;
-  margin: auto;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
 }
 
 mjx-container {
+  display: inline-block;
   padding: 0.5rem 0;
-}
-
-mjx-container {
-  display: inline;
   margin: auto 2px -2px;
+  overflow: visible !important;  /* Override MathJax's overflow */
+  text-align: left;
 }
 
 mjx-container > svg {
-  margin: auto;
   display: inline-block;
+  height: auto;
+}
+
+mjx-container > svg[data-labels="true"] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* @mdit/plugin-mathjax theming refs */
+
+mjx-container svg path {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.MathJax_ref {
+  color: var(--vp-c-brand-1);
+}
+
+.MathJax_ref:hover {
+  color: var(--vp-c-brand-2);
+  cursor: pointer;
+}
+
+/* ===== Custom colors for input and output code blocks ===== */
+:root {
+  /* --vp-c-bg-input: #eef0f3; */
+  --vp-c-bg-output: #fbfbfb;
+  --vp-c-bg-output-outline: #e2e2e3;
+}
+
+.dark {
+  /* --vp-c-bg-input: #1a1a1a; */
+  --vp-c-bg-output: #1a1a1a;
+  --vp-c-bg-output-outline: #2e2e32;
+}
+
+/*
+.language-julia {
+  background-color: var(--vp-c-bg-input) !important;
+}
+*/
+
+.language- {
+  background-color: var(--vp-c-bg-output) !important;
+  outline: 1px solid var(--vp-c-bg-output-outline);
+}
+
+/* Julia REPL prompt syntax highlighting */
+/* prompt token behavior */
+.vp-doc .shiki .repl-prompt {
+  opacity: 1.0;
+  user-select: none;
+}
+
+:root:not(.dark) .vp-doc .shiki .repl-prompt-julia {
+  color: var(--vp-dark-green);
+}
+
+:root:not(.dark) .vp-doc .shiki .repl-prompt-pkg {
+  color: var(--vp-c-brand-light);
+}
+
+.dark .vp-doc .shiki .repl-prompt-julia {
+  color: var(--vp-dark-green-light);
+}
+
+.dark .vp-doc .shiki .repl-prompt-pkg {
+  color: var(--vp-c-brand-dark);
+}
+
+/* ===== Sidebar Drawer Toggle ===== */
+/* Smooth transitions for sidebar collapse/expand on desktop */
+@media (min-width: 960px) {
+  .VPSidebar {
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease;
+  }
+
+  .VPContent.has-sidebar {
+    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                padding-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Smooth transitions for navbar elements (needed for expand-back too) */
+  .VPNavBar.has-sidebar .content {
+    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .VPNavBar.has-sidebar .divider {
+    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .VPNavBar.has-sidebar .title {
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease !important;
+  }
+
+  /* Collapsed state: zero the sidebar width variable so all layout formulas
+     (VitePress defaults + Enhanced Readabilities plugin) adjust automatically */
+  html.sidebar-drawer-collapsed {
+    --vp-sidebar-width: 0px !important;
+  }
+
+  html.sidebar-drawer-collapsed .VPSidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Original width mode only: let content fill space up to the aside */
+  html.sidebar-drawer-collapsed
+    body:not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchFullWidth):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchSidebarWidthAdjustableOnly):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchBothWidthAdjustable)
+    .VPDoc.has-sidebar .container {
+    display: flex;
+    justify-content: center;
+    max-width: 992px;
+  }
+
+  html.sidebar-drawer-collapsed
+    body:not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchFullWidth):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchSidebarWidthAdjustableOnly):not(.VPNolebaseEnhancedReadabilitiesLayoutSwitchBothWidthAdjustable)
+    .VPDoc.has-sidebar .content-container {
+    max-width: none;
+  }
+
+  /* Collapse the navbar title area (site logo + name) */
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .title,
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar > .wrapper > .container > .title {
+    width: 0 !important;
+    overflow: hidden;
+    opacity: 0;
+    padding: 0 !important;
+    pointer-events: none;
+  }
+
+  /* Move drawer button closer to the edge */
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar .content,
+  html.sidebar-drawer-collapsed .VPNavBar.has-sidebar > .wrapper > .container > .content {
+    padding-left: 8px !important;
+  }
 }
