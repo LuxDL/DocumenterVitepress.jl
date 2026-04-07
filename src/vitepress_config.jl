@@ -158,6 +158,13 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # # Sidebar drawer toggle
     push!(replacers, "sidebarDrawer: 'REPLACE_ME_DOCUMENTER_VITEPRESS_SIDEBAR_DRAWER'" => "sidebarDrawer: $(settings.sidebar_drawer)")
 
+    # # Noindex for non-stable deployments
+    if settings.noindex_non_stable && base != "stable"
+        push!(replacers, "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX" => "['meta', { name: 'robots', content: 'noindex, nofollow' }],")
+    else
+        push!(replacers, "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX" => "")
+    end
+
     # # Favicon
 
     if occursin("rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'", config)

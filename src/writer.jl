@@ -68,6 +68,8 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     sidebar_drawer::Bool = false
     "Whether to write inventory or not"
     write_inventory = true
+    "Whether to add a `noindex` meta tag to non-stable deployments, preventing search engines from indexing dev/preview docs."
+    noindex_non_stable::Bool = false
     """
     Sets the granularity of versions which should be kept. Options are :patch, :minor or :breaking (the default).
     You can use this to reduce the number of docs versions that coexist on your dev branch. With :patch, every patch
