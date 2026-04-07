@@ -67,10 +67,13 @@ and in another terminal do
 pkg> activate . # do this inside the docs folder
 using LiveServer
 
-LiveServer.serve(dir = "build/1")
+LiveServer.servedocs(; builddir = "build/1")
 ```
 
 Then open your browser to the URL shown (typically `http://localhost:8000/`).
+
+!!! tip
+    If you want to have a live-updating documentation build, try `LiveServer.servedocs(; buildfoldername = "build/1")` as described in [Option B below](@ref "get-started-live-dev-option-b")
 
 
 ### 5. Update Your Deployment
@@ -105,7 +108,23 @@ That's it! Your documentation should now build and deploy with DocumenterVitepre
 
 For active documentation development, you have three options:
 
-### Option A: Simple Rebuild (Recommended)
+### [Option A: Automatic Rebuild with `servedocs`](@id "get-started-live-dev-option-a")
+
+`LiveServer.servedocs` watches your source files and automatically triggers a full Documenter rebuild whenever they change, then refreshes the browser. This is more convenient than Option A since you don't have to manually re-run `make.jl`.
+
+```julia
+using LiveServer
+
+servedocs(; buildfoldername="build/1")
+```
+
+Then open your browser to `http://localhost:8000/`, or whatever gets printed after the `servedocs` call.
+
+> [!NOTE]
+> 
+> For larger documentation projects, `servedocs` may be unreliable.  See Option B below for another option.
+
+### [Option B: Simple Rebuild](@id "get-started-live-dev-option-b")
 
 First, install `LiveServer` in your docs environment if you haven't already:
 
@@ -123,25 +142,11 @@ Then, after making changes to your markdown files:
    ```
 3. `Refresh your browser`
 
-This is the most reliable method.
+This is the most basic and reliable method, and is especially suitable for documentation with very long build times.
+But it requires a bit of manual intervention to run `make.jl`.
 
-### Option B: Automatic Rebuild with `servedocs`
 
-`LiveServer.servedocs` watches your source files and automatically triggers a full Documenter rebuild whenever they change, then refreshes the browser. This is more convenient than Option A since you don't have to manually re-run `make.jl`.
-
-```julia
-using LiveServer
-
-servedocs(; buildfoldername="build/1")
-```
-
-Then open your browser to `http://localhost:8000/`.
-
-> [!NOTE]
-> 
-> For larger documentation projects, `servedocs` may be unreliable.
-
-### Option C: Using Vitepress Development Server (Advanced)
+### [Option C: Using Vitepress Development Server (Advanced)](@id "get-started-live-dev-option-c")
 
 If you want to use Vitepress's built-in development server with hot-reload, you can run:
 
