@@ -132,7 +132,7 @@ This is the most reliable method.
 ```julia
 using LiveServer
 
-servedocs(buildfoldername="build/1")
+servedocs(; buildfoldername="build/1")
 ```
 
 Then open your browser to `http://localhost:8000/`.
