@@ -67,7 +67,7 @@ and in another terminal do
 pkg> activate . # do this inside the docs folder
 using LiveServer
 
-LiveServer.servedocs(; builddir = "build/1")
+LiveServer.serve(; dir = "build/1")
 ```
 
 Then open your browser to the URL shown (typically `http://localhost:8000/`).
