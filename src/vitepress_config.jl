@@ -40,7 +40,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Check for the config and plugin files
     for f in ["config.mts", "mathjax-plugin.ts", "julia-repl-transformer.ts"]
         vitepress_config_file = joinpath(source_vitepress_dir, f) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
-        if !isfile(vitepress_config_file)   
+        if !isfile(vitepress_config_file)
             mkpath(splitdir(vitepress_config_file)[1])
             @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/$(f)` file. Substituting in the default file."
             # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
@@ -190,7 +190,8 @@ function pagelist2str(doc, page::String)
     else
         Documenter.MDFlatten.mdflatten(elements[idx])
     end
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(path)' }" # , $(sidebar_items(doc, page)) }"
 end
 
 pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
@@ -198,7 +199,8 @@ pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name
 function pagelist2str(doc, name_page::Pair{String, String})
     name, page = name_page
     # This is the simplest and easiest case.
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
+    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(path)' }" # , $(sidebar_items(doc, page)) }"
 end
 
 function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
