@@ -124,7 +124,7 @@ Then open your browser to `http://localhost:8000/`, or whatever gets printed aft
 > 
 > For larger documentation projects, `servedocs` may be unreliable.  See Option B below for another option.
 
-### [Option B: Simple Rebuild](@id "get-started-live-dev-option-b")
+### [Option B: Simple Rebuild](@id get-started-live-dev-option-b)
 
 First, install `LiveServer` in your docs environment if you haven't already:
 
