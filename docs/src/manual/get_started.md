@@ -73,7 +73,7 @@ LiveServer.serve(; dir = "build/1")
 Then open your browser to the URL shown (typically `http://localhost:8000/`).
 
 !!! tip
-    If you want to have a live-updating documentation build, try `LiveServer.servedocs(; buildfoldername = "build/1")` as described in [Option B below](@ref "get-started-live-dev-option-b")
+    If you want to have a live-updating documentation build, try `LiveServer.servedocs(; buildfoldername = "build/1")` as described in [Option B below](@ref get-started-live-dev-option-b)
 
 
 ### 5. Update Your Deployment
