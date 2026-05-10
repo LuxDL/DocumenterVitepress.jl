@@ -2,6 +2,7 @@ import Documenter: Documenter, Builder, Expanders, MarkdownAST
 import Documenter.DOM: escapehtml
 using DocInventories: DocInventories, Inventory, InventoryItem
 using TOML: TOML
+import JSON
 
 import ANSIColoredPrinters
 using Base64: base64decode, base64encode
@@ -223,6 +224,25 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
 
+    # Copy plugin-provided static assets into `public/`. See `extension_hooks.jl`.
+    # Iteration order over `doc.plugins` (a Dict) is non-deterministic, so a name
+    # collision between two plugins resolves to whichever ran last.
+    public_dir = joinpath(builddir, settings.md_output_path, "public")
+    mkpath(public_dir)
+    for plugin in values(doc.plugins)
+        for asset_dir in vitepress_assets(plugin)
+            if !isdir(asset_dir)
+                @warn "DocumenterVitepress: plugin $(typeof(plugin)) registered asset directory $(repr(asset_dir)) which does not exist; skipping."
+                continue
+            end
+            for entry in readdir(asset_dir)
+                src = joinpath(asset_dir, entry)
+                dst = joinpath(public_dir, entry)
+                cp(src, dst; force = true)
+            end
+        end
+    end
+
     inventory = if settings.write_inventory
         version = settings.inventory_version
         if isnothing(version)
@@ -283,7 +303,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
         # Now that the Markdown files are written, we can build the Vitepress site if required.
         if settings.build_vitepress
-            build_vitepress(bases, base, i_base, builddir, deploy_decision.subfolder, settings)
+            build_vitepress(bases, base, i_base, builddir, deploy_decision.subfolder, settings, doc)
         else
             @info """
                 DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
@@ -304,7 +324,41 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     return
 end
 
-function build_vitepress(bases, base, i_base, builddir, subfolder, settings)
+"""
+    merge_plugin_dependencies!(package_json_path::String, doc)
+
+Walk `doc.plugins`, collect every plugin's `vitepress_dependencies(plugin)`, and
+merge the result into the `dependencies` object of the `package.json` at
+`package_json_path`. The file is rewritten in place with 2-space indentation and
+a trailing newline. No-op if no plugin contributes any dependency.
+
+Iteration order over `doc.plugins` is non-deterministic, so on a key collision
+between two plugins the winner is implementation-defined.
+"""
+function merge_plugin_dependencies!(package_json_path::String, doc)
+    extra = Dict{String,String}()
+    for plugin in values(doc.plugins)
+        merge!(extra, vitepress_dependencies(plugin))
+    end
+    isempty(extra) && return
+    pkg = JSON.parsefile(package_json_path; dicttype = Dict{String,Any})
+    deps = get!(pkg, "dependencies", Dict{String,Any}())
+    if !(deps isa AbstractDict)
+        @warn "DocumenterVitepress: `dependencies` in $(package_json_path) is not an object; replacing it."
+        deps = Dict{String,Any}()
+        pkg["dependencies"] = deps
+    end
+    for (k, v) in extra
+        deps[k] = v
+    end
+    open(package_json_path, "w") do io
+        JSON.print(io, pkg, 2)
+        println(io) # trailing newline
+    end
+    return
+end
+
+function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc=nothing)
     @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
     # Build the docs using `npm`
     should_remove_package_json = false
@@ -329,6 +383,12 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings)
                 if !isfile(package_json_path)
                     cp(template_path, package_json_path)
                     should_remove_package_json = true
+                end
+                # Merge plugin-provided npm dependencies into package.json. See
+                # `extension_hooks.jl`. Iteration order is non-deterministic; later
+                # plugins win on key collisions.
+                if doc !== nothing
+                    merge_plugin_dependencies!(package_json_path, doc)
                 end
                 # wrap in `node(...) do _`
                 node(; adjust_PATH = true, adjust_LIBPATH = true) do _
