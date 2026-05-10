@@ -77,6 +77,12 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
+    # Inject plugin-supplied Vue component imports and `app.component` calls into
+    # the theme entry. See `extension_hooks.jl`. This must happen after the file
+    # is in the build dir (whether copied from template above or from the user's
+    # source via Documenter's build-tree copy).
+    inject_plugin_components!(joinpath(build_vitepress_dir, "theme", "index.ts"), doc)
+
     # We have already rewritten the config file, so we can't get burned by clean=false
     # again.
     vitepress_config_file = joinpath(build_vitepress_dir, "config.mts")
@@ -175,6 +181,11 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Noindex for non-stable deployments
     new_config = apply_noindex(new_config, settings.noindex_non_stable, base)
 
+    # Apply each plugin's transform to the now-substituted config (see `extension_hooks.jl`).
+    for plugin in values(doc.plugins)
+        new_config = vitepress_config_transform(plugin, new_config)
+    end
+
     write(vitepress_config_file, new_config)
     yield()
     touch(vitepress_config_file)
@@ -213,6 +224,74 @@ function apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::A
     Search engines may index this deployment. Add the marker inside the `head` array of `docs/src/.vitepress/config.mts`.
     """
     return config
+end
+
+"""
+    inject_plugin_components!(theme_index_path::String, doc)
+
+Walk `doc.plugins`, collect every plugin's `vitepress_components(plugin)`, and
+edit the `theme/index.ts` at `theme_index_path` to add the corresponding
+`import` statements at the top and `app.component(...)` registrations inside
+`enhanceApp`. Templates supplied by DocumenterVitepress contain two stable
+markers, `// __DV_PLUGIN_COMPONENT_IMPORTS__` and
+`// __DV_PLUGIN_COMPONENT_REGISTRATIONS__`, which are replaced in place. If the
+user supplies their own `theme/index.ts` *without* the markers, this function
+warns and leaves the file untouched (so plugin components won't auto-register
+for that user — they should add the markers themselves or do the imports
+manually).
+
+No-op if no plugin contributes a component.
+"""
+function inject_plugin_components!(theme_index_path::String, doc)
+    components = @NamedTuple{name::String, import_path::String}[]
+    for plugin in values(doc.plugins)
+        append!(components, vitepress_components(plugin))
+    end
+    isempty(components) && return
+    isfile(theme_index_path) || return  # nothing to inject into
+
+    contents = read(theme_index_path, String)
+
+    import_marker = "// __DV_PLUGIN_COMPONENT_IMPORTS__"
+    register_marker = "// __DV_PLUGIN_COMPONENT_REGISTRATIONS__"
+
+    if !occursin(import_marker, contents) || !occursin(register_marker, contents)
+        @warn """
+            DocumenterVitepress: plugin(s) registered Vue components via `vitepress_components`,
+            but `$(theme_index_path)` does not contain the required injection markers
+            `$(import_marker)` and `$(register_marker)`. Skipping injection. Add these markers
+            to your custom `theme/index.ts` (one in the import section, one inside `enhanceApp`)
+            to opt in.
+            """
+        return
+    end
+
+    # Generate a stable JS identifier per component name; collisions across
+    # plugins resolve to whichever ran last (consistent with other hooks).
+    seen = Set{String}()
+    imports = String[]
+    registrations = String[]
+    for c in components
+        sym = "DV_PLUGIN_" * replace(c.name, r"[^A-Za-z0-9_]" => "_")
+        # Ensure the local symbol is unique within this file.
+        base_sym = sym
+        i = 1
+        while sym in seen
+            i += 1
+            sym = string(base_sym, "_", i)
+        end
+        push!(seen, sym)
+        push!(imports, "import $(sym) from $(repr(c.import_path));")
+        push!(registrations, "    app.component($(repr(c.name)), $(sym));")
+    end
+
+    new_contents = replace(
+        contents,
+        import_marker => join(imports, "\n"),
+        register_marker => strip(join(registrations, "\n")),
+    )
+    write(theme_index_path, new_contents)
+    return
 end
 
 function pagelist2str(doc, page::String)
