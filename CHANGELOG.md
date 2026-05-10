@@ -1,10 +1,13 @@
 # Changelog
 
 ## unreleased
+
+## v0.3.3 - 2026-04-10
 - Fixed Windows paths for `Documenter`-crosslinks (`Documenter.PageLink` and `Documenter.LocalLink`) and for the nav/sidebar (via `pagelist2str`) [#340](https://github.com/LuxDL/DocumenterVitepress.jl/pull/340)
 - Improved visual distinction between code input and output blocks: output blocks now have a distinct background and a surrounding border [#338](https://github.com/LuxDL/DocumenterVitepress.jl/pull/338)
 - Added `sidebar_drawer` config option to `MarkdownVitepress` and a `SidebarDrawerToggle` Vue component for toggling sidebar visibility [#329](https://github.com/LuxDL/DocumenterVitepress.jl/pull/329)
 - Adds syntax highlighting for `julia>` and `pkg>` Julia REPL mode prompts using Shiki transformer with regex matching [#322](https://github.com/LuxDL/DocumenterVitepress.jl/pull/322)
+- Documents `LiveServer.servedocs` as an option for live documentation development [#337](https://github.com/LuxDL/DocumenterVitepress.jl/issues/337)
 
 ## v0.3.2 - 2026-02-16
 - use loadDynamicFiles official API [#325](https://github.com/LuxDL/DocumenterVitepress.jl/pull/325)
