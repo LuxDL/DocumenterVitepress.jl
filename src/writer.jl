@@ -362,6 +362,12 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
     @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
     # Build the docs using `npm`
     should_remove_package_json = false
+    # Snapshot of the user's `docs/package.json` taken right before plugin
+    # deps are merged in, so we can restore it in `finally`. Without this,
+    # every build would leave `docs/package.json` dirty in git with the
+    # plugin-injected `file:` deps. `nothing` means "do not restore"
+    # (file didn't exist, or we're going to delete it ourselves).
+    user_package_json_bytes::Union{Vector{UInt8},Nothing} = nothing
     try
         if !isfile(joinpath(dirname(builddir), "package.json"))
             @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
@@ -388,6 +394,12 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
                 # `extension_hooks.jl`. Iteration order is non-deterministic; later
                 # plugins win on key collisions.
                 if doc !== nothing
+                    # Snapshot the user's package.json before mutation so the
+                    # `finally` block can restore it. Skip when we're about to
+                    # delete the file anyway (template was substituted in).
+                    if !should_remove_package_json
+                        user_package_json_bytes = read(package_json_path)
+                    end
                     merge_plugin_dependencies!(package_json_path, doc)
                 end
                 # wrap in `node(...) do _`
@@ -424,6 +436,11 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
         if should_remove_package_json
             rm(joinpath(dirname(builddir), "package.json"))
             rm(joinpath(dirname(builddir), "package-lock.json"))
+        elseif user_package_json_bytes !== nothing
+            # Restore the user's checked-in package.json so the merge of
+            # plugin-injected `file:` deps doesn't leave the working tree
+            # dirty after every build.
+            write(joinpath(dirname(builddir), "package.json"), user_package_json_bytes)
         end
     end
 end
