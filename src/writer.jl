@@ -415,7 +415,21 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
                         @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
                         @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
                     else
-                        run(`$(npm) install`)
+                        # Capture `npm install` output so a failure prints the
+                        # actual npm error (script-exit, EBADENGINE, peer-dep
+                        # conflict, etc.) instead of just a bare `ProcessExited`
+                        # from Julia. Successful installs stay quiet.
+                        npm_out = IOBuffer()
+                        npm_err = IOBuffer()
+                        try
+                            run(pipeline(`$(npm) install`; stdout=npm_out, stderr=npm_err))
+                        catch e
+                            stdout_text = String(take!(npm_out))
+                            stderr_text = String(take!(npm_err))
+                            isempty(stdout_text) || println(stderr, "── npm install stdout ──\n", stdout_text)
+                            isempty(stderr_text) || println(stderr, "── npm install stderr ──\n", stderr_text)
+                            rethrow(e)
+                        end
                         run(`$(npm) run env -- vitepress build $(build_output_path)`)
                     end
                 end
