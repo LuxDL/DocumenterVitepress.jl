@@ -977,9 +977,14 @@ function autowrap_eqref(text::AbstractString)
     replace(text, EQREF_REGEX => m -> "\$$(m)\$")
 end
 
+# Only escape `<` and `>` here (Vue would otherwise parse them as HTML tags, see #101).
+# We deliberately do not escape `&`: vitepress copies the markdown title verbatim into
+# the per-page JSON used to set `document.title` on hydration, so an escaped `&amp;`
+# would surface as the literal 5-char string in the browser tab.
+escape_markdown_text(text::AbstractString) = replace(text, '<' => "&lt;", '>' => "&gt;")
+
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
-    wrapped = autowrap_eqref(text.text)
-    print(io, escapehtml(wrapped))
+    print(io, escape_markdown_text(autowrap_eqref(text.text)))
 end
 # Heading
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Heading, page, doc; kwargs...)

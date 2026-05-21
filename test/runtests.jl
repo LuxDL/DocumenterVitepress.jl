@@ -89,3 +89,67 @@ end
         @test occursin("""var DOCUMENTER_STABLE = "stable";""", versions_js)
     end
 end
+
+@testset "escape_markdown_text" begin
+    esc = DocumenterVitepress.escape_markdown_text
+    # Characters that don't need escaping: HTML entities in the markdown source
+    # propagate through vitepress into the page-data JSON used to set document.title,
+    # surfacing as literal `&amp;` / `&#39;` / `&quot;` in browser tab titles.
+    @test esc("PDF & SVG") == "PDF & SVG"
+    @test esc("it's") == "it's"
+    @test esc("he said \"hi\"") == "he said \"hi\""
+    # `<` and `>` must still be escaped, otherwise Vue parses them as HTML tags (#101).
+    @test esc("a <cond> b") == "a &lt;cond&gt; b"
+    @test esc("plain text") == "plain text"
+end
+
+@testset "heading escaping (full vitepress round-trip)" begin
+    mktempdir() do dir
+        dir = realpath(dir)
+        src = joinpath(dir, "src")
+        mkpath(src)
+        write(joinpath(src, "index.md"), "# PDF & SVG\n\nbody with <cond> in it.\n")
+        # DocumenterVitepress shells out to `git tag` to determine version aliases;
+        # make `dir` a git repo so that succeeds (empty repo => no tags is fine).
+        run(pipeline(`$(Documenter.git()) -C $dir init --quiet`, stdout=devnull))
+
+        Documenter.makedocs(;
+            sitename = "Test",
+            root = dir,
+            source = "src",
+            build = "build",
+            warnonly = true,
+            remotes = nothing,
+            format = DocumenterVitepress.MarkdownVitepress(
+                repo = "github.com/test/Test.jl",
+                devbranch = "main",
+                devurl = "dev",
+                deploy_decision = Documenter.DeployDecision(; all_ok = false),
+            ),
+            pages = ["index.md"],
+        )
+
+        rendered_md = read(joinpath(dir, "build", ".documenter", "index.md"), String)
+        @test occursin("# PDF & SVG", rendered_md)
+        @test occursin("&lt;cond&gt;", rendered_md)
+
+        # The browser-tab title comes from two places, and the bug only manifests in one:
+        #   1. The static `<title>` in the HTML head — vitepress HTML-escapes the title
+        #      text here, so a bare `&` becomes `&amp;` and renders correctly as `&`.
+        #   2. The page-data JSON embedded in `assets/index.md.*.js`, used by the
+        #      client to call `document.title = data.title` after hydration. Vitepress
+        #      writes the markdown title text verbatim into this JSON — so if the
+        #      markdown source held the entity-encoded form `PDF &amp; SVG`, the JSON
+        #      gets the literal 13-char string `"PDF &amp; SVG"` and the tab ends up
+        #      showing "PDF &amp; SVG" once JS runs.
+        assets_dir = joinpath(dir, "build", "1", "assets")
+        page_data_js = only(filter(
+            f -> startswith(f, "index.md.") && endswith(f, ".js") && !endswith(f, ".lean.js"),
+            readdir(assets_dir),
+        ))
+        page_data = read(joinpath(assets_dir, page_data_js), String)
+        json_title = match(r"\\\"title\\\":\\\"(.*?)\\\"", page_data)
+        @test json_title !== nothing
+        @test json_title.captures[1] == "PDF & SVG"
+    end
+end
