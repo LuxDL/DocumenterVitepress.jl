@@ -165,11 +165,8 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     push!(replacers, "sidebarDrawer: 'REPLACE_ME_DOCUMENTER_VITEPRESS_SIDEBAR_DRAWER'" => "sidebarDrawer: $(settings.sidebar_drawer)")
 
     # # Noindex for non-stable deployments
-    if settings.noindex_non_stable && base != "stable"
-        push!(replacers, "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX" => "['meta', { name: 'robots', content: 'noindex, nofollow' }],")
-    else
-        push!(replacers, "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX" => "")
-    end
+    # Handled separately in `apply_noindex` (after the other replacers run)
+    # so that user configs without the marker still get the meta tag injected.
 
     # # Favicon
 
@@ -186,6 +183,9 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
 
     new_config = replace(config, replacers...)
 
+    # Noindex for non-stable deployments
+    new_config = apply_noindex(new_config, settings.noindex_non_stable, base)
+
     # Apply plugin-supplied transforms to the now-substituted config. See
     # `extension_hooks.jl`. Iteration order over `doc.plugins` is non-deterministic.
     for plugin in values(doc.plugins)
@@ -197,6 +197,40 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     touch(vitepress_config_file)
 
     return
+end
+
+"""
+    apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::AbstractString) -> String
+
+Add a `noindex, nofollow` robots meta tag to the VitePress `config` string when
+`noindex_non_stable` is enabled and `base` is not `"stable"`, so that search
+engines only index the stable deployment.
+
+The tag replaces the `// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX` marker if
+present (as in the package template). User-supplied configs forked from older
+templates may lack the marker, in which case the tag is injected at the start
+of the `head` array instead; if neither the marker nor a `head` array can be
+found, a warning is emitted and the config is returned unchanged.
+"""
+function apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::AbstractString)
+    marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"
+    if !(noindex_non_stable && base != "stable")
+        return replace(config, marker => "")
+    end
+    head_entry = "['meta', { name: 'robots', content: 'noindex, nofollow' }],"
+    if occursin(marker, config)
+        return replace(config, marker => head_entry)
+    end
+    m = match(r"head:\s*\[", config)
+    if m !== nothing
+        return replace(config, m.match => "$(m.match)\n    $(head_entry)"; count = 1)
+    end
+    @warn """
+    DocumenterVitepress: `noindex_non_stable` is enabled and this build (base = $(repr(base))) should not be indexed,
+    but the config file contains neither the `$marker` marker nor a `head` array to inject the robots meta tag into.
+    Search engines may index this deployment. Add the marker inside the `head` array of `docs/src/.vitepress/config.mts`.
+    """
+    return config
 end
 
 """
