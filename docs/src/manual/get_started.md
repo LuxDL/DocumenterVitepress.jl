@@ -135,7 +135,7 @@ jobs:
         id: deploy
         run: |
           # Looks for: deploy_repo = "github.com/owner/repo.git"
-          DEPLOY_REPO=$(grep -oP 'deploy_repo\s*=\s*"github\.com/\K[^"]+(?=\.git")' docs/make.jl || true)
+          DEPLOY_REPO=$(grep -oP 'deploy_repo\s*=\s*"github\.com/\K[^"]+' docs/make.jl | sed 's/\.git$//' || true)
 
           if [ -n "$DEPLOY_REPO" ]; then
             echo "repo=$DEPLOY_REPO" >> "$GITHUB_OUTPUT"
