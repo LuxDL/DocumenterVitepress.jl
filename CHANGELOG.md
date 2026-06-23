@@ -1,6 +1,7 @@
 # Changelog
 
 ## unreleased
+- Added a GitHub Actions workflow for posting a PR preview comment with a link to the documentation preview. The workflow automatically reads `deploy_repo` from `docs/make.jl` to support cross-repository deployments, and only runs on PRs from the same repository (not forks) [#355](https://github.com/LuxDL/DocumenterVitepress.jl/pull/355)
 
 ## v0.3.4 - 2026-05-21
 
