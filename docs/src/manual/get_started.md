@@ -104,6 +104,89 @@ DocumenterVitepress.deploydocs(;
 
 That's it! Your documentation should now build and deploy with DocumenterVitepress.
 
+### 6. Add a PR Preview Comment
+
+To automatically post a comment with the preview URL whenever a pull request is opened, add the following workflow file to your repository at `.github/workflows/preview-comment.yml`:
+
+::: details preview-comment.yml
+
+```yaml
+name: Preview comment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Post preview URL
+    runs-on: ubuntu-latest
+    # Only run on PRs from the same repo (not forks)
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract deploy repo from make.jl
+        id: deploy
+        run: |
+          # Looks for: deploy_repo = "github.com/owner/repo.git"
+          DEPLOY_REPO=$(grep -oP 'deploy_repo\s*=\s*"github\.com/\K[^"]+(?=\.git")' docs/make.jl || true)
+
+          if [ -n "$DEPLOY_REPO" ]; then
+            echo "repo=$DEPLOY_REPO" >> "$GITHUB_OUTPUT"
+          else
+            # No cross-repo deployment found, fall back to the source repo
+            echo "repo=${{ github.repository }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment preview URL
+        uses: actions/github-script@v7
+        env:
+          DEPLOY_REPO: ${{ steps.deploy.outputs.repo }}
+        with:
+          script: |
+            const pr = context.issue.number;
+            const [deployOwner, deployRepoName] = process.env.DEPLOY_REPO.split("/");
+
+            const previewUrl = `https://${deployOwner}.github.io/${deployRepoName}/previews/PR${pr}/`;
+            const marker = "<!-- documenter-preview-comment -->";
+            const body = [
+              marker,
+              "### 📚 Documentation preview 🚀",
+              "",
+              `**Preview URL:** [${previewUrl}](${previewUrl})`,
+              "",
+              "> [!NOTE]",
+              "> The preview will be available once the documentation build completes successfully, and will reflect the last successful build for this PR.",
+            ].join("\n");
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr,
+            });
+
+            const existing = comments.find((c) => c.body?.includes(marker));
+
+            if (!existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                body,
+              });
+            }
+```
+
+:::
+
+This workflow automatically detects whether your docs are deployed to a separate repository by reading the `deploy_repo` field from `docs/make.jl`. If no cross-repo deployment is configured, it falls back to the current repository. The comment is posted once when the PR is opened and is skipped on subsequent pushes if it already exists.
+
 ## Live Development Workflow
 
 For active documentation development, you have three options:
