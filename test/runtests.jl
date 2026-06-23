@@ -3,6 +3,26 @@ using DocumenterVitepress.Documenter
 using Test
 
 
+@testset "frontmatter YAML escaping" begin
+    esc = DocumenterVitepress._escape_yaml_double_quoted
+    # plain text is unchanged
+    @test esc("plain description") == "plain description"
+    # embedded double quotes are escaped (the SphericalPendulumConstraint regression:
+    # an unescaped `"` closed the YAML scalar early and broke the Vitepress build)
+    @test esc("Mirrors the \"Spherical joint\" test") == "Mirrors the \\\"Spherical joint\\\" test"
+    # newlines become escape sequences, never raw line breaks
+    @test esc("line one\nline two") == "line one\\nline two"
+    # backslashes are doubled
+    @test esc("a\\b") == "a\\\\b"
+    # tabs and carriage returns
+    @test esc("a\tb\rc") == "a\\tb\\rc"
+    # non-string values are accepted (page meta may hold any value)
+    @test esc(:sym) == "sym"
+    # the escaped value embedded in a `key: "..."` line stays on a single line
+    val = esc("Dyad docs.  Mirrors the \"Spherical joint without state\" test")
+    @test !occursin('\n', "description: \"$val\"")
+end
+
 @testset "Bases" begin
     determine_bases(args...; kwargs...) = DocumenterVitepress.determine_bases(args...; kwargs..., log = false)
     # 0.0.X

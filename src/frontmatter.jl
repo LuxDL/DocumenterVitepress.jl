@@ -3,6 +3,36 @@
 # So, we have a stage that will merge and render all frontmatter blocks
 # before doing anything else.
 
+"""
+    _escape_yaml_double_quoted(value) -> String
+
+Escape `value` so it can be safely embedded inside a double-quoted YAML scalar
+(`key: "..."`). Page titles and descriptions set via `page.globals.meta` are
+arbitrary text; without escaping, an embedded `"` closes the scalar early and a
+raw newline turns it into a multi-line scalar, both of which produce invalid
+frontmatter and break the Vitepress build with errors such as
+`a multiline key may not be an implicit key`.
+"""
+function _escape_yaml_double_quoted(value)
+    io = IOBuffer()
+    for c in string(value)
+        if c == '\\'
+            print(io, "\\\\")
+        elseif c == '"'
+            print(io, "\\\"")
+        elseif c == '\n'
+            print(io, "\\n")
+        elseif c == '\r'
+            print(io, "\\r")
+        elseif c == '\t'
+            print(io, "\\t")
+        else
+            print(io, c)
+        end
+    end
+    return String(take!(io))
+end
+
 function merge_and_render_frontmatter(io::IO, mime::MIME"text/yaml", page, doc; kwargs...)
     frontmatter = String[]
     for block in page.mdast.children
@@ -15,10 +45,10 @@ function merge_and_render_frontmatter(io::IO, mime::MIME"text/yaml", page, doc; 
     end
 
     if haskey(page.globals.meta, :Title)
-        pushfirst!(frontmatter, "title: \"$(page.globals.meta[:Title])\"")
+        pushfirst!(frontmatter, "title: \"$(_escape_yaml_double_quoted(page.globals.meta[:Title]))\"")
     end
     if haskey(page.globals.meta, :Description)
-        pushfirst!(frontmatter, "description: \"$(page.globals.meta[:Description])\"")
+        pushfirst!(frontmatter, "description: \"$(_escape_yaml_double_quoted(page.globals.meta[:Description]))\"")
     end
     println(io, "---")
     println(io, join(frontmatter, "\n"))
