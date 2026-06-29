@@ -741,8 +741,22 @@ function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kw
     end
     # v-html takes a javascript expression that results in a string of html, but this
     # has to be parsed within the context of an html attribute, so we escape all the offending
-    # characters. vitepress will not further modify this html as is usually intended with display values.
-    print(io, "<div v-html=\"`")
+    # characters. vitepress will not further modify this html as is usually intended with
+    # display values.
+    #
+    # We additionally tag the element with the `vp-raw-html` class.  `v-html` compiles to
+    # `el.innerHTML = ...`, and **`<script>` tags inserted via `innerHTML` are never executed
+    # by the browser** (per the HTML spec).  On a hard page load this works anyway, because
+    # VitePress server-renders the markup and the browser's HTML parser runs the baked-in
+    # scripts.  But VitePress is a single-page app: on client-side navigation (e.g. clicking a
+    # sidebar link) the page is mounted on the client, `innerHTML` is set, and the scripts
+    # never run.  This is why interactive outputs such as WGLMakie/Bonito figures (which
+    # bootstrap themselves from `<script>` tags) silently fail to appear after navigation.
+    # The `vp-raw-html` class lets the theme (see `template/src/.vitepress/theme/index.ts`)
+    # find these blocks after a client-side navigation and re-execute their scripts.  Keeping
+    # the plain `v-html` means that if the theme hook is absent the output still renders as
+    # before (it just won't be re-activated on navigation), so this degrades gracefully.
+    print(io, "<div class=\"vp-raw-html\" v-html=\"`")
     escapehtml(io, repr(mime, element))
     println(io, "`\"></div>")
 end
