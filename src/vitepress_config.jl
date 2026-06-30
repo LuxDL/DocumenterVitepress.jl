@@ -302,8 +302,10 @@ get_title(doc, page::Pair{<: AbstractString, <: Any}) = first(page)
 
 # Catch all method: just broadcast over any iterable assuming it is a collection
 function pagelist2str(doc, pages, sidenav::Val)
-    contents = map(pages) do page
-        "{ " * pagelist2str(doc, page, sidenav) * " }"
+    contents = String[]
+    for page in pages
+        str = pagelist2str(doc, page, sidenav)
+        isempty(str) || push!(contents, "{ " * str * " }")  # skip omitted/hidden (`nothing`) pages
     end
     return "[" * join(contents, ",\n") * "]"
 end
@@ -315,8 +317,13 @@ end
 
 function pagelist2str(doc, name_page::Pair{<: Any, <: Any}, sidenav::Val)
     name, page = name_page
-    # This is the simplest and easiest case.
-    return pagelist2str(doc, name => page, sidenav) # , $(sidebar_items(doc, page)) }"
+    # Normalize the name to a `String` so the pair dispatches to a concrete method
+    # above. If that doesn't change the pair's type (an unsupported `page` type),
+    # error instead of recursing into this same method forever.
+    new_pair = string(name) => page
+    typeof(new_pair) === typeof(name_page) &&
+        error("DocumenterVitepress: unsupported `pages` entry $(repr(name_page)) of type $(typeof(name_page)).")
+    return pagelist2str(doc, new_pair, sidenav)
 end
 
 function pagelist2str(doc, name_page::Pair{<: Any, <: Nothing}, sidenav::Val)
@@ -332,8 +339,10 @@ end
 function pagelist2str(doc, name_contents::Pair{<: AbstractString, <: AbstractArray}, sidenav::Val)
     name, contents = name_contents
     # This is for nested stuff.  Should work automatically but you never know...
-    rendered_contents = map(contents) do content
-        "{" * pagelist2str(doc, content, sidenav) * "}"
+    rendered_contents = String[]
+    for content in contents
+        str = pagelist2str(doc, content, sidenav)
+        isempty(str) || push!(rendered_contents, "{" * str * "}")  # skip omitted/hidden (`nothing`) pages
     end
     final_contents = join(rendered_contents, ",\n")
     collapse = if sidenav === Val(:sidebar)
