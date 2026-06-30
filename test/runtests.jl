@@ -23,6 +23,17 @@ using Test
     @test !occursin('\n', "description: \"$val\"")
 end
 
+@testset "frontmatter delimiter stripping" begin
+    strip_delims = DocumenterVitepress._strip_frontmatter_delimiters
+    # no trailing newline
+    @test strip_delims("---\ntitle: My Page\n---") == "title: My Page"
+    # trailing newline must not leave the closing `---` behind (the regression)
+    @test strip_delims("---\ntitle: My Page\n---\n") == "title: My Page"
+    @test !occursin("---", strip_delims("---\ntitle: My Page\n---\n"))
+    # multi-line body and surrounding whitespace
+    @test strip_delims("\n---\na: 1\nb: 2\n---\n\n") == "a: 1\nb: 2"
+end
+
 @testset "Bases" begin
     determine_bases(args...; kwargs...) = DocumenterVitepress.determine_bases(args...; kwargs..., log = false)
     # 0.0.X

@@ -30,24 +30,38 @@ function _escape_yaml_double_quoted(value)
     return String(take!(io))
 end
 
+"""
+    _strip_frontmatter_delimiters(text) -> String
+
+Return the inner YAML of a raw `---\\n…\\n---` frontmatter block, dropping the
+opening/closing `---` and any surrounding whitespace. Robust to a trailing
+newline (a plain `split(text, "\\n")[2:end-1]` would leave the closing `---` in
+place when the block ends with one).
+"""
+function _strip_frontmatter_delimiters(text::AbstractString)
+    cleaned = strip(text)
+    head = startswith(cleaned, "---") ? 3 : 0
+    tail = endswith(cleaned, "---") ? 3 : 0
+    return strip(chop(cleaned; head, tail))
+end
+
 function merge_and_render_frontmatter(io::IO, mime::MIME"text/yaml", page, doc; kwargs...)
-    frontmatter = String[]
+    # Print directly to `io`: one frontmatter block, meta first, then the page's
+    # own `@frontmatter` / raw blocks (which win on duplicate keys).
+    println(io, "---")
+    if haskey(page.globals.meta, :Title)
+        println(io, "title: \"$(_escape_yaml_double_quoted(page.globals.meta[:Title]))\"")
+    end
+    if haskey(page.globals.meta, :Description)
+        println(io, "description: \"$(_escape_yaml_double_quoted(page.globals.meta[:Description]))\"")
+    end
     for block in page.mdast.children
         element = block.element
         if element isa MarkdownAST.CodeBlock && element.info == "@frontmatter"
-            push!(frontmatter, element.code)
+            println(io, rstrip(element.code))
         elseif element isa Documenter.RawNode && startswith(element.text, "---")
-            push!(frontmatter, join(split(element.text, "\n")[2:end-1], "\n"))
+            println(io, _strip_frontmatter_delimiters(element.text))
         end
     end
-
-    if haskey(page.globals.meta, :Title)
-        pushfirst!(frontmatter, "title: \"$(_escape_yaml_double_quoted(page.globals.meta[:Title]))\"")
-    end
-    if haskey(page.globals.meta, :Description)
-        pushfirst!(frontmatter, "description: \"$(_escape_yaml_double_quoted(page.globals.meta[:Description]))\"")
-    end
-    println(io, "---")
-    println(io, join(frontmatter, "\n"))
     println(io, "---")
 end
