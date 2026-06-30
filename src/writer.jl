@@ -739,29 +739,14 @@ function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kw
         end
         return
     end
-    # v-html takes a javascript expression that results in a string of html, but this
-    # has to be parsed within the context of an html attribute, so we escape all the offending
-    # characters. vitepress will not further modify this html as is usually intended with
-    # display values.
+    # Escape so the html can sit inside a `v-html` js template literal in an html attribute.
     html = repr(mime, element)
 
-    # `v-html` compiles to `el.innerHTML = ...`, and **`<script>` tags inserted via
-    # `innerHTML` are never executed by the browser** (per the HTML spec). On a hard page
-    # load this is masked, because VitePress server-renders the markup and the browser's HTML
-    # parser runs the baked-in scripts. But VitePress is a single-page app: on client-side
-    # navigation the page is mounted on the client, `innerHTML` is set, and the scripts never
-    # run. Interactive outputs that bootstrap from `<script>` tags (most notably
-    # WGLMakie/Bonito figures) therefore silently fail to appear.
-    #
-    # So when the output contains a `<script>`, we (a) wrap it in `<ClientOnly>` so it is not
-    # server-rendered at all -- there is no point SSR-ing a client-only widget (it can be
-    # multiple MB), and it keeps the SSR HTML small -- and (b) tag it with the `v-exec-scripts`
-    # directive (registered in `template/src/.vitepress/theme/index.ts`) which, after the
-    # element mounts on the client (initial render *and* every client-side navigation),
-    # re-creates the `<script>` elements so they actually execute.
-    #
-    # Script-free output keeps the plain, server-rendered `v-html` path: it renders fine
-    # without any client JS, so this degrades gracefully even with a custom theme.
+    # `v-html` sets `innerHTML`, which never runs `<script>` tags. So output containing a script
+    # (e.g. WGLMakie/Bonito figures) is wrapped in `<ClientOnly>` (no point server-rendering a
+    # client-only, possibly multi-MB widget) and tagged with the `v-exec-scripts` directive,
+    # which executes the scripts on mount (see `template/src/.vitepress/theme/index.ts`).
+    # Script-free output keeps the plain, server-rendered `v-html`.
     if occursin(r"<script"i, html)
         println(io, "<ClientOnly>")
         print(io, "<div class=\"vp-raw-html\" v-exec-scripts v-html=\"`")
