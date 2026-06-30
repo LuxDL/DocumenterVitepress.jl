@@ -153,6 +153,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # # Sidebar drawer toggle
     push!(replacers, "sidebarDrawer: 'REPLACE_ME_DOCUMENTER_VITEPRESS_SIDEBAR_DRAWER'" => "sidebarDrawer: $(settings.sidebar_drawer)")
 
+    # # Noindex for non-stable deployments
+    # Handled separately in `apply_noindex` (after the other replacers run)
+    # so that user configs without the marker still get the meta tag injected.
+
     # # Favicon
 
     if occursin("rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'", config)
@@ -167,6 +171,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Finally, run all the replacers and write the new config file
 
     new_config = replace(config, replacers...)
+
+    # Noindex for non-stable deployments
+    new_config = apply_noindex(new_config, settings.noindex_non_stable, base)
+
     write(vitepress_config_file, new_config)
     yield()
     touch(vitepress_config_file)
@@ -175,6 +183,36 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
 end
 
 function _get_raw_text(element)
+end
+
+"""
+    apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::AbstractString) -> String
+
+Inject a `noindex, nofollow` robots meta into `config` for non-stable, non-root
+deployments. Replaces the marker if present, else injects into the `head` array;
+warns and returns `config` unchanged if neither is found.
+"""
+function apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::AbstractString)
+    marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"
+    # Empty base = root deploy (single-version); keep it indexable.
+    if !(noindex_non_stable && base != "stable" && !isempty(base))
+        return replace(config, marker => "")
+    end
+    head_entry = "['meta', { name: 'robots', content: 'noindex, nofollow' }],"
+    if occursin(marker, config)
+        return replace(config, marker => head_entry)
+    end
+    # Match `head: [`, allowing quoted keys and flexible whitespace.
+    m = match(r"['\"]?head['\"]?\s*:\s*\[", config)
+    if m !== nothing
+        return replace(config, m.match => "$(m.match)\n    $(head_entry)"; count = 1)
+    end
+    @warn """
+    DocumenterVitepress: `noindex_non_stable` is enabled and this build (base = $(repr(base))) should not be indexed,
+    but the config file contains neither the `$marker` marker nor a `head` array to inject the robots meta tag into.
+    Search engines may index this deployment. Add the marker inside the `head` array of `docs/src/.vitepress/config.mts`.
+    """
+    return config
 end
 
 function pagelist2str(doc, page::String)

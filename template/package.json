@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@nolebase/vitepress-plugin-enhanced-readabilities": "^2.18.2",
+    "@mathjax/src": "^4.1.2",
     "@mdit/plugin-mathjax": "^0.26.1",
     "@mdit/plugin-tex": "^0.24.1",
     "markdown-it-footnote": "^4.0.0",
