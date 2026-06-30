@@ -1,7 +1,5 @@
-# In Vitepress you can only have one frontmatter block.
-# But users / other Documenter stages may inject multiple.
-# So, we have a stage that will merge and render all frontmatter blocks
-# before doing anything else.
+# Vitepress allows only one frontmatter block, but users / Documenter stages may
+# inject several, so this stage merges them into one.
 
 """
     _escape_yaml_double_quoted(value) -> String
@@ -33,10 +31,8 @@ end
 """
     _strip_frontmatter_delimiters(text) -> String
 
-Return the inner YAML of a raw `---\\n…\\n---` frontmatter block, dropping the
-opening/closing `---` and any surrounding whitespace. Robust to a trailing
-newline (a plain `split(text, "\\n")[2:end-1]` would leave the closing `---` in
-place when the block ends with one).
+Inner YAML of a `---…---` block, robust to a trailing newline that a plain
+`split[2:end-1]` would mishandle (leaving the closing `---`).
 """
 function _strip_frontmatter_delimiters(text::AbstractString)
     cleaned = strip(text)
@@ -46,8 +42,7 @@ function _strip_frontmatter_delimiters(text::AbstractString)
 end
 
 function merge_and_render_frontmatter(io::IO, mime::MIME"text/yaml", page, doc; kwargs...)
-    # Print directly to `io`: one frontmatter block, meta first, then the page's
-    # own `@frontmatter` / raw blocks (which win on duplicate keys).
+    # One merged block; later (page) blocks win on duplicate keys.
     println(io, "---")
     if haskey(page.globals.meta, :Title)
         println(io, "title: \"$(_escape_yaml_double_quoted(page.globals.meta[:Title]))\"")

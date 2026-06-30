@@ -7,8 +7,7 @@ using Test
     esc = DocumenterVitepress._escape_yaml_double_quoted
     # plain text is unchanged
     @test esc("plain description") == "plain description"
-    # embedded double quotes are escaped (the SphericalPendulumConstraint regression:
-    # an unescaped `"` closed the YAML scalar early and broke the Vitepress build)
+    # double quotes escaped (the regression: an unescaped `"` broke the build)
     @test esc("Mirrors the \"Spherical joint\" test") == "Mirrors the \\\"Spherical joint\\\" test"
     # newlines become escape sequences, never raw line breaks
     @test esc("line one\nline two") == "line one\\nline two"
