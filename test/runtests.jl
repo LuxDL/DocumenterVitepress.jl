@@ -189,8 +189,7 @@ end
     @test !occursin("noindex", out)
     @test !occursin(marker, out)
 
-    # User-supplied config forked from an older template: no marker, but a
-    # `head` array is present -> the meta entry is injected into `head`.
+    # User config (no marker) but with a `head` array -> injected into `head`.
     user_config = """
     export default defineConfig({
       head: [

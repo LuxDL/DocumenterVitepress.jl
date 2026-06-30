@@ -188,19 +188,13 @@ end
 """
     apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::AbstractString) -> String
 
-Add a `noindex, nofollow` robots meta tag to the VitePress `config` string when
-`noindex_non_stable` is enabled and `base` is not `"stable"`, so that search
-engines only index the stable deployment.
-
-The tag replaces the `// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX` marker if
-present (as in the package template). User-supplied configs forked from older
-templates may lack the marker, in which case the tag is injected at the start
-of the `head` array instead; if neither the marker nor a `head` array can be
-found, a warning is emitted and the config is returned unchanged.
+Inject a `noindex, nofollow` robots meta into `config` for non-stable, non-root
+deployments. Replaces the marker if present, else injects into the `head` array;
+warns and returns `config` unchanged if neither is found.
 """
 function apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::AbstractString)
     marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"
-    # An empty `base` is the root deployment (single-version sites) and must stay indexable.
+    # Empty base = root deploy (single-version); keep it indexable.
     if !(noindex_non_stable && base != "stable" && !isempty(base))
         return replace(config, marker => "")
     end
@@ -208,8 +202,7 @@ function apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::A
     if occursin(marker, config)
         return replace(config, marker => head_entry)
     end
-    # Match `head: [` with optional quotes around the key and flexible whitespace
-    # (`head:[`, `'head': [`, `"head" : [`, …).
+    # Match `head: [`, allowing quoted keys and flexible whitespace.
     m = match(r"['\"]?head['\"]?\s*:\s*\[", config)
     if m !== nothing
         return replace(config, m.match => "$(m.match)\n    $(head_entry)"; count = 1)
