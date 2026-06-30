@@ -1,5 +1,5 @@
 // .vitepress/theme/index.ts
-import { h, nextTick } from 'vue'
+import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import type { Theme as ThemeConfig } from 'vitepress'
 import 'virtual:mathjax-styles.css';
@@ -21,25 +21,20 @@ import './style.css' // You could setup your own, or else a default will be copi
 import './docstrings.css' // You could setup your own, or else a default will be copied.
 
 // ---------------------------------------------------------------------------
-// Re-execute <script> tags in `text/html` show-output blocks after client-side
-// navigation.
+// Execute <script> tags in interactive `text/html` show-output blocks.
 //
-// DocumenterVitepress renders `Base.show(::IO, ::MIME"text/html", x)` output via
-// Vue's `v-html` (see `render_mime(::MIME"text/html")` in `src/writer.jl`), tagging
-// the wrapper with the `vp-raw-html` class.  `v-html` compiles to `el.innerHTML = …`,
-// and the browser never executes `<script>` elements inserted via `innerHTML`.
+// DocumenterVitepress renders `Base.show(::IO, ::MIME"text/html", x)` output via Vue's
+// `v-html` (see `render_mime(::MIME"text/html")` in `src/writer.jl`). `v-html` compiles to
+// `el.innerHTML = …`, and the browser never executes `<script>` elements inserted via
+// `innerHTML`. Interactive outputs that bootstrap from `<script>` tags — most notably
+// WGLMakie/Bonito figures — therefore fail to appear (you just see a loading spinner).
 //
-// On a hard page load this is invisible, because VitePress server-renders the markup
-// and the browser's HTML parser runs the baked-in scripts.  But VitePress is a SPA:
-// on client-side navigation the page is mounted on the client, `innerHTML` is set, and
-// the scripts never run.  Interactive outputs that bootstrap from `<script>` tags —
-// most notably WGLMakie/Bonito figures — therefore silently fail to appear (you just
-// see the Bonito loading spinner) until the page is hard-reloaded.
-//
-// `reactivateRawHtml` walks every `.vp-raw-html` block and replaces its `<script>`
-// elements with freshly-created, executable copies, preserving document order (it waits
-// for `src` scripts to load before running the next, so ordering dependencies such as
-// "load the bundle before calling into it" are respected).
+// For such output the writer wraps the block in `<ClientOnly>` (so it is not server-rendered)
+// and tags it with `v-exec-scripts`. This directive runs after the element mounts on the
+// client — on the initial render *and* on every client-side navigation (each navigation
+// remounts the page component) — and replaces every `<script>` with a freshly-created,
+// executable copy, preserving document order (it waits for `src` scripts to load before
+// running the next, so "load the bundle before calling into it" ordering holds).
 function activateScripts(container: Element): void {
   const scripts = Array.from(container.querySelectorAll('script'))
   // Run sequentially to preserve execution order (bundle before init, etc.).
@@ -68,11 +63,6 @@ function activateScripts(container: Element): void {
   }
 }
 
-function reactivateRawHtml(): void {
-  if (typeof document === 'undefined') return
-  document.querySelectorAll('.vp-raw-html').forEach((el) => activateScripts(el))
-}
-
 export const Theme: ThemeConfig = {
   extends: DefaultTheme,
   Layout() {
@@ -92,20 +82,15 @@ export const Theme: ThemeConfig = {
     app.component('AuthorBadge', AuthorBadge)
     app.component('Authors', Authors)
 
-    // After a client-side navigation, re-run the scripts in `text/html` outputs so that
-    // interactive figures (WGLMakie/Bonito, Plotly, …) initialise instead of staying blank.
-    // We deliberately only do this on navigation, not on the initial load: on the initial
-    // load the scripts are already executed by the browser's HTML parser, so re-running them
-    // would render the figure twice.
-    if (!import.meta.env.SSR) {
-      const previous = router.onAfterRouteChanged
-      router.onAfterRouteChanged = (to: string) => {
-        previous?.(to)
-        // Wait for the freshly-navigated page (including its `v-html` content) to be in the
-        // DOM before re-activating the scripts.
-        nextTick(() => requestAnimationFrame(reactivateRawHtml))
-      }
-    }
+    // Execute the scripts inside interactive `text/html` outputs (WGLMakie/Bonito, Plotly, …)
+    // once their `<ClientOnly>` wrapper has mounted on the client. `mounted` fires on the
+    // initial client render and again whenever the page component is remounted by a
+    // client-side navigation, so figures initialise instead of staying blank.
+    app.directive('exec-scripts', {
+      mounted(el: HTMLElement) {
+        activateScripts(el)
+      },
+    })
   }
 }
 export default Theme
