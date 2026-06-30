@@ -6,12 +6,9 @@
 """
     _escape_yaml_double_quoted(value) -> String
 
-Escape `value` so it can be safely embedded inside a double-quoted YAML scalar
-(`key: "..."`). Page titles and descriptions set via `page.globals.meta` are
-arbitrary text; without escaping, an embedded `"` closes the scalar early and a
-raw newline turns it into a multi-line scalar, both of which produce invalid
-frontmatter and break the Vitepress build with errors such as
-`a multiline key may not be an implicit key`.
+Escape `value` for embedding in a double-quoted YAML scalar (`key: "..."`). Page
+titles/descriptions from `page.globals.meta` are arbitrary text; an unescaped `"`
+or newline would otherwise close the scalar early and break the frontmatter.
 """
 function _escape_yaml_double_quoted(value)
     io = IOBuffer()

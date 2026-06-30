@@ -224,9 +224,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
 
-    # Copy plugin-provided static assets into `public/`. See `extension_hooks.jl`.
-    # Iteration order over `doc.plugins` (a Dict) is non-deterministic, so a name
-    # collision between two plugins resolves to whichever ran last.
+    # Copy each plugin's static assets into `public/` (see `extension_hooks.jl`).
     public_dir = joinpath(builddir, settings.md_output_path, "public")
     mkpath(public_dir)
     for plugin in values(doc.plugins)
@@ -235,11 +233,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 @warn "DocumenterVitepress: plugin $(typeof(plugin)) registered asset directory $(repr(asset_dir)) which does not exist; skipping."
                 continue
             end
-            for entry in readdir(asset_dir)
-                src = joinpath(asset_dir, entry)
-                dst = joinpath(public_dir, entry)
-                cp(src, dst; force = true)
-            end
+            _merge_copy!(asset_dir, public_dir)
         end
     end
 
@@ -324,16 +318,28 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     return
 end
 
+# Recursively copy `src` to `dst`, merging into existing directories instead of
+# replacing them: `cp(; force=true)` on a directory deletes the whole destination
+# subtree first, which would drop files an earlier plugin (or the user) already
+# placed there. Individual files are still overwritten (last writer wins).
+function _merge_copy!(src, dst)
+    if isdir(src)
+        mkpath(dst)
+        for entry in readdir(src)
+            _merge_copy!(joinpath(src, entry), joinpath(dst, entry))
+        end
+    else
+        mkpath(dirname(dst))
+        cp(src, dst; force = true)
+    end
+end
+
 """
     merge_plugin_dependencies!(package_json_path::String, doc)
 
-Walk `doc.plugins`, collect every plugin's `vitepress_dependencies(plugin)`, and
-merge the result into the `dependencies` object of the `package.json` at
-`package_json_path`. The file is rewritten in place with 2-space indentation and
-a trailing newline. No-op if no plugin contributes any dependency.
-
-Iteration order over `doc.plugins` is non-deterministic, so on a key collision
-between two plugins the winner is implementation-defined.
+Merge every plugin's `vitepress_dependencies` into the `dependencies` object of
+the `package.json` at `package_json_path`, rewriting it in place (2-space indent,
+trailing newline). No-op when no plugin contributes a dependency.
 """
 function merge_plugin_dependencies!(package_json_path::String, doc)
     extra = Dict{String,String}()
@@ -362,11 +368,9 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
     @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
     # Build the docs using `npm`
     should_remove_package_json = false
-    # Snapshot of the user's `docs/package.json` taken right before plugin
-    # deps are merged in, so we can restore it in `finally`. Without this,
-    # every build would leave `docs/package.json` dirty in git with the
-    # plugin-injected `file:` deps. `nothing` means "do not restore"
-    # (file didn't exist, or we're going to delete it ourselves).
+    # Pre-merge snapshot of the user's `docs/package.json`, restored in `finally`
+    # so injected plugin deps don't leave the working tree dirty. `nothing` = no
+    # restore (file was absent, or we delete it ourselves below).
     user_package_json_bytes::Union{Vector{UInt8},Nothing} = nothing
     try
         if !isfile(joinpath(dirname(builddir), "package.json"))
@@ -390,13 +394,9 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
                     cp(template_path, package_json_path)
                     should_remove_package_json = true
                 end
-                # Merge plugin-provided npm dependencies into package.json. See
-                # `extension_hooks.jl`. Iteration order is non-deterministic; later
-                # plugins win on key collisions.
+                # Merge plugin-provided npm deps into package.json (see `extension_hooks.jl`).
                 if doc !== nothing
-                    # Snapshot the user's package.json before mutation so the
-                    # `finally` block can restore it. Skip when we're about to
-                    # delete the file anyway (template was substituted in).
+                    # Snapshot before mutating; skip if we'll delete the file anyway.
                     if !should_remove_package_json
                         user_package_json_bytes = read(package_json_path)
                     end
@@ -415,10 +415,8 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
                         @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
                         @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
                     else
-                        # Capture `npm install` output so a failure prints the
-                        # actual npm error (script-exit, EBADENGINE, peer-dep
-                        # conflict, etc.) instead of just a bare `ProcessExited`
-                        # from Julia. Successful installs stay quiet.
+                        # Capture output so a failed install surfaces npm's real
+                        # error instead of a bare `ProcessExited`; quiet on success.
                         npm_out = IOBuffer()
                         npm_err = IOBuffer()
                         try
@@ -451,9 +449,7 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
             rm(joinpath(dirname(builddir), "package.json"))
             rm(joinpath(dirname(builddir), "package-lock.json"))
         elseif user_package_json_bytes !== nothing
-            # Restore the user's checked-in package.json so the merge of
-            # plugin-injected `file:` deps doesn't leave the working tree
-            # dirty after every build.
+            # Restore the user's checked-in package.json (drop the injected plugin deps).
             write(joinpath(dirname(builddir), "package.json"), user_package_json_bytes)
         end
     end
