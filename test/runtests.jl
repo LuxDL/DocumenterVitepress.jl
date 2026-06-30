@@ -278,3 +278,22 @@ end
         @test read(joinpath(public, "top.txt"), String) == "from-b"
     end
 end
+
+@testset "pagelist2str dispatch" begin
+    # `Pair`-based entries don't touch `doc`, so a dummy `nothing` is enough here.
+    p2s(arg) = DocumenterVitepress.pagelist2str(nothing, arg, Val(:sidebar))
+    # leaf pair
+    @test occursin("text: 'Home'", p2s("Home" => "index.md"))
+    # a non-String name routes through the `Any => Any` fallback without recursing forever
+    @test occursin("text: 'sym'", p2s(:sym => "page.md"))
+    # a `nothing` page is omitted
+    @test p2s("Hidden" => nothing) == ""
+    # a genuinely unsupported page type errors instead of infinitely recursing
+    @test_throws ErrorException p2s("bad" => 123)
+    # nested arrays drop omitted children — no `{}` junk
+    nested = p2s("Sec" => ["A" => "a.md", "Skip" => nothing])
+    @test occursin("text: 'A'", nested)
+    @test !occursin("{}", nested)
+    # collection level filters empties too — no `{  }` junk
+    @test !occursin("{  }", p2s(["A" => "a.md", "Skip" => nothing]))
+end
