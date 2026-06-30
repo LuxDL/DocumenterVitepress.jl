@@ -12,14 +12,12 @@ end
 # So you can only really pull this trick once in a Julia session
 # But because doc.user.pages is a Vector{Any}, we can't really do anything about it.
 function DocumenterVitepress.pagelist2str(doc, ds::Vector{<: Any}, ::Val{:sidebar})
-    println("Hello World!!!")
     if !all(x -> x isa DecomposeInSidebar, ds)
         # if this is false, invoke the default method.
         return invoke(pagelist2str, Tuple{Any, Any, Val{:sidebar}}, doc, ds, Val(:sidebar))
     end
     contents = DocumenterVitepress.pagelist2str.((doc,), ds, (Val(:sidebar),))
     ret = "{\n" * join(contents, ",\n") * "\n}"
-    println(ret)
     return ret
 end
 
