@@ -77,6 +77,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
+    # Inject plugin Vue components into the theme entry (see `extension_hooks.jl`),
+    # after it's been written to the build dir.
+    inject_plugin_components!(joinpath(build_vitepress_dir, "theme", "index.ts"), doc)
+
     # We have already rewritten the config file, so we can't get burned by clean=false
     # again.
     vitepress_config_file = joinpath(build_vitepress_dir, "config.mts")
@@ -175,6 +179,11 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Noindex for non-stable deployments
     new_config = apply_noindex(new_config, settings.noindex_non_stable, base)
 
+    # Apply each plugin's config transform (see `extension_hooks.jl`).
+    for plugin in values(doc.plugins)
+        new_config = vitepress_config_transform(plugin, new_config)
+    end
+
     write(vitepress_config_file, new_config)
     yield()
     touch(vitepress_config_file)
@@ -213,6 +222,66 @@ function apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::A
     Search engines may index this deployment. Add the marker inside the `head` array of `docs/src/.vitepress/config.mts`.
     """
     return config
+end
+
+"""
+    inject_plugin_components!(theme_index_path::String, doc)
+
+Inject every plugin's `vitepress_components` into `theme_index_path` at its two
+injection markers. Warns and no-ops if a custom theme lacks them, or if no
+components are contributed.
+"""
+function inject_plugin_components!(theme_index_path::String, doc)
+    components = @NamedTuple{name::String, import_path::String}[]
+    for plugin in values(doc.plugins)
+        append!(components, vitepress_components(plugin))
+    end
+    isempty(components) && return
+    isfile(theme_index_path) || return  # nothing to inject into
+
+    contents = read(theme_index_path, String)
+
+    import_marker = "// __DV_PLUGIN_COMPONENT_IMPORTS__"
+    register_marker = "// __DV_PLUGIN_COMPONENT_REGISTRATIONS__"
+
+    if !occursin(import_marker, contents) || !occursin(register_marker, contents)
+        @warn """
+            DocumenterVitepress: plugin(s) registered Vue components via `vitepress_components`,
+            but `$(theme_index_path)` does not contain the required injection markers
+            `$(import_marker)` and `$(register_marker)`. Skipping injection. Add these markers
+            to your custom `theme/index.ts` (one in the import section, one inside `enhanceApp`)
+            to opt in.
+            """
+        return
+    end
+
+    # A stable, file-unique JS identifier per component name.
+    seen = Set{String}()
+    imports = String[]
+    registrations = String[]
+    for c in components
+        sym = "DV_PLUGIN_" * replace(c.name, r"[^A-Za-z0-9_]" => "_")
+        # Ensure the local symbol is unique within this file.
+        base_sym = sym
+        i = 1
+        while sym in seen
+            i += 1
+            sym = string(base_sym, "_", i)
+        end
+        push!(seen, sym)
+        push!(imports, "import $(sym) from $(repr(c.import_path));")
+        push!(registrations, "app.component($(repr(c.name)), $(sym));")
+    end
+
+    # The marker supplies the first line's indent; indent only continuation lines
+    # (imports at column 0, registrations inside `enhanceApp` at 4 spaces).
+    new_contents = replace(
+        contents,
+        import_marker => join(imports, "\n"),
+        register_marker => join(registrations, "\n    "),
+    )
+    write(theme_index_path, new_contents)
+    return
 end
 
 function pagelist2str(doc, page::String)

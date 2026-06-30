@@ -253,3 +253,28 @@ end
     out = @test_logs (:warn,) match_mode = :any apply_noindex(bare_config, true, "dev")
     @test out == bare_config
 end
+
+@testset "plugin asset merge-copy" begin
+    merge_copy! = DocumenterVitepress._merge_copy!
+    mktempdir() do root
+        a = joinpath(root, "plugin_a")
+        b = joinpath(root, "plugin_b")
+        public = joinpath(root, "public")
+        # Two plugins ship into the same-named subdirectory but with different files.
+        mkpath(joinpath(a, "sub")); write(joinpath(a, "sub", "a.js"), "a")
+        mkpath(joinpath(b, "sub")); write(joinpath(b, "sub", "b.js"), "b")
+
+        merge_copy!(a, public)
+        merge_copy!(b, public)
+
+        # Both survive: the second copy merged into `sub/` rather than replacing it
+        # (a plain `cp(; force=true)` on the directory would have deleted `a.js`).
+        @test isfile(joinpath(public, "sub", "a.js"))
+        @test isfile(joinpath(public, "sub", "b.js"))
+
+        # Same-named files still overwrite, last writer wins.
+        write(joinpath(a, "top.txt"), "from-a"); merge_copy!(a, public)
+        write(joinpath(b, "top.txt"), "from-b"); merge_copy!(b, public)
+        @test read(joinpath(public, "top.txt"), String) == "from-b"
+    end
+end
