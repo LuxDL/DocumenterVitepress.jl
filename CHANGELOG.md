@@ -1,6 +1,8 @@
 # Changelog
 
 ## unreleased
+
+- `npm install` failures now surface the captured npm stderr/stdout via `@error` instead of a bare `ProcessExited` [#362](https://github.com/LuxDL/DocumenterVitepress.jl/pull/362)
 - Added a frontmatter stage that merges multiple `@frontmatter`/raw blocks into the single block VitePress allows, emits page `title` and meta `description`, and escapes them for YAML [#358](https://github.com/LuxDL/DocumenterVitepress.jl/pull/358)
 - Added a `write_inventory` option to `MarkdownVitepress` (default `true`); set it to `false` to skip writing the `objects.inv` inventory [#360](https://github.com/LuxDL/DocumenterVitepress.jl/pull/360)
 - Added a `noindex_non_stable` option to `MarkdownVitepress` (default `true`) that injects a `noindex, nofollow` robots meta into non-stable, non-root deployments so search engines only index the stable docs [#361](https://github.com/LuxDL/DocumenterVitepress.jl/pull/361)
