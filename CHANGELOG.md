@@ -2,6 +2,7 @@
 
 ## unreleased
 - Added a `write_inventory` option to `MarkdownVitepress` (default `true`); set it to `false` to skip writing the `objects.inv` inventory [#360](https://github.com/LuxDL/DocumenterVitepress.jl/pull/360)
+- Added a `noindex_non_stable` option to `MarkdownVitepress` (default `true`) that injects a `noindex, nofollow` robots meta into non-stable, non-root deployments so search engines only index the stable docs [#361](https://github.com/LuxDL/DocumenterVitepress.jl/pull/361)
 - Interactive `text/html` show output that contains `<script>` tags (e.g. WGLMakie/Bonito figures, Plotly) now actually runs. Such output is wrapped in `<ClientOnly>` (so the potentially-multi-MB widget is not server-rendered) and its scripts are executed on the client via a new `v-exec-scripts` directive, on the initial render and on client-side navigation — previously `v-html` set `innerHTML`, whose `<script>` tags the browser never executes, so figures only appeared on a hard reload. Script-free HTML output keeps the plain server-rendered `v-html` path.
 - Added a GitHub Actions workflow for posting a PR preview comment with a link to the documentation preview. The workflow automatically reads `deploy_repo` from `docs/make.jl` to support cross-repository deployments, and only runs on PRs from the same repository (not forks) [#355](https://github.com/LuxDL/DocumenterVitepress.jl/pull/355)
 

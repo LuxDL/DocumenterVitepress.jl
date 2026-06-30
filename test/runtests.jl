@@ -153,3 +153,73 @@ end
         @test json_title.captures[1] == "PDF & SVG"
     end
 end
+
+@testset "noindex injection" begin
+    apply_noindex = DocumenterVitepress.apply_noindex
+    marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"
+    meta = "['meta', { name: 'robots', content: 'noindex, nofollow' }],"
+
+    # Config like the package template: marker present inside `head`.
+    template_config = """
+    export default defineConfig({
+      head: [
+        ['link', { rel: 'icon', href: 'favicon.ico' }],
+        $marker
+      ],
+    })
+    """
+
+    # Non-stable base -> marker replaced with the robots meta entry.
+    out = apply_noindex(template_config, true, "v1.2.3")
+    @test occursin(meta, out)
+    @test !occursin(marker, out)
+
+    # Stable base -> marker removed, no robots meta emitted.
+    out = apply_noindex(template_config, true, "stable")
+    @test !occursin("noindex", out)
+    @test !occursin(marker, out)
+
+    # Root base (empty string) -> root / single-version deploy stays indexable.
+    out = apply_noindex(template_config, true, "")
+    @test !occursin("noindex", out)
+    @test !occursin(marker, out)
+
+    # Feature disabled -> marker removed, no robots meta emitted.
+    out = apply_noindex(template_config, false, "dev")
+    @test !occursin("noindex", out)
+    @test !occursin(marker, out)
+
+    # User config (no marker) but with a `head` array -> injected into `head`.
+    user_config = """
+    export default defineConfig({
+      head: [
+        ['link', { rel: 'icon', href: 'favicon.ico' }],
+      ],
+    })
+    """
+    out = apply_noindex(user_config, true, "dev")
+    @test occursin(meta, out)
+    @test first(findfirst(meta, out)) > first(findfirst("head: [", out)) # inside `head`
+    out = apply_noindex(user_config, true, "v1.2")
+    @test occursin(meta, out)
+    out = apply_noindex(user_config, true, "stable")
+    @test !occursin("noindex", out)
+    out = apply_noindex(user_config, false, "dev")
+    @test !occursin("noindex", out)
+
+    # Quoted `head` key (as a linter/formatter may emit) is still matched.
+    quoted_config = """
+    export default defineConfig({
+      "head": [
+        ['link', { rel: 'icon', href: 'favicon.ico' }],
+      ],
+    })
+    """
+    out = apply_noindex(quoted_config, true, "dev")
+    @test occursin(meta, out)
+
+    # No marker and no `head` array at all -> warn, leave config unchanged.
+    bare_config = "export default defineConfig({ title: 'x' })"
+    out = @test_logs (:warn,) match_mode = :any apply_noindex(bare_config, true, "dev")
+    @test out == bare_config
+end
