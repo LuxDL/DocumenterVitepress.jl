@@ -2,6 +2,8 @@
 
 ## unreleased
 
+- Fixed list ordering / numbering and removed extra newlines [#276](https://github.com/LuxDL/DocumenterVitepress.jl/pull/276).
+
 ## v0.3.3 - 2026-04-10
 - Fixed Windows paths for `Documenter`-crosslinks (`Documenter.PageLink` and `Documenter.LocalLink`) and for the nav/sidebar (via `pagelist2str`) [#340](https://github.com/LuxDL/DocumenterVitepress.jl/pull/340)
 - Improved visual distinction between code input and output blocks: output blocks now have a distinct background and a surrounding border [#338](https://github.com/LuxDL/DocumenterVitepress.jl/pull/338)
