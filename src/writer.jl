@@ -326,8 +326,7 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings)
                         @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
                         @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
                     else
-                        # Capture output so a failed install surfaces npm's real
-                        # error instead of a bare `ProcessExited`; quiet on success.
+                        # Surface npm's real error, not a bare ProcessExited.
                         npm_out = IOBuffer()
                         npm_err = IOBuffer()
                         try
