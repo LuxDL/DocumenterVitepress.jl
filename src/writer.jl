@@ -739,12 +739,25 @@ function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kw
         end
         return
     end
-    # v-html takes a javascript expression that results in a string of html, but this
-    # has to be parsed within the context of an html attribute, so we escape all the offending
-    # characters. vitepress will not further modify this html as is usually intended with display values.
-    print(io, "<div v-html=\"`")
-    escapehtml(io, repr(mime, element))
-    println(io, "`\"></div>")
+    # Escape so the html can sit inside a `v-html` js template literal in an html attribute.
+    html = repr(mime, element)
+
+    # `v-html` sets `innerHTML`, which never runs `<script>` tags. So output containing a script
+    # (e.g. WGLMakie/Bonito figures) is wrapped in `<ClientOnly>` (no point server-rendering a
+    # client-only, possibly multi-MB widget) and tagged with the `v-exec-scripts` directive,
+    # which executes the scripts on mount (see `template/src/.vitepress/theme/index.ts`).
+    # Script-free output keeps the plain, server-rendered `v-html`.
+    if occursin(r"<script"i, html)
+        println(io, "<ClientOnly>")
+        print(io, "<div class=\"vp-raw-html\" v-exec-scripts v-html=\"`")
+        escapehtml(io, html)
+        println(io, "`\"></div>")
+        println(io, "</ClientOnly>")
+    else
+        print(io, "<div class=\"vp-raw-html\" v-html=\"`")
+        escapehtml(io, html)
+        println(io, "`\"></div>")
+    end
 end
 
 function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; md_output_path, kwargs...)
