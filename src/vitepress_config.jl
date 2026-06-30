@@ -229,18 +229,11 @@ end
 """
     inject_plugin_components!(theme_index_path::String, doc)
 
-Walk `doc.plugins`, collect every plugin's `vitepress_components(plugin)`, and
-edit the `theme/index.ts` at `theme_index_path` to add the corresponding
-`import` statements at the top and `app.component(...)` registrations inside
-`enhanceApp`. Templates supplied by DocumenterVitepress contain two stable
-markers, `// __DV_PLUGIN_COMPONENT_IMPORTS__` and
-`// __DV_PLUGIN_COMPONENT_REGISTRATIONS__`, which are replaced in place. If the
-user supplies their own `theme/index.ts` *without* the markers, this function
-warns and leaves the file untouched (so plugin components won't auto-register
-for that user — they should add the markers themselves or do the imports
-manually).
-
-No-op if no plugin contributes a component.
+Inject every plugin's `vitepress_components` into the `theme/index.ts` at
+`theme_index_path`, adding the `import` statements and `app.component(...)` calls
+at the `// __DV_PLUGIN_COMPONENT_IMPORTS__` / `// __DV_PLUGIN_COMPONENT_REGISTRATIONS__`
+markers. Warns and leaves the file untouched if a custom theme lacks the markers.
+No-op when no plugin contributes a component.
 """
 function inject_plugin_components!(theme_index_path::String, doc)
     components = @NamedTuple{name::String, import_path::String}[]
@@ -266,8 +259,7 @@ function inject_plugin_components!(theme_index_path::String, doc)
         return
     end
 
-    # Generate a stable JS identifier per component name; collisions across
-    # plugins resolve to whichever ran last (consistent with other hooks).
+    # A stable, file-unique JS identifier per component name.
     seen = Set{String}()
     imports = String[]
     registrations = String[]
@@ -282,13 +274,16 @@ function inject_plugin_components!(theme_index_path::String, doc)
         end
         push!(seen, sym)
         push!(imports, "import $(sym) from $(repr(c.import_path));")
-        push!(registrations, "    app.component($(repr(c.name)), $(sym));")
+        push!(registrations, "app.component($(repr(c.name)), $(sym));")
     end
 
+    # Each marker already sits at the right indentation and supplies the first
+    # injected line's indent in place; only the continuation lines need indenting
+    # (imports live at column 0, registrations inside `enhanceApp` at 4 spaces).
     new_contents = replace(
         contents,
         import_marker => join(imports, "\n"),
-        register_marker => strip(join(registrations, "\n")),
+        register_marker => join(registrations, "\n    "),
     )
     write(theme_index_path, new_contents)
     return
