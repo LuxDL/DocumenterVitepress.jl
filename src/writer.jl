@@ -335,8 +335,10 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings)
                         catch e
                             stdout_text = String(take!(npm_out))
                             stderr_text = String(take!(npm_err))
-                            isempty(stdout_text) || println(stderr, "── npm install stdout ──\n", stdout_text)
-                            isempty(stderr_text) || println(stderr, "── npm install stderr ──\n", stderr_text)
+                            log_msg = "npm install failed"
+                            isempty(stdout_text) || (log_msg *= "\n── npm install stdout ──\n" * stdout_text)
+                            isempty(stderr_text) || (log_msg *= "\n── npm install stderr ──\n" * stderr_text)
+                            @error log_msg
                             rethrow(e)
                         end
                         run(`$(npm) run env -- vitepress build $(build_output_path)`)
