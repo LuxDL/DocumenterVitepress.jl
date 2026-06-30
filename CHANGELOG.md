@@ -8,6 +8,8 @@
 
 - Stopped HTML-escaping plain text in the emitted markdown beyond what is required to keep Vue from parsing `<`/`>` as HTML tags. Previously, characters like `&`, `'`, `"` were turned into entities, which surfaced as literal `&amp;` / `&#39;` / `&quot;` in browser tab titles (e.g. a heading `# PDF & SVG` showed as "PDF &amp; SVG") [#351](https://github.com/LuxDL/DocumenterVitepress.jl/pull/351)
 
+- Fixed list ordering / numbering and removed extra newlines [#276](https://github.com/LuxDL/DocumenterVitepress.jl/pull/276).
+
 ## v0.3.3 - 2026-04-10
 
 - Fixed Windows paths for `Documenter`-crosslinks (`Documenter.PageLink` and `Documenter.LocalLink`) and for the nav/sidebar (via `pagelist2str`) [#340](https://github.com/LuxDL/DocumenterVitepress.jl/pull/340)
