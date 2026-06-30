@@ -106,14 +106,21 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
             @info "Base is \"\" and ENV[\"CI\"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path \"/\" to facilitate serving docs locally."
             "/"
         elseif isnothing(settings.deploy_url)
-            "/" * splitpath(settings.repo)[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
+            "/" * split(rstrip(settings.repo, '/'), '/')[end]
         else
-            s_path = startswith(settings.deploy_url, r"http[s?]:\/\/") ? splitpath(settings.deploy_url)[2:end] : splitpath(settings.deploy_url)
-            s = length(s_path) > 1 ? joinpath(s_path) : "" # ignore custom URL here
+            # Full URL: subpath starts at index 4 after scheme+host,
+            # e.g. ["https:", "", "host", "sub", "dir"].
+            s_path = if startswith(settings.deploy_url, r"^https?://")
+                frags = split(rstrip(settings.deploy_url, '/'), '/')
+                length(frags) >= 4 ? frags[4:end] : [""]
+            else
+                split(rstrip(settings.deploy_url, '/'), '/')
+            end
+            s = join(s_path, '/')
             isempty(s) ? "/" : "/$(s)"
         end
 
-    base_str = deploy_abspath == "/" ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
+    base_str = endswith(deploy_abspath, "/") ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
 
     push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH" => deploy_abspath)
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
