@@ -67,7 +67,7 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     """Enables a sidebar drawer toggle button on desktop. When enabled, a small chevron button appears at the edge of the sidebar, allowing users to collapse and expand it. The collapsed state is persisted in `localStorage`. Defaults to `false`."""
     sidebar_drawer::Bool = false
     "Whether to write inventory or not"
-    write_inventory = true
+    write_inventory::Bool = true
     """
     Sets the granularity of versions which should be kept. Options are :patch, :minor or :breaking (the default).
     You can use this to reduce the number of docs versions that coexist on your dev branch. With :patch, every patch
