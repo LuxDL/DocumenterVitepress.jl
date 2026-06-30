@@ -300,26 +300,25 @@ function get_title(doc, page::AbstractString)
 end
 get_title(doc, page::Pair{<: AbstractString, <: Any}) = first(page)
 
-# Catch all method: just broadcast over any iterable assuming it is a collection
+# Catch-all: treat any other iterable as a collection of page entries.
 function pagelist2str(doc, pages, sidenav::Val)
     contents = String[]
     for page in pages
         str = pagelist2str(doc, page, sidenav)
-        isempty(str) || push!(contents, "{ " * str * " }")  # skip omitted/hidden (`nothing`) pages
+        isempty(str) || push!(contents, "{ " * str * " }")
     end
     return "[" * join(contents, ",\n") * "]"
 end
 function pagelist2str(doc, page::AbstractString, sidenav::Val)
     name = get_title(doc, page)
     path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
-    return "text: '$(replace(name, "'" => "\\'"))', link: '/$(path)'" # , $(sidebar_items(doc, page)) }"
+    return "text: '$(replace(name, "'" => "\\'"))', link: '/$(path)'"
 end
 
 function pagelist2str(doc, name_page::Pair{<: Any, <: Any}, sidenav::Val)
     name, page = name_page
-    # Normalize the name to a `String` so the pair dispatches to a concrete method
-    # above. If that doesn't change the pair's type (an unsupported `page` type),
-    # error instead of recursing into this same method forever.
+    # Normalize name to String so the pair hits a concrete method; error (don't
+    # recurse forever) if the type is unchanged, i.e. an unsupported page type.
     new_pair = string(name) => page
     typeof(new_pair) === typeof(name_page) &&
         error("DocumenterVitepress: unsupported `pages` entry $(repr(name_page)) of type $(typeof(name_page)).")
@@ -332,17 +331,16 @@ end
 
 function pagelist2str(doc, name_page::Pair{<: AbstractString, <: AbstractString}, sidenav::Val)
     name, page = name_page
-    # This is the simplest and easiest case.
     path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
-    return "text: '$(replace(name, "'" => "\\'"))', link: '/$(path)'" # , $(sidebar_items(doc, page)) }"
+    return "text: '$(replace(name, "'" => "\\'"))', link: '/$(path)'"
 end
 function pagelist2str(doc, name_contents::Pair{<: AbstractString, <: AbstractArray}, sidenav::Val)
     name, contents = name_contents
-    # This is for nested stuff.  Should work automatically but you never know...
+    # Nested section: a name => array of child page entries.
     rendered_contents = String[]
     for content in contents
         str = pagelist2str(doc, content, sidenav)
-        isempty(str) || push!(rendered_contents, "{" * str * "}")  # skip omitted/hidden (`nothing`) pages
+        isempty(str) || push!(rendered_contents, "{" * str * "}")
     end
     final_contents = join(rendered_contents, ",\n")
     collapse = if sidenav === Val(:sidebar)

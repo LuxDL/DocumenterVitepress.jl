@@ -9,11 +9,9 @@ struct DecomposeInSidebar
     pages::Any
 end
 
-# So you can only really pull this trick once in a Julia session
-# But because doc.user.pages is a Vector{Any}, we can't really do anything about it.
+# NOTE: overrides pagelist2str globally; works once per Julia session.
 function DocumenterVitepress.pagelist2str(doc, ds::Vector{<: Any}, ::Val{:sidebar})
     if !all(x -> x isa DecomposeInSidebar, ds)
-        # if this is false, invoke the default method.
         return invoke(pagelist2str, Tuple{Any, Any, Val{:sidebar}}, doc, ds, Val(:sidebar))
     end
     contents = DocumenterVitepress.pagelist2str.((doc,), ds, (Val(:sidebar),))
