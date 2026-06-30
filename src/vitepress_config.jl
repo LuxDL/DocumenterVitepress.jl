@@ -200,14 +200,17 @@ found, a warning is emitted and the config is returned unchanged.
 """
 function apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::AbstractString)
     marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"
-    if !(noindex_non_stable && base != "stable")
+    # An empty `base` is the root deployment (single-version sites) and must stay indexable.
+    if !(noindex_non_stable && base != "stable" && !isempty(base))
         return replace(config, marker => "")
     end
     head_entry = "['meta', { name: 'robots', content: 'noindex, nofollow' }],"
     if occursin(marker, config)
         return replace(config, marker => head_entry)
     end
-    m = match(r"head:\s*\[", config)
+    # Match `head: [` with optional quotes around the key and flexible whitespace
+    # (`head:[`, `'head': [`, `"head" : [`, …).
+    m = match(r"['\"]?head['\"]?\s*:\s*\[", config)
     if m !== nothing
         return replace(config, m.match => "$(m.match)\n    $(head_entry)"; count = 1)
     end

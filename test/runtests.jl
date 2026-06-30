@@ -179,6 +179,11 @@ end
     @test !occursin("noindex", out)
     @test !occursin(marker, out)
 
+    # Root base (empty string) -> root / single-version deploy stays indexable.
+    out = apply_noindex(template_config, true, "")
+    @test !occursin("noindex", out)
+    @test !occursin(marker, out)
+
     # Feature disabled -> marker removed, no robots meta emitted.
     out = apply_noindex(template_config, false, "dev")
     @test !occursin("noindex", out)
@@ -202,6 +207,17 @@ end
     @test !occursin("noindex", out)
     out = apply_noindex(user_config, false, "dev")
     @test !occursin("noindex", out)
+
+    # Quoted `head` key (as a linter/formatter may emit) is still matched.
+    quoted_config = """
+    export default defineConfig({
+      "head": [
+        ['link', { rel: 'icon', href: 'favicon.ico' }],
+      ],
+    })
+    """
+    out = apply_noindex(quoted_config, true, "dev")
+    @test occursin(meta, out)
 
     # No marker and no `head` array at all -> warn, leave config unchanged.
     bare_config = "export default defineConfig({ title: 'x' })"
