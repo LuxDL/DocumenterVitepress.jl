@@ -106,13 +106,13 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
             @info "Base is \"\" and ENV[\"CI\"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path \"/\" to facilitate serving docs locally."
             "/"
         elseif isnothing(settings.deploy_url)
-            "/" * split(settings.repo, '/')[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
+            "/" * split(rstrip(settings.repo, '/'), '/')[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
         else
-            s_path = if startswith(settings.deploy_url, r"http[s?]:\/\/")
-                frags = split(settings.deploy_url, '/') # "https", "", "my.custom.domain", "sub", "dir"
+            s_path = if startswith(settings.deploy_url, r"^https?://")
+                frags = split(rstrip(settings.deploy_url, '/'), '/') # "https", "", "my.custom.domain", "sub", "dir"
                 length(frags) >= 4 ? frags[4:end] : [""] #                             |-> "sub", "dir"
             else
-                split(settings.deploy_url, '/') # "sub", "dir"
+                split(rstrip(settings.deploy_url, '/'), '/') # "sub", "dir"
             end
             s = join(s_path, '/')
             isempty(s) ? "/" : "/$(s)"
