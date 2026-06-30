@@ -368,10 +368,11 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
     @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
     # Build the docs using `npm`
     should_remove_package_json = false
-    # Pre-merge snapshot of the user's `docs/package.json`, restored in `finally`
-    # so injected plugin deps don't leave the working tree dirty. `nothing` = no
-    # restore (file was absent, or we delete it ourselves below).
+    # Pre-merge snapshot of the user's `docs/package.json` and `package-lock.json`,
+    # restored in `finally` so injected plugin deps don't leave the working tree
+    # dirty. `nothing` = no restore (file was absent, or we delete it ourselves below).
     user_package_json_bytes::Union{Vector{UInt8},Nothing} = nothing
+    user_package_lock_bytes::Union{Vector{UInt8},Nothing} = nothing
     try
         if !isfile(joinpath(dirname(builddir), "package.json"))
             @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
@@ -399,6 +400,8 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
                     # Snapshot before mutating; skip if we'll delete the file anyway.
                     if !should_remove_package_json
                         user_package_json_bytes = read(package_json_path)
+                        package_lock_path = joinpath(dirname(builddir), "package-lock.json")
+                        isfile(package_lock_path) && (user_package_lock_bytes = read(package_lock_path))
                     end
                     merge_plugin_dependencies!(package_json_path, doc)
                 end
@@ -450,8 +453,16 @@ function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc
             rm(joinpath(dirname(builddir), "package.json"))
             rm(joinpath(dirname(builddir), "package-lock.json"))
         elseif user_package_json_bytes !== nothing
-            # Restore the user's checked-in package.json (drop the injected plugin deps).
+            # Restore the user's checked-in package.json / package-lock.json (dropping
+            # the injected plugin deps). If there was no lockfile before, remove the
+            # one `npm install` generated so the working tree stays clean.
             write(joinpath(dirname(builddir), "package.json"), user_package_json_bytes)
+            package_lock_path = joinpath(dirname(builddir), "package-lock.json")
+            if user_package_lock_bytes !== nothing
+                write(package_lock_path, user_package_lock_bytes)
+            else
+                rm(package_lock_path; force = true)
+            end
         end
     end
 end
