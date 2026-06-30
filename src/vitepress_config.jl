@@ -77,10 +77,8 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
-    # Inject plugin-supplied Vue component imports and `app.component` calls into
-    # the theme entry. See `extension_hooks.jl`. This must happen after the file
-    # is in the build dir (whether copied from template above or from the user's
-    # source via Documenter's build-tree copy).
+    # Inject plugin Vue components into the theme entry (see `extension_hooks.jl`),
+    # after it's been written to the build dir.
     inject_plugin_components!(joinpath(build_vitepress_dir, "theme", "index.ts"), doc)
 
     # We have already rewritten the config file, so we can't get burned by clean=false
@@ -181,7 +179,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Noindex for non-stable deployments
     new_config = apply_noindex(new_config, settings.noindex_non_stable, base)
 
-    # Apply each plugin's transform to the now-substituted config (see `extension_hooks.jl`).
+    # Apply each plugin's config transform (see `extension_hooks.jl`).
     for plugin in values(doc.plugins)
         new_config = vitepress_config_transform(plugin, new_config)
     end
@@ -229,11 +227,9 @@ end
 """
     inject_plugin_components!(theme_index_path::String, doc)
 
-Inject every plugin's `vitepress_components` into the `theme/index.ts` at
-`theme_index_path`, adding the `import` statements and `app.component(...)` calls
-at the `// __DV_PLUGIN_COMPONENT_IMPORTS__` / `// __DV_PLUGIN_COMPONENT_REGISTRATIONS__`
-markers. Warns and leaves the file untouched if a custom theme lacks the markers.
-No-op when no plugin contributes a component.
+Inject every plugin's `vitepress_components` into `theme_index_path` at its two
+injection markers. Warns and no-ops if a custom theme lacks them, or if no
+components are contributed.
 """
 function inject_plugin_components!(theme_index_path::String, doc)
     components = @NamedTuple{name::String, import_path::String}[]
@@ -277,9 +273,8 @@ function inject_plugin_components!(theme_index_path::String, doc)
         push!(registrations, "app.component($(repr(c.name)), $(sym));")
     end
 
-    # Each marker already sits at the right indentation and supplies the first
-    # injected line's indent in place; only the continuation lines need indenting
-    # (imports live at column 0, registrations inside `enhanceApp` at 4 spaces).
+    # The marker supplies the first line's indent; indent only continuation lines
+    # (imports at column 0, registrations inside `enhanceApp` at 4 spaces).
     new_contents = replace(
         contents,
         import_marker => join(imports, "\n"),

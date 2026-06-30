@@ -1,13 +1,6 @@
-# Extension hooks for `Documenter.Plugin` integration.
-#
-# Third-party Documenter plugins can overload these to inject npm dependencies,
-# Vue components, config transforms, and static assets into the generated
-# Vitepress site. All defaults are no-ops, so existing plugins are unaffected.
-#
-# At build time DocumenterVitepress collects the results from every plugin in
-# `doc.plugins`. That `Dict` iterates in **non-deterministic** order, so when two
-# plugins claim the same key (npm package, component name, asset filename) the
-# last one wins — pick distinct keys to avoid colliding.
+# Extension hooks for `Documenter.Plugin`s to inject npm deps, Vue components,
+# config transforms, and assets into the generated site. Defaults are no-ops;
+# `doc.plugins` iterates non-deterministically, so on a key clash the last wins.
 
 """
     vitepress_dependencies(plugin::Documenter.Plugin) -> Dict{String,String}
