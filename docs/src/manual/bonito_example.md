@@ -21,6 +21,25 @@ updates the counter's own DOM node directly in JavaScript, so no running Julia s
 needed once deployed (see Bonito's
 [static-export notes](https://github.com/SimonDanisch/Bonito.jl/blob/master/docs/src/interactions.md#creating-interactive-examples)).
 
+**Input**
+````
+```@example bonito
+App() do session
+    count = DOM.span("0")
+    button = Button("Click me!")
+    onjs(session, button.value, js"""
+        function (clicked) {
+            const el = $(count)
+            el.textContent = String(parseInt(el.textContent, 10) + 1)
+        }
+        """)
+    return DOM.div(button, DOM.p("Clicks: ", count))
+end
+```
+````
+
+**Output**
+
 ```@example bonito
 App() do session
     count = DOM.span("0")
