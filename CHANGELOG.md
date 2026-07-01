@@ -2,6 +2,7 @@
 
 ## unreleased
 
+- Fixed missing root `index.html` redirect on deploy: `Documenter.deploydocs` writes this for its standard `versions=` argument, but `DocumenterVitepress.deploydocs` uses a custom `versions` type that bypasses that code path, so a freshly-deployed site had nothing at its root and 404'd instead of redirecting to `stable`/`dev` [#271](https://github.com/LuxDL/DocumenterVitepress.jl/issues/271)
 - Made sidebar/navbar generation overloadable: `pagelist2str` now dispatches on a `Val{:sidebar}`/`Val{:navbar}` tag (with a `get_title` helper), so a custom `make.jl` can control how pages map to VitePress nav entries [#357](https://github.com/LuxDL/DocumenterVitepress.jl/pull/357)
 - Fixed VitePress `base`-path derivation from `repo`/`deploy_url`: split on `/` instead of `splitpath` (which mangled URLs), support custom-domain subpaths, and strip trailing slashes [#359](https://github.com/LuxDL/DocumenterVitepress.jl/pull/359)
 - Added `Documenter.Plugin` extension hooks (`vitepress_dependencies`, `vitepress_components`, `vitepress_config_transform`, `vitepress_assets`) for plugins to inject npm deps, Vue components, `config.mts` transforms, and `public/` assets at build time; all default to no-ops [#363](https://github.com/LuxDL/DocumenterVitepress.jl/pull/363)
