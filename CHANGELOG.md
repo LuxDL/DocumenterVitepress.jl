@@ -2,6 +2,7 @@
 
 ## unreleased
 
+- Added `DocumenterVitepress.BonitoPlugin()`, a `Documenter.Plugin` (supporting Bonito v4 and v5) that ships Bonito's JS/CSS bundle through the site's `public/` folder instead of re-embedding it inline on every figure; asset URLs are rebased client-side so they resolve under any deploy `base` [#366](https://github.com/LuxDL/DocumenterVitepress.jl/pull/366)
 - Made sidebar/navbar generation overloadable: `pagelist2str` now dispatches on a `Val{:sidebar}`/`Val{:navbar}` tag (with a `get_title` helper), so a custom `make.jl` can control how pages map to VitePress nav entries [#357](https://github.com/LuxDL/DocumenterVitepress.jl/pull/357)
 - Fixed VitePress `base`-path derivation from `repo`/`deploy_url`: split on `/` instead of `splitpath` (which mangled URLs), support custom-domain subpaths, and strip trailing slashes [#359](https://github.com/LuxDL/DocumenterVitepress.jl/pull/359)
 - Added `Documenter.Plugin` extension hooks (`vitepress_dependencies`, `vitepress_components`, `vitepress_config_transform`, `vitepress_assets`) for plugins to inject npm deps, Vue components, `config.mts` transforms, and `public/` assets at build time; all default to no-ops [#363](https://github.com/LuxDL/DocumenterVitepress.jl/pull/363)
