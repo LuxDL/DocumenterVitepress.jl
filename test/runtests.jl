@@ -325,12 +325,11 @@ end
     html1 = render_button()
     m1 = match(r"src=\"(/bonito/js/[^\"]+)\"", html1)
     @test m1 !== nothing
-    # absolute, root-relative — not relative to whatever page happens to render it
+    # absolute, not relative to the rendering page
     @test startswith(m1[1], "/bonito/")
 
-    # a fresh `Page()` (a new markdown page, in real usage) reuses the same physical
-    # bundle instead of writing a second copy — this is the point of shipping a
-    # shared asset folder instead of Bonito's default per-page one.
+    # a fresh Page() (new markdown page) reuses the same bundle — the whole
+    # point of a shared asset folder instead of Bonito's per-page default.
     Page()
     html2 = render_button()
     m2 = match(r"src=\"(/bonito/js/[^\"]+)\"", html2)

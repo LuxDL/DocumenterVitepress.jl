@@ -21,21 +21,14 @@ import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
 import './style.css' // You could setup your own, or else a default will be copied.
 import './docstrings.css' // You could setup your own, or else a default will be copied.
 
-// A root-relative `src`/`href` (e.g. from a plugin shipping static files into
-// `public/`, such as the Bonito asset bundle) needs the deploy `base` prepended.
-// Content injected via `v-html` bypasses Vite's own asset resolution (which does this
-// automatically for links it compiles itself), so it's done by hand here. Left alone
-// if already absolute (`//host/...`, `https://...`) or already base-relative.
+// Root-relative URLs inside `v-html` content bypass Vite's own base
+// resolution, so this adds it by hand; already-absolute URLs are untouched.
 function rebase(url: string): string {
   return url.startsWith('/') && !url.startsWith('//') ? withBase(url) : url
 }
 
-// Bonito's own client runtime (`window.Bonito.fetch_binary`/`load_script`) fetches
-// root-relative URLs baked into its *inline* bootstrap script (`Bonito.init_session(id,
-// Bonito.fetch_binary('/bonito/bin/…'), …)`) — text content `rebase()` above can't reach,
-// since rewriting arbitrary script text would risk mangling unrelated string literals.
-// Patched once, as soon as the Bonito bundle defines `window.Bonito` (its first script),
-// so the very next inline script's `fetch_binary` call already resolves correctly.
+// Bonito's own inline bootstrap calls fetch_binary/load_script directly —
+// not reachable by rebase() above. Patched once window.Bonito exists.
 function patchBonitoFetchUrls(): void {
   const B = (window as any).Bonito
   if (!B || B.__dvRebased) return
