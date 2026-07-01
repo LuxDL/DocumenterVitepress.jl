@@ -15,7 +15,7 @@ const ASSETS_DIR = Ref{Union{Nothing, String}}(nothing)
 
 function assets_dir()
     dir = ASSETS_DIR[]
-    if dir === nothing
+    if dir === nothing || !isdir(dir)
         dir = mktempdir(; prefix = "dv_bonito_assets_")
         ASSETS_DIR[] = dir
     end

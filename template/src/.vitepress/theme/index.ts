@@ -36,7 +36,7 @@ function patchBonitoFetchUrls(): void {
   for (const name of ['fetch_binary', 'load_script']) {
     const orig = B[name]
     if (typeof orig === 'function') {
-      B[name] = (url: string, ...rest: unknown[]) => orig(rebase(url), ...rest)
+      B[name] = (url: string, ...rest: unknown[]) => orig.call(B, rebase(url), ...rest)
     }
   }
 }
