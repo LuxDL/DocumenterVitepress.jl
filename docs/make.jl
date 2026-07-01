@@ -3,6 +3,7 @@ using DocumenterVitepress
 using DocumenterCitations
 using DocumenterInterLinks
 using LaTeXStrings
+using Bonito
 
 struct DecomposeInSidebar
     path::String
@@ -96,6 +97,7 @@ makedocs(;
             "Markdown" => "manual/markdown-examples.md",
             "MIME output" => "manual/mime_examples.md",
             "Video Embedding" => "manual/video_embedding.md",
+            "Bonito interactivity" => "manual/bonito_example.md",
             "DocumenterCitations integration" => "manual/citations.md",
             "CSS Styling" => "manual/style_css.md",
             "Authors' badge" => "manual/author_badge.md",
@@ -106,7 +108,7 @@ makedocs(;
             "Internal API" => "devs/internal_api.md",
         ]),
     ],
-    plugins = [bib, links],
+    plugins = [bib, links, DocumenterVitepress.BonitoPlugin()],
 )
 
 DocumenterVitepress.deploydocs(;
