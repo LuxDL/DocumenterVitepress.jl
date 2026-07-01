@@ -29,19 +29,7 @@ function rebase(url: string): string {
   return url.startsWith('/') && !url.startsWith('//') ? withBase(url) : url
 }
 
-// Bonito's own inline bootstrap calls fetch_binary/load_script directly —
-// not reachable by rebase() above. Patched once window.Bonito exists.
-function patchBonitoFetchUrls(): void {
-  const B = (window as any).Bonito
-  if (!B || B.__dvRebased) return
-  B.__dvRebased = true
-  for (const name of ['fetch_binary', 'load_script']) {
-    const orig = B[name]
-    if (typeof orig === 'function') {
-      B[name] = (url: string, ...rest: unknown[]) => orig.call(B, rebase(url), ...rest)
-    }
-  }
-}
+// __DV_PLUGIN_THEME_HELPERS__
 
 // `v-exec-scripts` runs the <script> tags inside a `v-html`'d block: innerHTML never executes
 // scripts, so we re-create each one. `src` scripts are awaited so order holds (bundle before
@@ -49,7 +37,7 @@ function patchBonitoFetchUrls(): void {
 // wraps in <ClientOnly> + this directive.
 async function activateScripts(container: Element): Promise<void> {
   for (const old of Array.from(container.querySelectorAll('script'))) {
-    patchBonitoFetchUrls()
+    // __DV_PLUGIN_SCRIPT_HOOK__
     const fresh = document.createElement('script')
     for (const attr of Array.from(old.attributes)) {
       const value = attr.name === 'src' ? rebase(attr.value) : attr.value
