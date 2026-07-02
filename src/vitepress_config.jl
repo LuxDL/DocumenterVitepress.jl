@@ -53,10 +53,14 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
-    # ? theme / check for index.ts, style.css and docstrings.css files
+    # ? theme / check for index.ts, plugin-hooks.ts, style.css, docstrings.css
     if !isfile(joinpath(source_vitepress_dir, "theme", "index.ts"))
         @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/index.ts` file. Substituting in the default file."
         write(joinpath(build_vitepress_dir, "theme", "index.ts"), read(joinpath(template_vitepress_dir, "theme", "index.ts"), String))
+    end
+    if !isfile(joinpath(source_vitepress_dir, "theme", "plugin-hooks.ts"))
+        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/plugin-hooks.ts` file. Substituting in the default file."
+        write(joinpath(build_vitepress_dir, "theme", "plugin-hooks.ts"), read(joinpath(template_vitepress_dir, "theme", "plugin-hooks.ts"), String))
     end
     if !isfile(joinpath(source_vitepress_dir, "theme", "style.css"))
         @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/style.css` file. Substituting in the default file."
@@ -77,11 +81,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
-    # Inject plugin Vue components and theme transforms (see `extension_hooks.jl`),
-    # after the theme entry has been written to the build dir.
-    theme_index_path = joinpath(build_vitepress_dir, "theme", "index.ts")
-    inject_plugin_components!(theme_index_path, doc)
-    apply_theme_transforms!(theme_index_path, doc)
+    # See `extension_hooks.jl`: components go into `index.ts`; free-form theme
+    # transforms target `plugin-hooks.ts`, so plugins never touch `index.ts`.
+    inject_plugin_components!(joinpath(build_vitepress_dir, "theme", "index.ts"), doc)
+    apply_theme_transforms!(joinpath(build_vitepress_dir, "theme", "plugin-hooks.ts"), doc)
 
     # We have already rewritten the config file, so we can't get burned by clean=false
     # again.
@@ -293,20 +296,21 @@ function inject_plugin_components!(theme_index_path::String, doc)
 end
 
 """
-    apply_theme_transforms!(theme_index_path::String, doc)
+    apply_theme_transforms!(theme_path::String, doc)
 
-Apply every plugin's `vitepress_theme_transform` to `theme_index_path`. No-op
-(no read/write) if no plugin overrides the default identity transform.
+Apply every plugin's `vitepress_theme_transform` to the file at `theme_path`
+(normally `theme/plugin-hooks.ts`). No-op if no plugin overrides the default
+identity transform.
 """
-function apply_theme_transforms!(theme_index_path::String, doc)
-    isfile(theme_index_path) || return
-    theme = read(theme_index_path, String)
+function apply_theme_transforms!(theme_path::String, doc)
+    isfile(theme_path) || return
+    theme = read(theme_path, String)
     new_theme = theme
     for plugin in values(doc.plugins)
         new_theme = vitepress_theme_transform(plugin, new_theme)
     end
     new_theme == theme && return
-    write(theme_index_path, new_theme)
+    write(theme_path, new_theme)
     return
 end
 

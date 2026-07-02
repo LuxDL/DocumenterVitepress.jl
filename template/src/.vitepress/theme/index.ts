@@ -21,13 +21,14 @@ import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
 import './style.css' // You could setup your own, or else a default will be copied.
 import './docstrings.css' // You could setup your own, or else a default will be copied.
 
+import { runPluginScriptHooks } from './plugin-hooks'
+
 // Root-relative URLs inside `v-html` content bypass Vite's own base
 // resolution, so this adds it by hand; already-absolute URLs are untouched.
-function rebase(url: string): string {
+// Exported for plugin-hooks.ts, whose injected content may need to rebase a URL.
+export function rebase(url: string): string {
   return url.startsWith('/') && !url.startsWith('//') ? withBase(url) : url
 }
-
-// __DV_PLUGIN_THEME_HELPERS__
 
 // `v-exec-scripts` runs the <script> tags inside a `v-html`'d block: innerHTML never executes
 // scripts, so we re-create each one. `src` scripts are awaited so order holds (bundle before
@@ -35,7 +36,7 @@ function rebase(url: string): string {
 // wraps in <ClientOnly> + this directive.
 async function activateScripts(container: Element): Promise<void> {
   for (const old of Array.from(container.querySelectorAll('script'))) {
-    // __DV_PLUGIN_SCRIPT_HOOK__
+    await runPluginScriptHooks()
     const fresh = document.createElement('script')
     for (const attr of Array.from(old.attributes)) {
       const value = attr.name === 'src' ? rebase(attr.value) : attr.value

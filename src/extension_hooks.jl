@@ -40,8 +40,9 @@ vitepress_assets(::Documenter.Plugin) = String[]
 """
     vitepress_theme_transform(plugin::Documenter.Plugin, theme::String) -> String
 
-Transform the `theme/index.ts` source, called once per plugin after component
-injection. Default: identity. Edits should key off a stable marker rather than
-exact whitespace so they survive template changes.
+Transform the `theme/plugin-hooks.ts` source, called once per plugin. Default:
+identity. Kept separate from `theme/index.ts` so plugin-specific code never
+has to touch the shared theme entry; edits should key off a stable marker
+rather than exact whitespace so they survive template changes.
 """
 vitepress_theme_transform(::Documenter.Plugin, theme::String) = theme

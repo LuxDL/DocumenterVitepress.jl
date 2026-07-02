@@ -49,7 +49,11 @@ const THEME_SCRIPT_HOOK_MARKER = "// __DV_PLUGIN_SCRIPT_HOOK__"
 
 # Bonito's own inline bootstrap calls fetch_binary/load_script directly, with
 # URLs the theme's generic `rebase()` (on <script src>/<link href>) can't reach.
+# `rebase` lives in index.ts; this is a call-time-only import, so the circular
+# reference (index.ts imports runPluginScriptHooks back from here) is fine.
 const FETCH_PATCH_JS = """
+import { rebase } from './index'
+
 function patchBonitoFetchUrls(): void {
   const B = (window as any).Bonito
   if (!B || B.__dvRebased) return
@@ -66,10 +70,10 @@ function DV.vitepress_theme_transform(::BonitoAssetsPlugin, theme::String)
     if !occursin(THEME_HELPERS_MARKER, theme) || !occursin(THEME_SCRIPT_HOOK_MARKER, theme)
         @warn """
             DocumenterVitepress: BonitoPlugin could not patch `window.Bonito`'s asset
-            URLs for the deploy base — `theme/index.ts` is missing the
+            URLs for the deploy base — `theme/plugin-hooks.ts` is missing the
             `$THEME_HELPERS_MARKER` / `$THEME_SCRIPT_HOOK_MARKER` markers. Bonito
             assets may 404 under a non-root base. Add these markers to your custom
-            theme (one after `rebase()`, one inside `activateScripts`'s loop).
+            `theme/plugin-hooks.ts` (see the template for where they go).
             """
         return theme
     end
