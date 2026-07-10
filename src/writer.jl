@@ -765,40 +765,25 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
         return codes
     end
 
-    # Every other MultiCodeBlock is currently Documenter's `@repl` block
-    # (`mcb.language == "julia-repl"`), whose children live in `node.children` as
-    # interleaved input (`julia-repl`) and output (`documenter-ansi`) code blocks.
+    # `@repl` children: `julia-repl` input and `documenter-ansi` output.
     codeblocks = [n.element::MarkdownAST.CodeBlock for n in node.children]
 
-    # `@repl` output is tagged `documenter-ansi`.  When `ansicolor` is enabled
-    # (e.g. via `writer_supports_ansicolor(::MarkdownVitepress)`) it may carry raw
-    # ANSI escape codes from colored `show` methods / StyledStrings.  If any
-    # output actually does, emit the whole transcript as a *single* `ansi` fence
-    # annotated with a `julia-repl-runs=` spec (`lang:linecount` per run, in
-    # order).  Our Shiki transformer (`julia-repl-transformer.ts`) reads that spec
-    # and re-highlights the input runs as `julia` and the output runs as `ansi`,
-    # assembling one `<pre>` -- so the block looks like Documenter's HTML output
-    # (Julia-highlighted input + colored output in a single box) instead of
-    # showing raw escape codes.  See
-    # https://github.com/LuxDL/DocumenterVitepress.jl/issues/373.  When there is
-    # no color we keep the previous single-`julia`-block layout unchanged.
+    # ANSI output: emit one `ansi` fence with a `julia-repl-runs` spec for
+    # julia-repl-transformer.ts; else a plain single `julia` block (below).
     if any(cb -> occursin('\e', cb.code), codeblocks)
-        # Build the transcript line-by-line, tagging each line with the Shiki
-        # language of the run it belongs to, reproducing the same blank-line
-        # spacing between REPL entries as the plain path below.
+        # Per-line (text, run-language); blank line before each input entry.
         lines = String[]
         line_langs = String[]
         for (i, cb) in enumerate(codeblocks)
-            lang = intelligent_language(cb.info)  # "julia" (input) or "ansi" (output)
+            lang = intelligent_language(cb.info)  # "julia" or "ansi"
             if i > 1 && cb.info == mcb.language
-                # a blank line precedes each input entry (mirrors the plain layout)
                 push!(lines, ""); push!(line_langs, lang)
             end
             for line in split(cb.code, '\n')
                 push!(lines, line); push!(line_langs, lang)
             end
         end
-        # Compress consecutive same-language lines into `lang:linecount` runs.
+        # Collapse into `lang:linecount` runs.
         runs = Tuple{String, Int}[]
         for lang in line_langs
             if !isempty(runs) && runs[end][1] == lang
@@ -811,8 +796,6 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
         return [Markdown.Code("ansi julia-repl-runs=$spec", join(lines, '\n'))]
     end
 
-    # No ANSI color: keep the previous single-block layout so plain REPL
-    # transcripts render as one contiguous `julia` code block.
     io = IOBuffer()
     for (i, thing) in enumerate(codeblocks)
         print(io, thing.code)

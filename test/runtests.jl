@@ -225,17 +225,9 @@ end
 end
 
 @testset "REPL block ANSI color output (issue #373)" begin
-    # A `@repl` block whose result's `text/plain` show emits ANSI escape codes
-    # when `:color` is set (as StyledStrings and many colored `show` methods do)
-    # must be emitted as a SINGLE `ansi` fence carrying a `julia-repl-runs=` spec.
-    # Our Shiki transformer uses that spec to render one <pre> with the input
-    # Julia-highlighted and the output ANSI-colored -- rather than concatenating
-    # everything into a `julia` fence where the raw escape codes would show up
-    # verbatim.  A plain `@repl` block must be unaffected and stay a single
-    # contiguous `julia` transcript.
-    #
-    # The markdown is written flush-left on purpose: leading indentation would
-    # turn the ```@repl fences into indented code blocks.
+    # Colored `@repl` output becomes one `ansi` fence with a `julia-repl-runs=`
+    # spec; plain `@repl` stays one `julia` block. Markdown flush-left so the
+    # ```@repl fences aren't indented.
     md_content = raw"""
 # Repl ansi
 
@@ -267,7 +259,7 @@ Colored()
                 repo = "github.com/test/Test.jl",
                 devbranch = "main",
                 devurl = "dev",
-                build_vitepress = false,  # only need the emitted markdown, not the JS build
+                build_vitepress = false,  # only need the emitted markdown
                 deploy_decision = Documenter.DeployDecision(; all_ok = false),
             ),
             pages = ["index.md"],
@@ -275,25 +267,22 @@ Colored()
 
         rendered = read(joinpath(dir, "build", ".documenter", "index.md"), String)
 
-        # The colored @repl block is a SINGLE `ansi` fence annotated with a
-        # `julia-repl-runs=` spec (the marker our Shiki transformer keys on).
+        # Colored block: one `ansi` fence carrying the runs spec.
         fence = match(r"```ansi julia-repl-runs=(\S+)\n(.*?)\n```"s, rendered)
         @test fence !== nothing
         runspec, body = fence.captures
-        # Input prompt and colored output live in the SAME fence (one unified box).
+        # Input prompt and colored output share the one fence.
         @test occursin("julia> Colored()", body)
         @test occursin("\e[31mred\e[39m", body)
-        # The spec interleaves `julia` (input) and `ansi` (output) runs.
+        # Spec interleaves `julia` (input) and `ansi` (output) runs.
         @test occursin("julia:", runspec) && occursin("ansi:", runspec)
 
-        # No raw escape codes may leak into a plain `julia` fence (the bug: they
-        # used to be concatenated into a `julia` block and rendered verbatim).
+        # No escape codes leak into a plain `julia` fence.
         for m in eachmatch(r"```julia\n(.*?)\n```"s, rendered)
             @test !occursin('\e', m.captures[1])
         end
 
-        # The plain (colorless) @repl block is unchanged: one contiguous `julia`
-        # transcript, with no `julia-repl-runs=` annotation.
+        # Colorless block: unchanged single `julia` transcript.
         @test occursin("```julia\njulia> 1 + 1\n2\n```", rendered)
     end
 end

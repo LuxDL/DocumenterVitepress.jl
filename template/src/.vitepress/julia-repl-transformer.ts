@@ -20,8 +20,7 @@ export function juliaReplTransformer(): ShikiTransformer {
     return { len: 0, kind: null }
   }
 
-  // The object is captured in `self` so the `code` hook can pass the transformer
-  // to its own recursive highlighting calls (see below).
+  // `self` lets the `code` hook pass this transformer to its recursive calls.
   const self: ShikiTransformer = {
     name: "julia-repl-prompts",
 
@@ -54,17 +53,9 @@ export function juliaReplTransformer(): ShikiTransformer {
       }
     },
 
-    // A Documenter `@repl` block whose output carries ANSI color codes is
-    // emitted by DocumenterVitepress as a single `ansi` fence annotated with a
-    // `julia-repl-runs=<lang:linecount,...>` meta (see `join_multiblock` in
-    // `src/writer.jl`).  A code fence can only carry one Shiki grammar, but we
-    // want Julia-syntax-highlighted input *and* ANSI-colored output in one box
-    // -- like Documenter's HTML output.  So we take over rendering: split the
-    // source into the runs described by the meta, re-highlight each run with its
-    // own grammar (`julia` or `ansi`), and stitch the resulting lines back into a
-    // single `<pre>`.  The julia runs are highlighted with this same transformer
-    // so the `julia>` prompt styling above still applies; the recursive calls
-    // carry empty meta, so this hook is a no-op for them (no infinite recursion).
+    // `julia-repl-runs=...` fences (writer.jl): re-highlight each run with its
+    // own grammar, stitch into one <pre>. Julia runs reuse this transformer
+    // for prompt styling; their empty meta no-ops this hook.
     code(node) {
       const raw = (this.options.meta as { __raw?: string } | undefined)?.__raw ?? ""
       const match = raw.match(/julia-repl-runs=(\S+)/)
@@ -83,7 +74,7 @@ export function juliaReplTransformer(): ShikiTransformer {
           ...this.options,
           lang,
           meta: {},
-          // Re-apply prompt styling to julia input; ansi output needs nothing.
+          // julia input reuses prompt styling; ansi needs none.
           transformers: lang === "julia" ? [self] : [],
         })
         const pre = hast.children[0] as Element
