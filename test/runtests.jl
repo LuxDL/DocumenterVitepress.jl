@@ -224,6 +224,80 @@ end
     end
 end
 
+@testset "REPL block ANSI color output (issue #373)" begin
+    # A `@repl` block whose result's `text/plain` show emits ANSI escape codes
+    # when `:color` is set (as StyledStrings and many colored `show` methods do)
+    # must be emitted as a SINGLE `ansi` fence carrying a `julia-repl-runs=` spec.
+    # Our Shiki transformer uses that spec to render one <pre> with the input
+    # Julia-highlighted and the output ANSI-colored -- rather than concatenating
+    # everything into a `julia` fence where the raw escape codes would show up
+    # verbatim.  A plain `@repl` block must be unaffected and stay a single
+    # contiguous `julia` transcript.
+    #
+    # The markdown is written flush-left on purpose: leading indentation would
+    # turn the ```@repl fences into indented code blocks.
+    md_content = raw"""
+# Repl ansi
+
+```@repl ansi-demo
+struct Colored end
+Base.show(io::IO, ::MIME"text/plain", ::Colored) = print(io, get(io, :color, false) ? "\e[31mred\e[39m" : "red")
+Colored()
+```
+
+```@repl plain-demo
+1 + 1
+```
+"""
+    mktempdir() do dir
+        dir = realpath(dir)
+        src = joinpath(dir, "src")
+        mkpath(src)
+        write(joinpath(src, "index.md"), md_content)
+        run(pipeline(`$(Documenter.git()) -C $dir init --quiet`, stdout = devnull))
+
+        Documenter.makedocs(;
+            sitename = "Test",
+            root = dir,
+            source = "src",
+            build = "build",
+            warnonly = true,
+            remotes = nothing,
+            format = DocumenterVitepress.MarkdownVitepress(
+                repo = "github.com/test/Test.jl",
+                devbranch = "main",
+                devurl = "dev",
+                build_vitepress = false,  # only need the emitted markdown, not the JS build
+                deploy_decision = Documenter.DeployDecision(; all_ok = false),
+            ),
+            pages = ["index.md"],
+        )
+
+        rendered = read(joinpath(dir, "build", ".documenter", "index.md"), String)
+
+        # The colored @repl block is a SINGLE `ansi` fence annotated with a
+        # `julia-repl-runs=` spec (the marker our Shiki transformer keys on).
+        fence = match(r"```ansi julia-repl-runs=(\S+)\n(.*?)\n```"s, rendered)
+        @test fence !== nothing
+        runspec, body = fence.captures
+        # Input prompt and colored output live in the SAME fence (one unified box).
+        @test occursin("julia> Colored()", body)
+        @test occursin("\e[31mred\e[39m", body)
+        # The spec interleaves `julia` (input) and `ansi` (output) runs.
+        @test occursin("julia:", runspec) && occursin("ansi:", runspec)
+
+        # No raw escape codes may leak into a plain `julia` fence (the bug: they
+        # used to be concatenated into a `julia` block and rendered verbatim).
+        for m in eachmatch(r"```julia\n(.*?)\n```"s, rendered)
+            @test !occursin('\e', m.captures[1])
+        end
+
+        # The plain (colorless) @repl block is unchanged: one contiguous `julia`
+        # transcript, with no `julia-repl-runs=` annotation.
+        @test occursin("```julia\njulia> 1 + 1\n2\n```", rendered)
+    end
+end
+
 @testset "noindex injection" begin
     apply_noindex = DocumenterVitepress.apply_noindex
     marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"
