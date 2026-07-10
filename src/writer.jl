@@ -763,21 +763,50 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
         # push the last code block
         push!(codes, Markdown.Code(intelligent_language(current_language), current_string))
         return codes
+    end
 
-    else
-        io = IOBuffer()
-        codeblocks = [n.element::MarkdownAST.CodeBlock for n in node.children]
-        for (i, thing) in enumerate(codeblocks)
-            print(io, thing.code)
-            if i != length(codeblocks)
-              !isempty(thing.code) && println(io)
-                if findnext(x -> x.info == mcb.language, codeblocks, i + 1) == i + 1
-                    println(io)
-                end
+    # `@repl` children: `julia-repl` input and `documenter-ansi` output.
+    codeblocks = [n.element::MarkdownAST.CodeBlock for n in node.children]
+
+    # ANSI output: emit one `ansi` fence with a `julia-repl-runs` spec for
+    # julia-repl-transformer.ts; else a plain single `julia` block (below).
+    if any(cb -> occursin('\e', cb.code), codeblocks)
+        # Per-line (text, run-language); blank line before each input entry.
+        lines = String[]
+        line_langs = String[]
+        for (i, cb) in enumerate(codeblocks)
+            lang = intelligent_language(cb.info)  # "julia" or "ansi"
+            if i > 1 && cb.info == mcb.language
+                push!(lines, ""); push!(line_langs, lang)
+            end
+            for line in split(cb.code, '\n')
+                push!(lines, line); push!(line_langs, lang)
             end
         end
-        return [Markdown.Code(intelligent_language(mcb.language), String(take!(io)))]
+        # Collapse into `lang:linecount` runs.
+        runs = Tuple{String, Int}[]
+        for lang in line_langs
+            if !isempty(runs) && runs[end][1] == lang
+                runs[end] = (lang, runs[end][2] + 1)
+            else
+                push!(runs, (lang, 1))
+            end
+        end
+        spec = join(("$lang:$count" for (lang, count) in runs), ",")
+        return [Markdown.Code("ansi julia-repl-runs=$spec", join(lines, '\n'))]
     end
+
+    io = IOBuffer()
+    for (i, thing) in enumerate(codeblocks)
+        print(io, thing.code)
+        if i != length(codeblocks)
+          !isempty(thing.code) && println(io)
+            if findnext(x -> x.info == mcb.language, codeblocks, i + 1) == i + 1
+                println(io)
+            end
+        end
+    end
+    return [Markdown.Code(intelligent_language(mcb.language), String(take!(io)))]
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc; kwargs...)

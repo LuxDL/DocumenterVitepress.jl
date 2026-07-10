@@ -224,6 +224,69 @@ end
     end
 end
 
+@testset "REPL block ANSI color output (issue #373)" begin
+    # Colored `@repl` output becomes one `ansi` fence with a `julia-repl-runs=`
+    # spec; plain `@repl` stays one `julia` block. Markdown flush-left so the
+    # ```@repl fences aren't indented.
+    md_content = raw"""
+# Repl ansi
+
+```@repl ansi-demo
+struct Colored end
+Base.show(io::IO, ::MIME"text/plain", ::Colored) = print(io, get(io, :color, false) ? "\e[31mred\e[39m" : "red")
+Colored()
+```
+
+```@repl plain-demo
+1 + 1
+```
+"""
+    mktempdir() do dir
+        dir = realpath(dir)
+        src = joinpath(dir, "src")
+        mkpath(src)
+        write(joinpath(src, "index.md"), md_content)
+        run(pipeline(`$(Documenter.git()) -C $dir init --quiet`, stdout = devnull))
+
+        Documenter.makedocs(;
+            sitename = "Test",
+            root = dir,
+            source = "src",
+            build = "build",
+            warnonly = true,
+            remotes = nothing,
+            format = DocumenterVitepress.MarkdownVitepress(
+                repo = "github.com/test/Test.jl",
+                devbranch = "main",
+                devurl = "dev",
+                build_vitepress = false,  # only need the emitted markdown
+                deploy_decision = Documenter.DeployDecision(; all_ok = false),
+            ),
+            pages = ["index.md"],
+        )
+
+        rendered = read(joinpath(dir, "build", ".documenter", "index.md"), String)
+
+        # Colored block: one `ansi` fence carrying the runs spec.
+        fence = match(r"```ansi julia-repl-runs=(\S+)\n(.*?)\n```"s, rendered)
+        @test fence !== nothing
+        runspec, body = fence.captures
+        # Input prompt and colored output share the one fence.
+        @test occursin("julia> Colored()", body)
+        @test occursin("\e[31mred\e[39m", body)
+        # Spec interleaves `julia` (input) and `ansi` (output) runs.
+        @test occursin("julia:", runspec) && occursin("ansi:", runspec)
+
+        # No escape codes leak into a plain `julia` fence.
+        for m in eachmatch(r"```julia\n(.*?)\n```"s, rendered)
+            @test !occursin('\e', m.captures[1])
+        end
+
+        # Colorless block: unchanged single `julia` transcript.
+        @test occursin("```julia\njulia> 1 + 1\n2\n```", rendered)
+    end
+end
+
 @testset "noindex injection" begin
     apply_noindex = DocumenterVitepress.apply_noindex
     marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"

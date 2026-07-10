@@ -2,6 +2,7 @@
 
 ## unreleased
 
+- Fixed ANSI-colored `@repl` output (e.g. from StyledStrings or colored `show` methods) rendering as raw escape codes. `@repl` output whose text carries ANSI escapes is now emitted as a single `ansi` fence annotated with a `julia-repl-runs=` spec, and the `julia-repl-transformer` re-highlights the input as `julia` and the output as `ansi` into one `<pre>` — matching Documenter's HTML output (syntax-highlighted input, colored output in one box). Colorless `@repl` blocks are unchanged [#373](https://github.com/LuxDL/DocumenterVitepress.jl/issues/373)
 - Fixed missing root `index.html` redirect on deploy: `Documenter.deploydocs` writes this for its standard `versions=` argument, but `DocumenterVitepress.deploydocs` uses a custom `versions` type that bypasses that code path, so a freshly-deployed site had nothing at its root and 404'd instead of redirecting to `stable`/`dev` [#368](https://github.com/LuxDL/DocumenterVitepress.jl/pull/368)
 - Made sidebar/navbar generation overloadable: `pagelist2str` now dispatches on a `Val{:sidebar}`/`Val{:navbar}` tag (with a `get_title` helper), so a custom `make.jl` can control how pages map to VitePress nav entries [#357](https://github.com/LuxDL/DocumenterVitepress.jl/pull/357)
 - Fixed VitePress `base`-path derivation from `repo`/`deploy_url`: split on `/` instead of `splitpath` (which mangled URLs), support custom-domain subpaths, and strip trailing slashes [#359](https://github.com/LuxDL/DocumenterVitepress.jl/pull/359)
