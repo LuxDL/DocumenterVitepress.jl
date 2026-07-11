@@ -1209,15 +1209,20 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     print(io, heading_text)
     print(io, " {#$(id)}")
     if haskey(kwargs, :inventory)
-        item = InventoryItem(
-            name = header.anchor.id,
-            domain = "std",
-            role = "label",
-            dispname = _get_inventory_dispname(header.anchor.id, Documenter.MDFlatten.mdflatten(anchor.node)),
-            priority = -1,
-            uri = _get_inventory_uri(doc, page, id),
-        )
-        push!(kwargs[:inventory], item)
+        # Skip the inventory entry when the anchor id is empty (#375).
+        if isempty(header.anchor.id)
+            @warn "DocumenterVitepress: skipping inventory entry for a header with an empty anchor id on page $(page.source)."
+        else
+            item = InventoryItem(
+                name = header.anchor.id,
+                domain = "std",
+                role = "label",
+                dispname = _get_inventory_dispname(header.anchor.id, Documenter.MDFlatten.mdflatten(anchor.node)),
+                priority = -1,
+                uri = _get_inventory_uri(doc, page, id),
+            )
+            push!(kwargs[:inventory], item)
+        end
     end
     println(io)
 end
