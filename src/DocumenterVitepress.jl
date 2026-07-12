@@ -15,15 +15,15 @@ const ASSETS = normpath(joinpath(@__DIR__, "..", "assets"))
 
 include("vitepress_interface.jl")
 include("extension_hooks.jl")
+include("bonito.jl")
 include("vitepress_config.jl")
 include("frontmatter.jl")
 include("writer.jl")
 include("ANSIBlocks.jl")
 
 export MarkdownVitepress
-# The four `vitepress_*` extension hooks below are public API but not exported,
-# to avoid polluting downstream namespaces. Reach them as
-# `DocumenterVitepress.vitepress_dependencies`, etc.
+# `vitepress_*` hooks and `BonitoPlugin` are public but not exported —
+# reach them as `DocumenterVitepress.vitepress_dependencies` etc.
 
 # Selectors interface in Documenter, for dispatching on different writers
 abstract type MarkdownFormat <: Documenter.FormatSelector end

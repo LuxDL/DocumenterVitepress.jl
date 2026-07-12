@@ -53,10 +53,14 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
-    # ? theme / check for index.ts, style.css and docstrings.css files
+    # ? theme / check for index.ts, plugin-hooks.ts, style.css, docstrings.css
     if !isfile(joinpath(source_vitepress_dir, "theme", "index.ts"))
         @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/index.ts` file. Substituting in the default file."
         write(joinpath(build_vitepress_dir, "theme", "index.ts"), read(joinpath(template_vitepress_dir, "theme", "index.ts"), String))
+    end
+    if !isfile(joinpath(source_vitepress_dir, "theme", "plugin-hooks.ts"))
+        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/plugin-hooks.ts` file. Substituting in the default file."
+        write(joinpath(build_vitepress_dir, "theme", "plugin-hooks.ts"), read(joinpath(template_vitepress_dir, "theme", "plugin-hooks.ts"), String))
     end
     if !isfile(joinpath(source_vitepress_dir, "theme", "style.css"))
         @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/style.css` file. Substituting in the default file."
@@ -77,9 +81,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
-    # Inject plugin Vue components into the theme entry (see `extension_hooks.jl`),
-    # after it's been written to the build dir.
+    # See `extension_hooks.jl`: components go into `index.ts`; free-form theme
+    # transforms target `plugin-hooks.ts`, so plugins never touch `index.ts`.
     inject_plugin_components!(joinpath(build_vitepress_dir, "theme", "index.ts"), doc)
+    apply_theme_transforms!(joinpath(build_vitepress_dir, "theme", "plugin-hooks.ts"), doc)
 
     # We have already rewritten the config file, so we can't get burned by clean=false
     # again.
@@ -287,6 +292,25 @@ function inject_plugin_components!(theme_index_path::String, doc)
         register_marker => join(registrations, "\n    "),
     )
     write(theme_index_path, new_contents)
+    return
+end
+
+"""
+    apply_theme_transforms!(theme_path::String, doc)
+
+Apply every plugin's `vitepress_theme_transform` to the file at `theme_path`
+(normally `theme/plugin-hooks.ts`). No-op if no plugin overrides the default
+identity transform.
+"""
+function apply_theme_transforms!(theme_path::String, doc)
+    isfile(theme_path) || return
+    theme = read(theme_path, String)
+    new_theme = theme
+    for plugin in values(doc.plugins)
+        new_theme = vitepress_theme_transform(plugin, new_theme)
+    end
+    new_theme == theme && return
+    write(theme_path, new_theme)
     return
 end
 

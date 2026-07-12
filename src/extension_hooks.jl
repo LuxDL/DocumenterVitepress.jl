@@ -1,6 +1,5 @@
-# Extension hooks for `Documenter.Plugin`s to inject npm deps, Vue components,
-# config transforms, and assets into the generated site. Defaults are no-ops;
-# `doc.plugins` iterates non-deterministically, so on a key clash the last wins.
+# Extension hooks for `Documenter.Plugin`s: deps, components, config/theme
+# transforms, assets. Defaults are no-ops; on a key clash the last plugin wins.
 
 """
     vitepress_dependencies(plugin::Documenter.Plugin) -> Dict{String,String}
@@ -37,3 +36,13 @@ directory (a file lands at `public/<filename>`). Missing paths are warned about
 and skipped. Default: empty.
 """
 vitepress_assets(::Documenter.Plugin) = String[]
+
+"""
+    vitepress_theme_transform(plugin::Documenter.Plugin, theme::String) -> String
+
+Transform the `theme/plugin-hooks.ts` source, called once per plugin. Default:
+identity. Kept separate from `theme/index.ts` so plugin-specific code never
+has to touch the shared theme entry; edits should key off a stable marker
+rather than exact whitespace so they survive template changes.
+"""
+vitepress_theme_transform(::Documenter.Plugin, theme::String) = theme

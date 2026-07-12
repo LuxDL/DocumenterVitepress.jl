@@ -18,6 +18,7 @@ TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
 ANSIColoredPrinters = "0.0.1"
+Bonito = "4, 5"
 DocInventories = "1.0"
 DocStringExtensions = "0.9"
 Documenter = "1.11"
@@ -29,10 +30,13 @@ TOML = "0.2,1"
 julia = "1.10"
 
 [weakdeps]
+Bonito = "824d6782-a2ef-11e9-3a09-e5662e0c26f8"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 
 [extensions]
+DocumenterVitepressBonitoExt = "Bonito"
 DocumenterVitepressDocumenterCitationsExt = "DocumenterCitations"
 
 [extras]
+Bonito = "824d6782-a2ef-11e9-3a09-e5662e0c26f8"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"

@@ -1,5 +1,6 @@
 using DocumenterVitepress
 using DocumenterVitepress.Documenter
+using Bonito
 using Test
 
 
@@ -399,4 +400,45 @@ end
     @test !occursin("{}", nested)
     # collection level filters empties too — no `{  }` junk
     @test !occursin("{  }", p2s(["A" => "a.md", "Skip" => nothing]))
+end
+
+@testset "Bonito plugin" begin
+    plugin = DocumenterVitepress.BonitoPlugin()
+    @test plugin isa Documenter.Plugin
+
+    dirs = DocumenterVitepress.vitepress_assets(plugin)
+    @test length(dirs) == 1
+    @test isdir(only(dirs))
+
+    render_button() = sprint() do io
+        show(io, MIME"text/html"(), App() do session
+            count = DOM.span("0")
+            button = Button("Click me!")
+            onjs(session, button.value, js"""
+                function (clicked) {
+                    const el = $(count)
+                    el.textContent = String(parseInt(el.textContent, 10) + 1)
+                }
+                """)
+            return DOM.div(button, DOM.p("Clicks: ", count))
+        end)
+    end
+
+    Page()
+    html1 = render_button()
+    m1 = match(r"src=\"(/bonito/js/[^\"]+)\"", html1)
+    @test m1 !== nothing
+    # absolute, not relative to the rendering page
+    @test startswith(m1[1], "/bonito/")
+
+    # a fresh Page() (new markdown page) reuses the same bundle — the whole
+    # point of a shared asset folder instead of Bonito's per-page default.
+    Page()
+    html2 = render_button()
+    m2 = match(r"src=\"(/bonito/js/[^\"]+)\"", html2)
+    @test m2 !== nothing
+    @test m1[1] == m2[1]
+
+    asset_path = joinpath(only(dirs), m1[1][2:end]) # strip the leading '/'
+    @test isfile(asset_path)
 end
