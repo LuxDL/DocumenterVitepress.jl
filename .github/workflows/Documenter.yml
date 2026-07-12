@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Julia
         uses: julia-actions/setup-julia@v3
       - name: Load Julia packages from cache
@@ -50,7 +50,7 @@ jobs:
       - name: Save Julia depot cache on cancel or failure
         id: julia-cache-save
         if: cancelled() || failure()
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: |
             ${{ steps.julia-cache.outputs.cache-paths }}
