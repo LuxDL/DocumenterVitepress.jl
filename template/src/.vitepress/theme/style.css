@@ -78,6 +78,19 @@ font-feature-settings: "calt" off;
   --vp-custom-block-tip-bg: var(--vp-tip-bg);
 }
 
+ /* Reset text color of code blocks to default text color
+  * Vitepress uses --vp-c-brand-1 by default, which makes code look like links (#377) */
+:root {
+  --vp-code-color: var(--vp-c-text-1);
+}
+.custom-block.tip code {
+  color: var(--vp-c-text-1);
+  background-color: var(--vp-code-bg);
+}
+.custom-block.tip a>code {
+  color:var(--vp-c-tip-1);
+}
+
  /* Component: Button */
 :root {
   --vp-button-brand-border: var(--vp-light-gray);
