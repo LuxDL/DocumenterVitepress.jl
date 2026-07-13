@@ -34,7 +34,7 @@ Modifying the style sheets here will also allow you to override the default Vite
 
 ## Layout options
 
-For example, the following settings can be adjusted to increase the available space for your content.
+For example, to increase the available space for your content, you can add the following to `overrides.css`:
 
 ```css
 .VPDoc.has-aside .content-container {
@@ -146,6 +146,25 @@ The following settings allows your content to fill out all available space on sc
 
 ```
 
+## Colors
+
+Vitepress (and thus DocumenterVitepress) use CSS variables to define colors, which can be modified in `overrides.css` to change the color scheme of your site.
+
+For example, the primary text color is `--vp-c-text-1`, which you can set to a different value if desired.
+The colors here correspond to light and dark mode respectively.
+
+```css
+:root {
+    --vp-c-text-1: #000000;
+}
+
+.dark {
+    --vp-c-text-1: #ffffff;
+}
+```
+
+To see a full list of available CSS variables, see [the Vitepress source code](https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css).
+
 ## More
 
-Other attributes can also be modified there, i.e., text colors, link colors, font family, etc.
+Other attributes can also be modified there, i.e., font family, etc.
