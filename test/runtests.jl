@@ -287,6 +287,43 @@ Colored()
     end
 end
 
+@testset "empty anchor id does not abort build (issue #375)" begin
+    mktempdir() do dir
+        dir = realpath(dir)
+        src = joinpath(dir, "src")
+        mkpath(src)
+        # Bare `##` gives a heading with no text, hence an empty anchor id.
+        write(joinpath(src, "index.md"), "# Real Heading\n\nsome text\n\n##\n\nmore text\n")
+        run(pipeline(`$(Documenter.git()) -C $dir init --quiet`, stdout = devnull))
+
+        # Build completes and warns; `inventory_version = ""` mutes version warnings.
+        @test_logs (:warn, r"empty anchor id") match_mode = :any Documenter.makedocs(;
+            sitename = "Test",
+            root = dir,
+            source = "src",
+            build = "build",
+            warnonly = true,
+            remotes = nothing,
+            format = DocumenterVitepress.MarkdownVitepress(
+                repo = "github.com/test/Test.jl",
+                devbranch = "main",
+                devurl = "dev",
+                build_vitepress = false,
+                inventory_version = "",
+                deploy_decision = Documenter.DeployDecision(; all_ok = false),
+            ),
+            pages = ["index.md"],
+        )
+
+        # Page still renders.
+        rendered = read(joinpath(dir, "build", ".documenter", "index.md"), String)
+        @test occursin("# Real Heading", rendered)
+
+        # Inventory still written, minus the empty-id entry.
+        @test isfile(joinpath(dir, "build", ".documenter", "public", "objects.inv"))
+    end
+end
+
 @testset "noindex injection" begin
     apply_noindex = DocumenterVitepress.apply_noindex
     marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"
