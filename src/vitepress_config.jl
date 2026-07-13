@@ -53,7 +53,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
-    for f in ("index.ts", "style.css", "docstrings.css", "overrides.css")
+    for f in ["index.ts", "style.css", "docstrings.css", "overrides.css"]
         theme_f = joinpath("theme", f)
         if !isfile(joinpath(source_vitepress_dir, theme_f))
             @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/$theme_f` file. Substituting in the default file."
