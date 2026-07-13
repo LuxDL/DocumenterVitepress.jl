@@ -2,6 +2,10 @@
 
 ## unreleased
 
+- Fixed `DecomposeInSidebar` to properly handle mixed lists of decomposed and regular page entries [#381](https://github.com/LuxDL/DocumenterVitepress.jl/pull/381)
+- Changed the default text colour for code blocks to be the same as plain text, to avoid confusion with hyperlinks [#380](https://github.com/LuxDL/DocumenterVitepress.jl/pull/380)
+- Added an `overrides.css` file to allow for targeted overrides to the default Vitepress and DocumenterVitepress styles without having to copy the entire theme [#379](https://github.com/LuxDL/DocumenterVitepress.jl/pull/379)
+- Fixed a bug where DocumenterVitepress would error if outside of a git repository
 - Fixed ANSI-colored `@repl` output (e.g. from StyledStrings or colored `show` methods) rendering as raw escape codes. `@repl` output whose text carries ANSI escapes is now emitted as a single `ansi` fence annotated with a `julia-repl-runs=` spec, and the `julia-repl-transformer` re-highlights the input as `julia` and the output as `ansi` into one `<pre>` — matching Documenter's HTML output (syntax-highlighted input, colored output in one box). Colorless `@repl` blocks are unchanged [#373](https://github.com/LuxDL/DocumenterVitepress.jl/issues/373)
 - Fixed missing root `index.html` redirect on deploy: `Documenter.deploydocs` writes this for its standard `versions=` argument, but `DocumenterVitepress.deploydocs` uses a custom `versions` type that bypasses that code path, so a freshly-deployed site had nothing at its root and 404'd instead of redirecting to `stable`/`dev` [#368](https://github.com/LuxDL/DocumenterVitepress.jl/pull/368)
 - Made sidebar/navbar generation overloadable: `pagelist2str` now dispatches on a `Val{:sidebar}`/`Val{:navbar}` tag (with a `get_title` helper), so a custom `make.jl` can control how pages map to VitePress nav entries [#357](https://github.com/LuxDL/DocumenterVitepress.jl/pull/357)
@@ -13,9 +17,6 @@
 - Added a `noindex_non_stable` option to `MarkdownVitepress` (default `true`) that injects a `noindex, nofollow` robots meta into non-stable, non-root deployments so search engines only index the stable docs [#361](https://github.com/LuxDL/DocumenterVitepress.jl/pull/361)
 - Interactive `text/html` show output that contains `<script>` tags (e.g. WGLMakie/Bonito figures, Plotly) now actually runs. Such output is wrapped in `<ClientOnly>` (so the potentially-multi-MB widget is not server-rendered) and its scripts are executed on the client via a new `v-exec-scripts` directive, on the initial render and on client-side navigation — previously `v-html` set `innerHTML`, whose `<script>` tags the browser never executes, so figures only appeared on a hard reload. Script-free HTML output keeps the plain server-rendered `v-html` path.
 - Added a GitHub Actions workflow for posting a PR preview comment with a link to the documentation preview. The workflow automatically reads `deploy_repo` from `docs/make.jl` to support cross-repository deployments, and only runs on PRs from the same repository (not forks) [#355](https://github.com/LuxDL/DocumenterVitepress.jl/pull/355)
-- Added an `overrides.css` file to allow for targeted overrides to the default Vitepress and DocumenterVitepress styles without having to copy the entire theme [#379](https://github.com/LuxDL/DocumenterVitepress.jl/pull/379)
-- Fixed a bug where DocumenterVitepress would error if outside of a git repository
-- Changed the default text colour for code blocks to be the same as plain text, to avoid confusion with hyperlinks [#380](https://github.com/LuxDL/DocumenterVitepress.jl/pull/380)
 
 ## v0.3.4 - 2026-05-21
 
