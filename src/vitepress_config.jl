@@ -404,17 +404,38 @@ end
 
 function pagelist2str(doc, ds::DecomposeInSidebar, ::Val{:sidebar})
     raw_contents = pagelist2str(doc, ds.pages, Val(:sidebar))
-    contents = if raw_contents isa String
-        raw_contents
+    
+    if startswith(raw_contents, "[")
+        return "\"/$(ds.path)/\": $(raw_contents)"
     else
-        join(raw_contents, ",\n")
+        return "\"/$(ds.path)/\": [\n{\n$(raw_contents)\n}\n]"
     end
-
-    return "\"/$(ds.path)/\": {\n$(contents)\n}"
 end
 
 function pagelist2str(doc, ds::DecomposeInSidebar, ::Val{:navbar})
     return pagelist2str(doc, ds.pages, Val(:sidebar))
+end
+
+function pagelist2str(doc, ds::Vector{<: Any}, ::Val{:navbar})
+    if !any(x -> x isa DecomposeInSidebar, ds)
+        return invoke(pagelist2str, Tuple{Any, Any, Val{:navbar}}, doc, ds, Val(:navbar))
+    end
+
+    contents = String[]
+    for x in ds
+        if x isa DecomposeInSidebar
+            # Expand vectors, otherwise treat as single item
+            items = x.pages isa AbstractVector ? x.pages : [x.pages]
+            for p in items
+                str = pagelist2str(doc, p, Val(:sidebar))
+                isempty(str) || push!(contents, "{ " * str * " }")
+            end
+        else
+            str = pagelist2str(doc, x, Val(:navbar))
+            isempty(str) || push!(contents, "{ " * str * " }")
+        end
+    end
+    return "[" * join(contents, ",\n") * "]"
 end
 
 function Documenter.walk_navpages(ds::DecomposeInSidebar, parent, doc)
