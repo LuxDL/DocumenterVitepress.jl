@@ -53,19 +53,14 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
-    # ? theme / check for index.ts, style.css and docstrings.css files
-    if !isfile(joinpath(source_vitepress_dir, "theme", "index.ts"))
-        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/index.ts` file. Substituting in the default file."
-        write(joinpath(build_vitepress_dir, "theme", "index.ts"), read(joinpath(template_vitepress_dir, "theme", "index.ts"), String))
+    for f in ("index.ts", "style.css", "docstrings.css", "overrides.css")
+        theme_f = joinpath("theme", f)
+        if !isfile(joinpath(source_vitepress_dir, theme_f))
+            @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/$theme_f` file. Substituting in the default file."
+            write(joinpath(build_vitepress_dir, theme_f), read(joinpath(template_vitepress_dir, theme_f), String))
+        end
     end
-    if !isfile(joinpath(source_vitepress_dir, "theme", "style.css"))
-        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/style.css` file. Substituting in the default file."
-        write(joinpath(build_vitepress_dir, "theme", "style.css"), read(joinpath(template_vitepress_dir, "theme", "style.css"), String))
-    end
-    if !isfile(joinpath(source_vitepress_dir, "theme", "docstrings.css"))
-        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file."
-        write(joinpath(build_vitepress_dir, "theme", "docstrings.css"), read(joinpath(template_vitepress_dir, "theme", "docstrings.css"), String))
-    end
+
     # Copy SidebarDrawerToggle.vue if user hasn't provided one
     sidebar_toggle_source = joinpath(sourcedir, "components", "SidebarDrawerToggle.vue")
     sidebar_toggle_build = joinpath(builddir, settings.md_output_path, "components", "SidebarDrawerToggle.vue")

@@ -20,6 +20,7 @@ import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
 import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
 import './style.css' // You could setup your own, or else a default will be copied.
 import './docstrings.css' // You could setup your own, or else a default will be copied.
+import './overrides.css' // You could setup your own, or else a default will be copied.
 
 // `v-exec-scripts` runs the <script> tags inside a `v-html`'d block: innerHTML never executes
 // scripts, so we re-create each one. `src` scripts are awaited so order holds (bundle before
