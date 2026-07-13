@@ -537,7 +537,13 @@ end
 stripped_version(v::VersionNumber) = VersionNumber(v.major, v.minor, v.patch)
 
 function get_all_tagged_release_versions()::Vector{VersionNumber}
-    tags = readlines(`$(Documenter.git()) tag`)
+    tags = try
+        readlines(`$(Documenter.git()) tag`)
+    catch e
+        (e isa ProcessFailedException || e isa Base.IOError) || rethrow(e)
+        @info "DocumenterVitepress: could not get git tags, assuming no tagged releases exist."
+        return VersionNumber[]
+    end
     version_numbers = stripped_version.(VersionNumber.(filter(is_version_string, tags)))
     filter!(version_numbers) do v
         isempty(v.prerelease) # we never want alias bases for prereleases so we don't clobber `stable` etc.
