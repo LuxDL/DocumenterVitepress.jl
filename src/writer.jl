@@ -540,7 +540,7 @@ function get_all_tagged_release_versions()::Vector{VersionNumber}
     tags = try
         readlines(`$(Documenter.git()) tag`)
     catch e
-        e isa ProcessFailedException || rethrow(e)
+        (e isa ProcessFailedException || e isa Base.IOError) || rethrow(e)
         @info "DocumenterVitepress: could not get git tags, assuming no tagged releases exist."
         return VersionNumber[]
     end
