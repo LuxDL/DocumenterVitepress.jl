@@ -2,6 +2,9 @@
 
 ## unreleased
 
+## v0.3.5 - 2026-07-14
+
+- Updating logo image to docs/src/assets location in README.md [#390](https://github.com/LuxDL/DocumenterVitepress.jl/pull/390)
 - Cleaned up `docs/make.jl` by removing unused `DocumenterCitations` integration code and clarifying remaining dependencies [#382](https://github.com/LuxDL/DocumenterVitepress.jl/pull/382).
 - Fixed `DecomposeInSidebar` to properly handle mixed lists of decomposed and regular page entries [#381](https://github.com/LuxDL/DocumenterVitepress.jl/pull/381)
 - Changed the default text colour for code blocks to be the same as plain text, to avoid confusion with hyperlinks [#380](https://github.com/LuxDL/DocumenterVitepress.jl/pull/380)
