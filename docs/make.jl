@@ -5,21 +5,14 @@ using DocumenterCitations
 using DocumenterInterLinks
 using LaTeXStrings
 
-# Handle DocumenterCitations integration - if you're running this, then you don't need anything here!!
+# Include custom styles for `citations.md` here instead of inside 
+# the markdown file to avoid Documenter world-age method errors.
 documenter_citations_dir = dirname(dirname(pathof(DocumenterCitations)))
 documenter_citations_docs_dir = joinpath(documenter_citations_dir, "docs")
-# Copy over the DocumenterCitations docs
-# At this point, we can't copy them over, since there are a lot of `@ref`s that are
-# internal to the DC documentation.
-# cp(joinpath(documenter_citations_docs_dir, "src", "refs.bib"), joinpath(@__DIR__, "src", "refs.bib"))
-# if !occursin("Gallery", read(joinpath(@__DIR__, "src", "citations.md"), String))
-#     open(joinpath(@__DIR__, "src", "citations.md"); append = true, write = true) do io
-#         write(io, read(joinpath(documenter_citations_docs_dir, "src", "gallery.md"), String))
-#     end
-# end
+
 include(joinpath(documenter_citations_docs_dir, "custom_styles", "enumauthoryear.jl"))
 include(joinpath(documenter_citations_docs_dir, "custom_styles", "keylabels.jl"))
-# End DocumenterCitation integration code.  Below is what you need to actually run DC.
+# End DocumenterCitations custom styles integration.
 
 
 bib = CitationBibliography(
