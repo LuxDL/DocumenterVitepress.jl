@@ -365,3 +365,79 @@ end
 function _get_first_or_string(x)
     return first(x)
 end
+
+"""
+    DecomposeInSidebar(path::String, pages)
+
+A wrapper for a collection of pages that allows for multi-sidebar configurations in Vitepress. 
+
+When you pass a list of `DecomposeInSidebar` objects to the `pages` argument of `makedocs`,
+DocumenterVitepress will generate a sidebar configuration that maps different sidebars to 
+different routes. `path` should be the URL path prefix (e.g., `"guide"` or `"manual"`), and 
+`pages` should be the standard Documenter page list for that section.
+"""
+struct DecomposeInSidebar
+    path::String
+    pages::Any
+end
+
+function pagelist2str(doc, ds::Vector{<: Any}, ::Val{:sidebar})
+    if !any(x -> x isa DecomposeInSidebar, ds)
+        return invoke(pagelist2str, Tuple{Any, Any, Val{:sidebar}}, doc, ds, Val(:sidebar))
+    end
+    
+    decomposed_items = filter(x -> x isa DecomposeInSidebar, ds)
+    regular_items = filter(x -> !(x isa DecomposeInSidebar), ds)
+    
+    contents = String[]
+    for x in decomposed_items
+        push!(contents, pagelist2str(doc, x, Val(:sidebar)))
+    end
+    
+    if !isempty(regular_items)
+        raw_regular = invoke(pagelist2str, Tuple{Any, Any, Val{:sidebar}}, doc, regular_items, Val(:sidebar))
+        push!(contents, "\"/\": " * raw_regular)
+    end
+    
+    return "{\n" * join(contents, ",\n") * "\n}"
+end
+
+function pagelist2str(doc, ds::DecomposeInSidebar, ::Val{:sidebar})
+    raw_contents = pagelist2str(doc, ds.pages, Val(:sidebar))
+    
+    if startswith(raw_contents, "[")
+        return "\"/$(ds.path)/\": $(raw_contents)"
+    else
+        return "\"/$(ds.path)/\": [\n{\n$(raw_contents)\n}\n]"
+    end
+end
+
+function pagelist2str(doc, ds::DecomposeInSidebar, ::Val{:navbar})
+    return pagelist2str(doc, ds.pages, Val(:sidebar))
+end
+
+function pagelist2str(doc, ds::Vector{<: Any}, ::Val{:navbar})
+    if !any(x -> x isa DecomposeInSidebar, ds)
+        return invoke(pagelist2str, Tuple{Any, Any, Val{:navbar}}, doc, ds, Val(:navbar))
+    end
+
+    contents = String[]
+    for x in ds
+        if x isa DecomposeInSidebar
+            # Expand vectors, otherwise treat as single item
+            items = x.pages isa AbstractVector ? x.pages : [x.pages]
+            for p in items
+                str = pagelist2str(doc, p, Val(:sidebar))
+                isempty(str) || push!(contents, "{ " * str * " }")
+            end
+        else
+            str = pagelist2str(doc, x, Val(:navbar))
+            isempty(str) || push!(contents, "{ " * str * " }")
+        end
+    end
+    return "[" * join(contents, ",\n") * "]"
+end
+
+function Documenter.walk_navpages(ds::DecomposeInSidebar, parent, doc)
+    return Documenter.walk_navpages(ds.pages, parent, doc)
+end
