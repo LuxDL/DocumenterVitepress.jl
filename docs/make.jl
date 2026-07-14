@@ -7,7 +7,7 @@ using LaTeXStrings
 
 # Include custom styles for `citations.md` here instead of inside 
 # the markdown file to avoid Documenter world-age method errors.
-documenter_citations_dir = dirname(dirname(pathof(DocumenterCitations)))
+documenter_citations_dir = pkgdir(DocumenterCitations)
 documenter_citations_docs_dir = joinpath(documenter_citations_dir, "docs")
 
 include(joinpath(documenter_citations_docs_dir, "custom_styles", "enumauthoryear.jl"))
