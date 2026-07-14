@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FDocumenterVitepress&query=total_requests&&label=Total%20Downloads)](https://juliapkgstats.com/pkg/DocumenterVitepress)
 [![CI Documenter](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml/badge.svg)](https://github.com/LuxDL/DocumenterVitepress.jl/actions/workflows/Documenter.yml)
 
-<img src="https://luxdl.github.io/DocumenterVitepress.jl/stable/logo.png" align="right" style="padding-left:10px;" width="180"/>
+<img src="./docs/src/assets/logo.png" align="right" style="padding-left:10px;" width="180"/>
 
 This package provides a Markdown backend to [Documenter.jl](https://documenter.juliadocs.org/stable/).
 The generated Markdown is rendered to HTML using the static site generator [vitepress](https://vitepress.dev/).
