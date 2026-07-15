@@ -248,6 +248,8 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         nothing
     end
 
+    search_index = []
+
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
@@ -255,9 +257,9 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             merge_and_render_frontmatter(io, MIME("text/yaml"), page, doc)
             for node in page.mdast.children
                 kwargs = if settings.write_inventory
-                    (; inventory = inventory)
+                    (; inventory = inventory, search_index = search_index)
                 else
-                    (;)
+                    (; search_index = search_index)
                 end
                 render(io, mime, node, page, doc; kwargs...)
             end
@@ -273,6 +275,20 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             )
             push!(inventory, item)
         end
+        push!(search_index, Dict(
+            "title" => _pagetitle(page),
+            "text" => "",
+            "location" => _get_inventory_uri(doc, page, nothing),
+            "category" => "page",
+            "page" => _pagetitle(page)
+        ))
+    end
+    
+    # Write the search index to a JS file so the frontend can load it
+    open(joinpath(builddir, settings.md_output_path, "public", "documenter_search_index.js"), "w") do io
+        print(io, "window.documenterSearchIndex = ")
+        JSON.print(io, search_index)
+        println(io)
     end
     if settings.write_inventory
         objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
@@ -628,6 +644,16 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
             uri = _get_inventory_uri(doc, page, anchor_id),
         )
         push!(kwargs[:inventory], item)
+    end
+    if haskey(kwargs, :search_index)
+        text = Documenter.MDFlatten.mdflatten(node)
+        push!(kwargs[:search_index], Dict(
+            "title" => string(docs.object.binding),
+            "text" => text,
+            "location" => _get_inventory_uri(doc, page, anchor_id),
+            "category" => category,
+            "page" => _pagetitle(page)
+        ))
     end
     # Docstring header based on the name of the binding and it's category.
     _badge_text = """<Badge type="info" class="jlObjectType jl$(category)" text="$(category)" />"""
@@ -1224,6 +1250,15 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
             uri = _get_inventory_uri(doc, page, id),
         )
         push!(kwargs[:inventory], item)
+    end
+    if haskey(kwargs, :search_index)
+        push!(kwargs[:search_index], Dict(
+            "title" => heading_text,
+            "text" => "",
+            "location" => _get_inventory_uri(doc, page, id),
+            "category" => "section",
+            "page" => _pagetitle(page)
+        ))
     end
     println(io)
 end

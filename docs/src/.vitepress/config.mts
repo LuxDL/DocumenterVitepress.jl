@@ -41,7 +41,8 @@ export default defineConfig({
     ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
     ['script', {src: `${getBaseRepository(baseTemp.base)}versions.js`}],
     // ['script', {src: '/versions.js'], for custom domains, I guess if deploy_url is available.
-    ['script', {src: `${baseTemp.base}siteinfo.js`}]
+    ['script', {src: `${baseTemp.base}siteinfo.js`}],
+    ['script', {src: `${baseTemp.base}documenter_search_index.js`}]
   ],
    markdown: {
     codeTransformers: [juliaReplTransformer()],
@@ -89,12 +90,12 @@ export default defineConfig({
     outline: 'deep',
     // https://vitepress.dev/reference/default-theme-config
     logo: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
-    search: {
-      provider: 'local',
-      options: {
-        detailedView: true
-      }
-    },
+    // search: {
+    //   provider: 'local',
+    //   options: {
+    //     detailedView: true
+    //   }
+    // },
     nav,
     sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     sidebarDrawer: 'REPLACE_ME_DOCUMENTER_VITEPRESS_SIDEBAR_DRAWER',
