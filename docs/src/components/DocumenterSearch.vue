@@ -254,7 +254,7 @@ function initWorker() {
             let search_divider = '<div class="search-divider w-100"></div>';
             let display_link = result.location.slice(0, 50) + (result.location.length > 50 ? "..." : "");
             if (result.page) {
-              display_link += ` (${result.page})`;
+              display_link += " (" + result.page + ")";
             }
 
             let searchstring = escapeRegExp(querystring);
