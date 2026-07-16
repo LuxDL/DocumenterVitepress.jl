@@ -1,0 +1,888 @@
+<template>
+  <div class="VPNavBarSearch">
+    <div class="DocSearch-Button" @click="isOpen = true" aria-label="Search">
+      <span class="DocSearch-Button-Container">
+        <svg class="DocSearch-Search-Icon" width="20" height="20" viewBox="0 0 20 20" aria-label="search icon">
+          <path d="M14.386 14.386l4.0877 4.0877-4.0877-4.0877c-2.9418 2.9419-7.7115 2.9419-10.6533 0-2.9419-2.9418-2.9419-7.7115 0-10.6533 2.9418-2.9419 7.7115-2.9419 10.6533 0 2.9419 2.9418 2.9419 7.7115 0 10.6533z" stroke="currentColor" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <span class="DocSearch-Button-Placeholder">Search</span>
+      </span>
+      <span class="DocSearch-Button-Keys">
+        <kbd class="DocSearch-Button-Key">⌘</kbd>
+        <kbd class="DocSearch-Button-Key">K</kbd>
+      </span>
+    </div>
+
+    <!-- Search Modal -->
+    <Teleport to="body">
+      <div v-if="isOpen" class="custom-search-modal" @click.self="isOpen = false">
+        <div class="custom-search-modal-content">
+          <!-- Header (Search Input) -->
+          <div class="custom-search-header">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M14.386 14.386l4.0877 4.0877-4.0877-4.0877c-2.9418 2.9419-7.7115 2.9419-10.6533 0-2.9419-2.9418-2.9419-7.7115 0-10.6533 2.9418-2.9419 7.7115-2.9419 10.6533 0 2.9419 2.9418 2.9419 7.7115 0 10.6533z" stroke="currentColor" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            <input 
+              ref="searchInputRef"
+              v-model="searchQuery" 
+              class="documenter-search-input" 
+              placeholder="Search docs" 
+              @input="onInput"
+              @keydown.esc="isOpen = false"
+              @keydown.down.prevent="navigateDown"
+              @keydown.up.prevent="navigateUp"
+              @keydown.enter.prevent="navigateEnter"
+            />
+            <button v-show="searchQuery.length > 0" @click="clearSearch" class="clear-input-btn" title="Clear Search">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <button @click="toggleFiltersVisibility" class="filter-toggle-btn" title="Toggle Filters">
+              <svg v-if="!showFilters" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line>
+              </svg>
+            </button>
+            <button @click="toggleCollected" class="filter-toggle-btn" :class="{ 'sort-toggle-active': isCollected }" title="Group by page" style="margin-right: 8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 2H8l-2 5h12L16 2z"></path>
+              </svg>
+            </button>
+            <button class="close-btn" @click="isOpen = false">Esc</button>
+          </div>
+
+          <!-- Body (Filters and Results) -->
+          <div class="search-modal-card-body">
+            
+            <div v-if="searchQuery.trim() === ''" class="has-text-centered my-5 py-5">
+              Type something to get started!
+            </div>
+            
+            <div v-else>
+              <!-- Filters -->
+              <div v-show="showFilters" class="search-toolbar">
+                <div class="search-toolbar-group">
+                  <button 
+                    class="search-filter"
+                    :class="{ 'search-filter-selected': selectedFilter === '' }"
+                    @click="toggleFilter('')"
+                  >
+                    All <span class="filter-badge">{{ unfilteredResults.length }}</span>
+                  </button>
+                  <button 
+                    v-for="filter in availableFilters" 
+                    :key="filter"
+                    class="search-filter"
+                    :class="{ 'search-filter-selected': selectedFilter === filter.toLowerCase() }"
+                    @click="toggleFilter(filter.toLowerCase())"
+                  >
+                    {{ filter }} <span class="filter-badge">{{ categoryCounts[filter.toLowerCase()] || 0 }}</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="search-divider" v-show="showFilters"></div>
+              
+              <!-- Result Count -->
+              <div class="is-size-6 result-count">
+                {{ filteredResults.length >= 200 ? '200+ results' : filteredResults.length + ' result(s)' }}
+              </div>
+
+              <!-- Results -->
+              <div v-if="filteredResults.length === 0" class="has-text-centered my-5 py-5">
+                No result found!
+              </div>
+
+              <!-- Grouped (Collect) view -->
+              <div v-else-if="isCollected" class="is-clipped w-100 is-flex is-flex-direction-column has-text-justified mt-1" @click="handleResultClick" @mousemove="onMouseMove">
+                <div v-for="group in groupedResults" :key="group.pagePath" class="search-group">
+                  <div class="search-group-header">
+                    <div class="search-group-breadcrumbs">
+                      <template v-for="(crumb, ci) in group.breadcrumbs" :key="ci">
+                        <span v-if="ci > 0" class="breadcrumb-sep">&gt;</span>
+                        <span>{{ crumb }}</span>
+                      </template>
+                    </div>
+                    <div class="search-group-title">{{ group.pageTitle }}</div>
+                  </div>
+                  <div class="search-group-children">
+                    <div 
+                      v-for="result in group.results" 
+                      :key="result.location" 
+                      class="search-result-wrapper"
+                      :class="{ 'is-selected': result._flatIndex === selectedIndex }"
+                      @mouseenter="onResultHover(result._flatIndex)"
+                      v-html="result.div"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Flat view (default or Sort A-Z) -->
+              <div v-else class="is-clipped w-100 is-flex is-flex-direction-column gap-2 has-text-justified mt-1" @click="handleResultClick" @mousemove="onMouseMove">
+                <div 
+                  v-for="(result, index) in filteredResults" 
+                  :key="result.location" 
+                  class="search-result-wrapper"
+                  :class="{ 'is-selected': index === selectedIndex }"
+                  @mouseenter="onResultHover(index)"
+                  v-html="result.div"
+                ></div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </Teleport>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+
+const isOpen = ref(false);
+const showFilters = ref(true);
+const isCollected = ref(false);
+const searchQuery = ref('');
+const searchInputRef = ref(null);
+const selectedFilter = ref('');
+const availableFilters = ref([]);
+const unfilteredResults = ref([]);
+const isWorkerRunning = ref(false);
+const selectedIndex = ref(-1);
+
+let lastSearchText = '';
+let worker = null;
+let checkInterval = null;
+
+function clearSearch() {
+  searchQuery.value = '';
+  onInput();
+  nextTick(() => {
+    searchInputRef.value?.focus();
+  });
+}
+
+let isKeyboardNav = false;
+
+function navigateDown() {
+  if (filteredResults.value.length > 0) {
+    isKeyboardNav = true;
+    selectedIndex.value = Math.min(selectedIndex.value + 1, filteredResults.value.length - 1);
+    scrollToSelected();
+  }
+}
+
+function navigateUp() {
+  if (filteredResults.value.length > 0) {
+    isKeyboardNav = true;
+    selectedIndex.value = Math.max(selectedIndex.value - 1, 0);
+    scrollToSelected();
+  }
+}
+
+function navigateEnter() {
+  if (selectedIndex.value >= 0 && selectedIndex.value < filteredResults.value.length) {
+    const el = document.querySelectorAll('.search-result-wrapper')[selectedIndex.value];
+    const link = el?.querySelector('a');
+    if (link) {
+      link.click();
+    }
+  }
+}
+
+function scrollToSelected() {
+  nextTick(() => {
+    const el = document.querySelectorAll('.search-result-wrapper')[selectedIndex.value];
+    if (el) {
+      el.scrollIntoView({ block: 'nearest' });
+    }
+  });
+}
+
+function onResultHover(index) {
+  if (!isKeyboardNav) {
+    selectedIndex.value = index;
+  }
+}
+
+function onMouseMove() {
+  isKeyboardNav = false;
+}
+
+// The filtered results computed on the frontend
+const filteredResults = computed(() => {
+  let results = unfilteredResults.value;
+  if (selectedFilter.value) {
+    results = results.filter(r => r.category.toLowerCase() === selectedFilter.value);
+  }
+  
+  let final_results = [];
+  let links = new Set();
+  
+  for (let i = 0; i < results.length && final_results.length < 200; ++i) {
+    let res = results[i];
+    if (res.location && !links.has(res.location)) {
+      final_results.push(res);
+      links.add(res.location);
+    }
+  }
+
+  return final_results;
+});
+
+// Grouped results for Collect mode
+const groupedResults = computed(() => {
+  const groups = new Map();
+  filteredResults.value.forEach(r => {
+    const pagePath = r.location.split('#')[0];
+    if (!groups.has(pagePath)) {
+      const segments = pagePath.replace(/\.[^.]+$/, '').split('/');
+      const breadcrumbs = segments.map(s => s.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
+      const pageTitle = r.page || breadcrumbs[breadcrumbs.length - 1] || pagePath;
+      groups.set(pagePath, { pagePath, pageTitle, breadcrumbs, results: [] });
+    }
+    groups.get(pagePath).results.push({ ...r });
+  });
+  
+  const arr = Array.from(groups.values());
+  let i = 0; arr.forEach(g => g.results.forEach(r => r._flatIndex = i++));
+  return arr;
+});
+
+// Calculate counts per category based on current unfiltered results
+const categoryCounts = computed(() => {
+  const counts = {};
+  for (const result of unfilteredResults.value) {
+    const cat = result.category.toLowerCase();
+    counts[cat] = (counts[cat] || 0) + 1;
+  }
+  return counts;
+});
+
+// Watch for modal open to focus input and attach global listener
+watch(isOpen, (newVal) => {
+  if (newVal) {
+    nextTick(() => {
+      searchInputRef.value?.focus();
+    });
+  }
+});
+
+// Reset selection when results change
+watch(filteredResults, () => {
+  selectedIndex.value = -1;
+});
+
+// Toggle a filter
+function toggleFilter(filter) {
+  if (selectedFilter.value === filter) {
+    selectedFilter.value = '';
+  } else {
+    selectedFilter.value = filter;
+  }
+  nextTick(() => searchInputRef.value?.focus());
+}
+
+function toggleFiltersVisibility() {
+  showFilters.value = !showFilters.value;
+  nextTick(() => searchInputRef.value?.focus());
+}
+
+function toggleCollected() {
+  isCollected.value = !isCollected.value;
+  selectedIndex.value = -1;
+  nextTick(() => searchInputRef.value?.focus());
+}
+
+// Close modal when clicking a result link
+function handleResultClick(e) {
+  if (e.target.closest('.search-result-link')) {
+    isOpen.value = false;
+  }
+}
+
+// Global hotkey (Cmd+K / Ctrl+K)
+function handleGlobalKeydown(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    isOpen.value = true;
+  }
+  if (e.key === 'Escape' && isOpen.value) {
+    isOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleGlobalKeydown);
+  initWorker();
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleGlobalKeydown);
+  if (worker) {
+    worker.terminate();
+  }
+  if (checkInterval) {
+    clearInterval(checkInterval);
+  }
+});
+
+function launchSearch() {
+  if (worker && searchQuery.value.trim() !== '') {
+    isWorkerRunning.value = true;
+    lastSearchText = searchQuery.value;
+    worker.postMessage(lastSearchText);
+  } else {
+    unfilteredResults.value = [];
+    isWorkerRunning.value = false;
+  }
+}
+
+function onInput() {
+  if (!isWorkerRunning.value) {
+    launchSearch();
+  }
+}
+
+function initWorker() {
+  checkInterval = setInterval(() => {
+    if (typeof window.documenterSearchIndex !== 'undefined') {
+      clearInterval(checkInterval);
+      
+      const index = window.documenterSearchIndex;
+      // Extract unique categories dynamically to prevent filtering mismatch
+      const categories = [...new Set(index.map(x => x.category))];
+      availableFilters.value = categories;
+      
+      const baseURL = import.meta.env.BASE_URL;
+      
+      const workerFunction = `
+        function worker_function() {
+          importScripts("https://cdn.jsdelivr.net/npm/minisearch@6.1.0/dist/umd/index.min.js");
+
+          const stopWords = new Set(["a","able","about","across","after","almost","also","am","among","an","and","are","as","at","be","because","been","but","by","can","cannot","could","dear","did","does","either","ever","every","from","got","had","has","have","he","her","hers","him","his","how","however","i","if","into","it","its","just","least","like","likely","may","me","might","most","must","my","neither","no","nor","not","of","off","often","on","or","other","our","own","rather","said","say","says","she","should","since","so","some","than","that","the","their","them","then","there","these","they","this","tis","to","too","twas","us","wants","was","we","were","what","when","who","whom","why","will","would","yet","you","your"]);
+
+          const juliaTermPattern = /@(?:[\\p{L}_][\\p{L}\\p{M}\\p{N}_]*[!?]?)?|[\\p{L}_][\\p{L}\\p{M}\\p{N}_]*[!?]?|\\p{N}+(?:\\.\\p{N}+)?|(?<![\\p{L}\\p{M}\\p{N}_])(?:[+\\-*\\/\\\\^%<>=!&|~?:.]+|\\p{Sm}+)(?![\\p{L}\\p{M}\\p{N}_])/gu;
+
+          let index = null;
+          let documenterBaseURL = '';
+          let filters = [];
+
+          self.onmessage = function (e) {
+            if (e.data.type === 'init') {
+              let data = e.data.documenterSearchIndex.map((x, key) => {
+                x["id"] = key;
+                return x;
+              });
+              documenterBaseURL = e.data.documenterBaseURL;
+              filters = e.data.filters;
+
+              index = new MiniSearch({
+                fields: ["title", "text"],
+                storeFields: ["location", "title", "text", "category", "page"],
+                processTerm: (term) => {
+                  if (typeof term !== "string") return null;
+                  const normalized = term.toLowerCase();
+                  return stopWords.has(normalized) ? null : normalized;
+                },
+                tokenize: (string) => {
+                  if (typeof string !== "string") return [];
+                  return string.match(juliaTermPattern) ?? [];
+                },
+                searchOptions: { 
+                  prefix: true, 
+                  boost: { title: 100 }, 
+                  fuzzy: (term) => (term.length >= 5 ? 0.2 : false) 
+                },
+              });
+
+              index.addAll(data);
+              return;
+            }
+
+            if (!index) return;
+
+          const htmlEscapes = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+          const reUnescapedHtml = /[&<>"']/g;
+          const reHasUnescapedHtml = RegExp(reUnescapedHtml.source);
+
+          function escape(string) {
+            return string && reHasUnescapedHtml.test(string)
+              ? string.replace(reUnescapedHtml, (chr) => htmlEscapes[chr])
+              : string || "";
+          }
+
+          function escapeRegExp(string) {
+            return string.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
+          }
+
+          function make_search_result(result, querystring) {
+            let search_divider = '<div class="search-divider w-100"></div>';
+            let display_link = result.location.slice(0, 50) + (result.location.length > 50 ? "..." : "");
+            if (result.page) {
+              display_link += " (" + result.page + ")";
+            }
+
+            let searchstring = escapeRegExp(querystring);
+            let textindex = new RegExp(searchstring, "i").exec(result.text || "");
+            let text = textindex !== null
+              ? result.text.slice(Math.max(textindex.index - 100, 0), Math.min(textindex.index + querystring.length + 100, (result.text || "").length))
+              : ""; 
+
+            text = text.length ? escape(text) : "";
+            let display_result = text.length
+              ? "..." + text.replace(new RegExp(escape(searchstring), "i"), '<span class="search-result-highlight">$&</span>') + "..."
+              : "";
+
+            let in_code = !["page", "section"].includes(result.category.toLowerCase());
+            let titleClass = in_code ? "search-result-code-title" : "";
+            
+            // Adjust base URL path handling
+            let finalUrl = documenterBaseURL + (documenterBaseURL.endsWith('/') || result.location.startsWith('/') ? '' : '/') + result.location;
+            finalUrl = finalUrl.replace(/\\/\\//g, '/').replace('http:/', 'http://').replace('https:/', 'https://');
+
+            return \`
+              <a href="\${finalUrl}" class="search-result-link px-4 py-2">
+                <div class="search-result-loc" title="\${result.location}">
+                  \${display_link}
+                </div>
+                <div class="search-result-header">
+                  <div class="search-result-title \${titleClass}">\${escape(result.title)}</div>
+                  <div class="property-search-result-badge">\${result.category}</div>
+                </div>
+                <p class="search-result-body">\${display_result}</p>
+              </a>
+              \${search_divider}
+            \`;
+          }
+
+            let query = e.data;
+            let results = index.search(query, {
+              combineWith: "AND",
+            });
+
+            let filtered_results = [];
+            let counts = {};
+            for (let filter of filters) counts[filter] = 0;
+            let present = {};
+
+            for (let result of results) {
+              let cat = result.category;
+              let cnt = counts[cat] || 0;
+              if (cnt < 200) {
+                let id = cat + "---" + result.location;
+                if (!present[id]) {
+                  present[id] = true;
+                  counts[cat] = cnt + 1;
+                  filtered_results.push({
+                    location: result.location,
+                    category: cat,
+                    title: result.title || '',
+                    page: result.page || '',
+                    div: make_search_result(result, query),
+                  });
+                }
+              }
+            }
+            postMessage(filtered_results);
+          };
+        }
+      `;
+      
+      const workerStr = `(${workerFunction})()`;
+      const workerBlob = new Blob([workerStr], { type: "text/javascript" });
+      worker = new Worker(URL.createObjectURL(workerBlob));
+      
+      worker.postMessage({
+        type: 'init',
+        documenterSearchIndex: index,
+        documenterBaseURL: baseURL,
+        filters: categories
+      });
+
+      worker.onmessage = (e) => {
+        if (lastSearchText !== searchQuery.value) {
+          launchSearch();
+        } else {
+          isWorkerRunning.value = false;
+        }
+        unfilteredResults.value = e.data;
+      };
+    }
+  }, 1000);
+}
+</script>
+
+<style scoped>
+/* 
+  VitePress Search Button Styling 
+  Attempts to match VPNavBarSearch default styles
+*/
+.VPNavBarSearch {
+  display: flex;
+  align-items: center;
+}
+.DocSearch-Button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0 10px 0 12px;
+  width: 100%;
+  height: 40px;
+  background: var(--vp-c-bg-alt);
+  border-radius: 8px;
+  color: var(--vp-c-text-2);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.25s, background-color 0.25s;
+}
+.DocSearch-Button:hover {
+  background: transparent;
+  border-color: var(--vp-c-brand-1);
+}
+.DocSearch-Button-Container {
+  display: flex;
+  align-items: center;
+}
+.DocSearch-Search-Icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+.DocSearch-Button-Placeholder {
+  font-size: 13px;
+  font-weight: 500;
+}
+.DocSearch-Button-Keys {
+  display: flex;
+  margin-left: 16px;
+  min-width: calc(40px + 0.2em);
+}
+.DocSearch-Button-Key {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 4px;
+  border-radius: 4px;
+  background-color: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  font-size: 12px;
+  font-family: var(--vp-font-family-base);
+}
+
+/* Modal Styling */
+.custom-search-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 10vh;
+  backdrop-filter: blur(4px);
+}
+
+.custom-search-modal-content {
+  background: var(--vp-c-bg);
+  width: 90%;
+  max-width: 700px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.custom-search-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--vp-c-divider);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.documenter-search-input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 1.1rem;
+  color: var(--vp-c-text-1);
+}
+
+.close-btn {
+  background: var(--vp-c-bg-alt);
+  border: 1px solid var(--vp-c-divider);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+}
+
+.clear-input-btn {
+  background: transparent;
+  border: none;
+  color: var(--vp-c-text-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  margin-right: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.clear-input-btn:hover {
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg-alt);
+}
+
+.search-modal-card-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Toolbar (Filters + Sorting) */
+.search-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.search-toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+
+.filter-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.filter-toggle-btn:hover {
+  background: var(--vp-c-bg-alt);
+  color: var(--vp-c-brand-1);
+}
+
+.sort-toggle-active {
+  color: var(--vp-c-brand-1);
+}
+
+.search-filter {
+  background: transparent;
+  border: 1px solid var(--vp-c-divider);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--vp-c-text-2);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-filter:hover {
+  border-color: var(--vp-button-brand-border, var(--vp-c-brand-1));
+  color: var(--vp-c-brand-1);
+}
+
+.search-filter-selected {
+  background: var(--vp-button-brand-bg, var(--vp-c-brand-1));
+  color: var(--vp-button-brand-text, white);
+  border-color: var(--vp-button-brand-border, var(--vp-c-brand-1));
+}
+.search-filter-selected:hover {
+  background: var(--vp-button-brand-hover-bg, var(--vp-c-brand-1));
+  color: var(--vp-button-brand-text, white);
+}
+
+.filter-badge {
+  background: var(--vp-c-bg-soft, var(--vp-c-default-soft));
+  color: var(--vp-c-text-2);
+  padding: 0 4px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+}
+.search-filter-selected .filter-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--vp-button-brand-text, white);
+}
+
+.search-divider {
+  height: 1px;
+  background: var(--vp-c-divider);
+  margin: 12px 0;
+}
+
+.result-count {
+  margin-bottom: 16px;
+  color: var(--vp-c-text-2);
+}
+
+/* Results */
+:deep(.search-result-link) {
+  display: block;
+  text-decoration: none !important;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
+  color: inherit;
+}
+.search-result-wrapper.is-selected :deep(.search-result-link) {
+  background: var(--vp-c-bg-alt);
+  border-color: var(--vp-c-brand-1);
+}
+
+:deep(.search-result-header) {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+:deep(.search-result-title) {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--vp-c-brand-1);
+}
+
+:deep(.search-result-code-title) {
+  font-family: monospace;
+}
+
+:deep(.property-search-result-badge) {
+  font-size: 0.65rem;
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+:deep(.search-result-body) {
+  font-size: 0.85rem;
+  color: var(--vp-c-text-2);
+  margin: 4px 0 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+:deep(.search-result-highlight) {
+  background: var(--vp-c-yellow-soft, rgba(255, 200, 0, 0.3));
+  color: var(--vp-c-yellow-1, inherit);
+  font-weight: bold;
+}
+
+:deep(.search-result-loc) {
+  font-size: 0.75rem;
+  color: var(--vp-c-text-3);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* Grouped / Collect view */
+.search-group {
+  margin-bottom: 4px;
+}
+
+.search-group-header {
+  background: var(--vp-c-bg-alt);
+  padding: 10px 14px;
+  border-radius: 8px 8px 0 0;
+}
+
+.search-group-breadcrumbs {
+  font-size: 0.75rem;
+  color: var(--vp-c-text-3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.breadcrumb-sep {
+  font-size: 0.65rem;
+  color: var(--vp-c-text-3);
+  opacity: 0.6;
+}
+
+.search-group-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.search-group-children {
+  border-left: 2px solid var(--vp-c-divider);
+  margin-left: 14px;
+  padding-left: 2px;
+}
+
+.search-group-children :deep(.search-result-body),
+.search-group-children :deep(.search-result-loc) {
+  display: none;
+}
+
+.search-group-children :deep(.search-result-link) {
+  padding: 4px 10px;
+}
+
+.search-group-children :deep(.search-result-header) {
+  margin-bottom: 0;
+}
+
+.search-group-children :deep(.search-result-title) {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+}
+
+/* Bulma compatibility utilities for VitePress */
+.has-text-centered { text-align: center; }
+.my-5 { margin-top: 1.5rem; margin-bottom: 1.5rem; }
+.py-5 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.is-flex { display: flex; }
+.gap-2 { gap: 0.5rem; }
+.is-flex-wrap-wrap { flex-wrap: wrap; }
+.is-justify-content-flex-start { justify-content: flex-start; }
+.is-align-items-center { align-items: center; }
+.is-size-6 { font-size: 1rem; }
+.is-clipped { overflow: hidden; }
+.w-100 { width: 100%; }
+.is-flex-direction-column { flex-direction: column; }
+.is-align-items-flex-start { align-items: flex-start; }
+.has-text-justified { text-align: justify; }
+.mt-1 { margin-top: 0.25rem; }
+</style>
