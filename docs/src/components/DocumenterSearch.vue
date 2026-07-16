@@ -37,12 +37,18 @@
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-            <button @click="showFilters = !showFilters" class="filter-toggle-btn" title="Toggle Filters" style="margin-right: 8px;">
+            <button @click="showFilters = !showFilters" class="filter-toggle-btn" title="Toggle Filters">
               <svg v-if="!showFilters" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
               </svg>
               <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line>
+              </svg>
+            </button>
+            <button @click="isCollected = !isCollected" class="filter-toggle-btn" :class="{ 'sort-toggle-active': isCollected }" title="Group by page" style="margin-right: 8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 2H8l-2 5h12L16 2z"></path>
               </svg>
             </button>
             <button class="close-btn" @click="isOpen = false">Esc</button>
@@ -57,7 +63,8 @@
             
             <div v-else>
               <!-- Filters -->
-              <div v-show="showFilters" class="is-flex gap-2 is-flex-wrap-wrap is-justify-content-flex-start is-align-items-center search-filters" style="margin-bottom: 12px;">
+              <div v-show="showFilters" class="search-toolbar">
+                <div class="search-toolbar-group">
                   <button 
                     class="search-filter"
                     :class="{ 'search-filter-selected': selectedFilter === '' }"
@@ -75,6 +82,7 @@
                     {{ filter }} <span class="filter-badge">{{ categoryCounts[filter.toLowerCase()] || 0 }}</span>
                   </button>
                 </div>
+              </div>
               
               <div class="search-divider" v-show="showFilters"></div>
               
@@ -88,6 +96,32 @@
                 No result found!
               </div>
 
+              <!-- Grouped (Collect) view -->
+              <div v-else-if="isCollected" class="is-clipped w-100 is-flex is-flex-direction-column has-text-justified mt-1" @click="handleResultClick">
+                <div v-for="group in groupedResults" :key="group.pagePath" class="search-group">
+                  <div class="search-group-header">
+                    <div class="search-group-breadcrumbs">
+                      <template v-for="(crumb, ci) in group.breadcrumbs" :key="ci">
+                        <span v-if="ci > 0" class="breadcrumb-sep">&gt;</span>
+                        <span>{{ crumb }}</span>
+                      </template>
+                    </div>
+                    <div class="search-group-title">{{ group.pageTitle }}</div>
+                  </div>
+                  <div class="search-group-children">
+                    <div 
+                      v-for="result in group.results" 
+                      :key="result.location" 
+                      class="search-result-wrapper"
+                      :class="{ 'is-selected': result._flatIndex === selectedIndex }"
+                      @mouseenter="selectedIndex = result._flatIndex"
+                      v-html="result.div"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Flat view (default or Sort A-Z) -->
               <div v-else class="is-clipped w-100 is-flex is-flex-direction-column gap-2 has-text-justified mt-1" @click="handleResultClick">
                 <div 
                   v-for="(result, index) in filteredResults" 
@@ -112,6 +146,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 
 const isOpen = ref(false);
 const showFilters = ref(true);
+const isCollected = ref(false);
 const searchQuery = ref('');
 const searchInputRef = ref(null);
 const selectedFilter = ref('');
@@ -119,6 +154,7 @@ const availableFilters = ref([]);
 const unfilteredResults = ref([]);
 const isWorkerRunning = ref(false);
 const selectedIndex = ref(-1);
+
 let lastSearchText = '';
 let worker = null;
 let checkInterval = null;
@@ -181,7 +217,35 @@ const filteredResults = computed(() => {
       links.add(res.location);
     }
   }
+
   return final_results;
+});
+
+// Grouped results for Collect mode
+const groupedResults = computed(() => {
+  const groups = new Map();
+  let flatIndex = 0;
+  
+  for (const result of filteredResults.value) {
+    const pagePath = result.location.split('#')[0];
+    if (!groups.has(pagePath)) {
+      // Build breadcrumbs from the path segments
+      const segments = pagePath.replace(/\.[^.]+$/, '').split('/');
+      const breadcrumbs = segments.map(s => 
+        s.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      );
+      groups.set(pagePath, {
+        pagePath,
+        pageTitle: result.page || breadcrumbs[breadcrumbs.length - 1] || pagePath,
+        breadcrumbs,
+        results: [],
+      });
+    }
+    const r = { ...result, _flatIndex: flatIndex++ };
+    groups.get(pagePath).results.push(r);
+  }
+  
+  return Array.from(groups.values());
 });
 
 // Calculate counts per category based on current unfiltered results
@@ -404,6 +468,8 @@ function initWorker() {
                   filtered_results.push({
                     location: result.location,
                     category: cat,
+                    title: result.title || '',
+                    page: result.page || '',
                     div: make_search_result(result, query),
                   });
                 }
@@ -577,13 +643,22 @@ function initWorker() {
   overflow-y: auto;
 }
 
-/* Filters */
-.search-filters {
+/* Toolbar (Filters + Sorting) */
+.search-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.search-toolbar-group {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
 }
+
 
 .filter-toggle-btn {
   background: transparent;
@@ -600,6 +675,10 @@ function initWorker() {
 
 .filter-toggle-btn:hover {
   background: var(--vp-c-bg-alt);
+  color: var(--vp-c-brand-1);
+}
+
+.sort-toggle-active {
   color: var(--vp-c-brand-1);
 }
 
@@ -717,6 +796,63 @@ function initWorker() {
   color: var(--vp-c-text-3);
   margin-bottom: 4px;
   font-weight: 500;
+}
+
+/* Grouped / Collect view */
+.search-group {
+  margin-bottom: 4px;
+}
+
+.search-group-header {
+  background: var(--vp-c-bg-alt);
+  padding: 10px 14px;
+  border-radius: 8px 8px 0 0;
+}
+
+.search-group-breadcrumbs {
+  font-size: 0.75rem;
+  color: var(--vp-c-text-3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.breadcrumb-sep {
+  font-size: 0.65rem;
+  color: var(--vp-c-text-3);
+  opacity: 0.6;
+}
+
+.search-group-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.search-group-children {
+  border-left: 2px solid var(--vp-c-divider);
+  margin-left: 14px;
+  padding-left: 2px;
+}
+
+.search-group-children :deep(.search-result-body),
+.search-group-children :deep(.search-result-loc) {
+  display: none;
+}
+
+.search-group-children :deep(.search-result-link) {
+  padding: 4px 10px;
+}
+
+.search-group-children :deep(.search-result-header) {
+  margin-bottom: 0;
+}
+
+.search-group-children :deep(.search-result-title) {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
 }
 
 /* Bulma compatibility utilities for VitePress */
