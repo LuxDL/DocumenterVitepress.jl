@@ -27,7 +27,16 @@
               placeholder="Search docs" 
               @input="onInput"
               @keydown.esc="isOpen = false"
+              @keydown.down.prevent="navigateDown"
+              @keydown.up.prevent="navigateUp"
+              @keydown.enter.prevent="navigateEnter"
             />
+            <button v-show="searchQuery.length > 0" @click="clearSearch" class="clear-input-btn" title="Clear Search">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
             <button @click="showFilters = !showFilters" class="filter-toggle-btn" title="Toggle Filters" style="margin-right: 8px;">
               <svg v-if="!showFilters" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
@@ -80,7 +89,14 @@
               </div>
 
               <div v-else class="is-clipped w-100 is-flex is-flex-direction-column gap-2 has-text-justified mt-1" @click="handleResultClick">
-                <div v-for="result in filteredResults" :key="result.location" v-html="result.div"></div>
+                <div 
+                  v-for="(result, index) in filteredResults" 
+                  :key="result.location" 
+                  class="search-result-wrapper"
+                  :class="{ 'is-selected': index === selectedIndex }"
+                  @mouseenter="selectedIndex = index"
+                  v-html="result.div"
+                ></div>
               </div>
             </div>
             
@@ -102,9 +118,51 @@ const selectedFilter = ref('');
 const availableFilters = ref([]);
 const unfilteredResults = ref([]);
 const isWorkerRunning = ref(false);
+const selectedIndex = ref(-1);
 let lastSearchText = '';
 let worker = null;
 let checkInterval = null;
+
+function clearSearch() {
+  searchQuery.value = '';
+  onInput();
+  nextTick(() => {
+    searchInputRef.value?.focus();
+  });
+}
+
+function navigateDown() {
+  if (filteredResults.value.length > 0) {
+    selectedIndex.value = Math.min(selectedIndex.value + 1, filteredResults.value.length - 1);
+    scrollToSelected();
+  }
+}
+
+function navigateUp() {
+  if (filteredResults.value.length > 0) {
+    selectedIndex.value = Math.max(selectedIndex.value - 1, 0);
+    scrollToSelected();
+  }
+}
+
+function navigateEnter() {
+  if (selectedIndex.value >= 0 && selectedIndex.value < filteredResults.value.length) {
+    const el = document.querySelectorAll('.search-result-wrapper')[selectedIndex.value];
+    const link = el?.querySelector('a');
+    if (link) {
+      link.click();
+    }
+  }
+}
+
+function scrollToSelected() {
+  nextTick(() => {
+    const el = document.querySelectorAll('.search-result-wrapper')[selectedIndex.value];
+    if (el) {
+      el.scrollIntoView({ block: 'nearest' });
+    }
+  });
+}
 
 // The filtered results computed on the frontend
 const filteredResults = computed(() => {
@@ -143,6 +201,11 @@ watch(isOpen, (newVal) => {
       searchInputRef.value?.focus();
     });
   }
+});
+
+// Reset selection when results change
+watch(filteredResults, () => {
+  selectedIndex.value = -1;
 });
 
 // Toggle a filter
@@ -491,6 +554,24 @@ function initWorker() {
   cursor: pointer;
 }
 
+.clear-input-btn {
+  background: transparent;
+  border: none;
+  color: var(--vp-c-text-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  margin-right: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.clear-input-btn:hover {
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg-alt);
+}
+
 .search-modal-card-body {
   padding: 20px;
   overflow-y: auto;
@@ -580,11 +661,13 @@ function initWorker() {
   text-decoration: none !important;
   padding: 12px;
   border-radius: 8px;
-  transition: background 0.2s;
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
   color: inherit;
 }
-:deep(.search-result-link:hover) {
+.search-result-wrapper.is-selected :deep(.search-result-link) {
   background: var(--vp-c-bg-alt);
+  border-color: var(--vp-c-brand-1);
 }
 
 :deep(.search-result-header) {
