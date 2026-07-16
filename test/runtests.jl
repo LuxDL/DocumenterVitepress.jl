@@ -203,6 +203,18 @@ end
         @test occursin("# PDF & SVG", rendered_md)
         @test occursin("&lt;cond&gt;", rendered_md)
 
+        generated_vitepress_dir = joinpath(dir, "build", ".documenter", ".vitepress")
+        generated_search_options = joinpath(generated_vitepress_dir, "search-options.mjs")
+        @test isfile(generated_search_options)
+        generated_config = read(joinpath(generated_vitepress_dir, "config.mts"), String)
+        @test occursin("import { documenterVitepressSearchOptions } from './search-options.mjs'", generated_config)
+        @test occursin("miniSearch: documenterVitepressSearchOptions", generated_config)
+
+        mini_search_module = joinpath(dir, "node_modules", "minisearch", "dist", "es", "index.js")
+        @test isfile(mini_search_module)
+        search_test = joinpath(@__DIR__, "search-options.test.mjs")
+        run(`$(DocumenterVitepress.node()) $search_test $generated_search_options $mini_search_module`)
+
         # The browser-tab title comes from two places, and the bug only manifests in one:
         #   1. The static `<title>` in the HTML head — vitepress HTML-escapes the title
         #      text here, so a bare `&` becomes `&amp;` and renders correctly as `&`.
