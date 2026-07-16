@@ -2,6 +2,8 @@
 
 ## unreleased
 
+- Improved VitePress local search with Julia-aware Unicode tokenization, case-insensitive stop-word handling, stricter multi-term matching, heading-focused ranking, and length-gated fuzzy matching [#190](https://github.com/LuxDL/DocumenterVitepress.jl/issues/190)
+
 ## v0.3.5 - 2026-07-14
 
 - Cleaned up `docs/make.jl` by removing unused `DocumenterCitations` integration code and clarifying remaining dependencies [#382](https://github.com/LuxDL/DocumenterVitepress.jl/pull/382).
