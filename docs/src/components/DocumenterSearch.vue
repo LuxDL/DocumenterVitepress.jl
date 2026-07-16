@@ -219,19 +219,25 @@ function initWorker() {
 
           const stopWords = new Set(["a","able","about","across","after","almost","also","am","among","an","and","are","as","at","be","because","been","but","by","can","cannot","could","dear","did","does","either","ever","every","from","got","had","has","have","he","her","hers","him","his","how","however","i","if","into","it","its","just","least","like","likely","may","me","might","most","must","my","neither","no","nor","not","of","off","often","on","or","other","our","own","rather","said","say","says","she","should","since","so","some","than","that","the","their","them","then","there","these","they","this","tis","to","too","twas","us","wants","was","we","were","what","when","who","whom","why","will","would","yet","you","your"]);
 
+          const juliaTermPattern = /@(?:[\\p{L}_][\\p{L}\\p{M}\\p{N}_]*[!?]?)?|[\\p{L}_][\\p{L}\\p{M}\\p{N}_]*[!?]?|\\p{N}+(?:\\.\\p{N}+)?|(?<![\\p{L}\\p{M}\\p{N}_])(?:[+\\-*\\/\\\\^%<>=!&|~?:.]+|\\p{Sm}+)(?![\\p{L}\\p{M}\\p{N}_])/gu;
+
           let index = new MiniSearch({
             fields: ["title", "text"],
             storeFields: ["location", "title", "text", "category", "page"],
             processTerm: (term) => {
-              let word = stopWords.has(term) ? null : term;
-              if (word) {
-                word = word.replace(/^[^\\w@!]+/, "").replace(/[^\\w@!]+$/, "");
-                word = word.toLowerCase();
-              }
-              return word ?? null;
+              if (typeof term !== "string") return null;
+              const normalized = term.toLowerCase();
+              return stopWords.has(normalized) ? null : normalized;
             },
-            tokenize: (string) => string.split(/[\\s\\-\\.]+/),
-            searchOptions: { prefix: true, boost: { title: 100 }, fuzzy: 2 },
+            tokenize: (string) => {
+              if (typeof string !== "string") return [];
+              return string.match(juliaTermPattern) ?? [];
+            },
+            searchOptions: { 
+              prefix: true, 
+              boost: { title: 100 }, 
+              fuzzy: (term) => (term.length >= 5 ? 0.2 : false) 
+            },
           });
 
           index.addAll(data);
@@ -293,7 +299,6 @@ function initWorker() {
           self.onmessage = function (e) {
             let query = e.data;
             let results = index.search(query, {
-              filter: (result) => result.score >= 1,
               combineWith: "AND",
             });
 

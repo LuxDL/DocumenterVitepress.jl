@@ -275,13 +275,38 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             )
             push!(inventory, item)
         end
-        push!(search_index, Dict(
-            "title" => _pagetitle(page),
-            "text" => "",
-            "location" => _get_inventory_uri(doc, page, nothing),
-            "category" => "page",
-            "page" => _pagetitle(page)
-        ))
+        current_heading_id = nothing
+        current_heading_text = _pagetitle(page)
+        current_text = String[]
+
+        function flush_section!()
+            text = strip(join(current_text, " "))
+            if !isempty(text)
+                push!(search_index, Dict(
+                    "title" => current_heading_text,
+                    "text" => text,
+                    "location" => _get_inventory_uri(doc, page, current_heading_id),
+                    "category" => current_heading_id === nothing ? "page" : "section",
+                    "page" => _pagetitle(page)
+                ))
+            end
+            empty!(current_text)
+        end
+
+        for node in page.mdast.children
+            if node.element isa Documenter.AnchoredHeader
+                flush_section!()
+                anchor = node.element.anchor
+                current_heading_id = replace(sanitized_anchor_label(anchor), " " => "-")
+                current_heading_text = Documenter.MDFlatten.mdflatten(first(node.children))
+            elseif node.element isa Documenter.DocsNode
+                # Docstrings are handled by render; we skip their text here
+                continue
+            else
+                push!(current_text, Documenter.MDFlatten.mdflatten(node))
+            end
+        end
+        flush_section!()
     end
     
     # Write the search index to a JS file so the frontend can load it
@@ -1250,15 +1275,6 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
             uri = _get_inventory_uri(doc, page, id),
         )
         push!(kwargs[:inventory], item)
-    end
-    if haskey(kwargs, :search_index)
-        push!(kwargs[:search_index], Dict(
-            "title" => heading_text,
-            "text" => "",
-            "location" => _get_inventory_uri(doc, page, id),
-            "category" => "section",
-            "page" => _pagetitle(page)
-        ))
     end
     println(io)
 end
