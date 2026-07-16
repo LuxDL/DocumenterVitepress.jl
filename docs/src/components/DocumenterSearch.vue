@@ -299,14 +299,14 @@ function initWorker() {
 
             return \`
               <a href="\${finalUrl}" class="search-result-link px-4 py-2">
+                <div class="search-result-loc" title="\${result.location}">
+                  \${display_link}
+                </div>
                 <div class="search-result-header">
                   <div class="search-result-title \${titleClass}">\${escape(result.title)}</div>
                   <div class="property-search-result-badge">\${result.category}</div>
                 </div>
                 <p class="search-result-body">\${display_result}</p>
-                <div class="search-result-loc" title="\${result.location}">
-                  \${display_link}
-                </div>
               </a>
               \${search_divider}
             \`;
@@ -567,6 +567,7 @@ function initWorker() {
 }
 
 :deep(.search-result-title) {
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--vp-c-brand-1);
 }
@@ -576,7 +577,7 @@ function initWorker() {
 }
 
 :deep(.property-search-result-badge) {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   background: var(--vp-c-brand-soft);
   color: var(--vp-c-brand-1);
   padding: 2px 6px;
@@ -585,9 +586,9 @@ function initWorker() {
 }
 
 :deep(.search-result-body) {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--vp-c-text-2);
-  margin: 4px 0;
+  margin: 4px 0 0 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -601,9 +602,10 @@ function initWorker() {
 }
 
 :deep(.search-result-loc) {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--vp-c-text-3);
-  margin-top: 4px;
+  margin-bottom: 4px;
+  font-weight: 500;
 }
 
 /* Bulma compatibility utilities for VitePress */
