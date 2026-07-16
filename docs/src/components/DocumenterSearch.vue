@@ -72,7 +72,7 @@
                 No result found!
               </div>
 
-              <div v-else class="is-clipped w-100 is-flex is-flex-direction-column gap-2 is-align-items-flex-start has-text-justified mt-1" @click="handleResultClick">
+              <div v-else class="is-clipped w-100 is-flex is-flex-direction-column gap-2 has-text-justified mt-1" @click="handleResultClick">
                 <div v-for="result in filteredResults" :key="result.location" v-html="result.div"></div>
               </div>
             </div>
@@ -96,6 +96,7 @@ const unfilteredResults = ref([]);
 const isWorkerRunning = ref(false);
 let lastSearchText = '';
 let worker = null;
+let checkInterval = null;
 
 // The filtered results computed on the frontend
 const filteredResults = computed(() => {
@@ -158,9 +159,12 @@ function handleResultClick(e) {
 
 // Global hotkey (Cmd+K / Ctrl+K)
 function handleGlobalKeydown(e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault();
     isOpen.value = true;
+  }
+  if (e.key === 'Escape' && isOpen.value) {
+    isOpen.value = false;
   }
 }
 
@@ -174,6 +178,9 @@ onUnmounted(() => {
   if (worker) {
     worker.terminate();
   }
+  if (checkInterval) {
+    clearInterval(checkInterval);
+  }
 });
 
 function launchSearch() {
@@ -183,6 +190,7 @@ function launchSearch() {
     worker.postMessage(lastSearchText);
   } else {
     unfilteredResults.value = [];
+    isWorkerRunning.value = false;
   }
 }
 
@@ -193,7 +201,7 @@ function onInput() {
 }
 
 function initWorker() {
-  const checkInterval = setInterval(() => {
+  checkInterval = setInterval(() => {
     if (typeof window.documenterSearchIndex !== 'undefined') {
       clearInterval(checkInterval);
       
@@ -202,45 +210,55 @@ function initWorker() {
       const categories = [...new Set(index.map(x => x.category))];
       availableFilters.value = categories;
       
-      // We safely try to get deploy base URL from __DEPLOY_ABSPATH__ if defined, otherwise empty string
-      let baseURL = '';
-      try {
-        baseURL = __DEPLOY_ABSPATH__ || '';
-      } catch(e) {}
+      const baseURL = typeof __DEPLOY_ABSPATH__ !== 'undefined' && __DEPLOY_ABSPATH__ !== '' 
+        ? __DEPLOY_ABSPATH__ 
+        : import.meta.env.BASE_URL;
       
       const workerFunction = `
-        function worker_function(documenterSearchIndex, documenterBaseURL, filters) {
+        function worker_function() {
           importScripts("https://cdn.jsdelivr.net/npm/minisearch@6.1.0/dist/umd/index.min.js");
-
-          let data = documenterSearchIndex.map((x, key) => {
-            x["id"] = key;
-            return x;
-          });
 
           const stopWords = new Set(["a","able","about","across","after","almost","also","am","among","an","and","are","as","at","be","because","been","but","by","can","cannot","could","dear","did","does","either","ever","every","from","got","had","has","have","he","her","hers","him","his","how","however","i","if","into","it","its","just","least","like","likely","may","me","might","most","must","my","neither","no","nor","not","of","off","often","on","or","other","our","own","rather","said","say","says","she","should","since","so","some","than","that","the","their","them","then","there","these","they","this","tis","to","too","twas","us","wants","was","we","were","what","when","who","whom","why","will","would","yet","you","your"]);
 
           const juliaTermPattern = /@(?:[\\p{L}_][\\p{L}\\p{M}\\p{N}_]*[!?]?)?|[\\p{L}_][\\p{L}\\p{M}\\p{N}_]*[!?]?|\\p{N}+(?:\\.\\p{N}+)?|(?<![\\p{L}\\p{M}\\p{N}_])(?:[+\\-*\\/\\\\^%<>=!&|~?:.]+|\\p{Sm}+)(?![\\p{L}\\p{M}\\p{N}_])/gu;
 
-          let index = new MiniSearch({
-            fields: ["title", "text"],
-            storeFields: ["location", "title", "text", "category", "page"],
-            processTerm: (term) => {
-              if (typeof term !== "string") return null;
-              const normalized = term.toLowerCase();
-              return stopWords.has(normalized) ? null : normalized;
-            },
-            tokenize: (string) => {
-              if (typeof string !== "string") return [];
-              return string.match(juliaTermPattern) ?? [];
-            },
-            searchOptions: { 
-              prefix: true, 
-              boost: { title: 100 }, 
-              fuzzy: (term) => (term.length >= 5 ? 0.2 : false) 
-            },
-          });
+          let index = null;
+          let documenterBaseURL = '';
+          let filters = [];
 
-          index.addAll(data);
+          self.onmessage = function (e) {
+            if (e.data.type === 'init') {
+              let data = e.data.documenterSearchIndex.map((x, key) => {
+                x["id"] = key;
+                return x;
+              });
+              documenterBaseURL = e.data.documenterBaseURL;
+              filters = e.data.filters;
+
+              index = new MiniSearch({
+                fields: ["title", "text"],
+                storeFields: ["location", "title", "text", "category", "page"],
+                processTerm: (term) => {
+                  if (typeof term !== "string") return null;
+                  const normalized = term.toLowerCase();
+                  return stopWords.has(normalized) ? null : normalized;
+                },
+                tokenize: (string) => {
+                  if (typeof string !== "string") return [];
+                  return string.match(juliaTermPattern) ?? [];
+                },
+                searchOptions: { 
+                  prefix: true, 
+                  boost: { title: 100 }, 
+                  fuzzy: (term) => (term.length >= 5 ? 0.2 : false) 
+                },
+              });
+
+              index.addAll(data);
+              return;
+            }
+
+            if (!index) return;
 
           const htmlEscapes = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
           const reUnescapedHtml = /[&<>"']/g;
@@ -296,7 +314,6 @@ function initWorker() {
             \`;
           }
 
-          self.onmessage = function (e) {
             let query = e.data;
             let results = index.search(query, {
               combineWith: "AND",
@@ -328,10 +345,17 @@ function initWorker() {
         }
       `;
       
-      const workerStr = `(${workerFunction})(${JSON.stringify(index)}, ${JSON.stringify(baseURL)}, ${JSON.stringify(categories)})`;
+      const workerStr = `(${workerFunction})()`;
       const workerBlob = new Blob([workerStr], { type: "text/javascript" });
       worker = new Worker(URL.createObjectURL(workerBlob));
       
+      worker.postMessage({
+        type: 'init',
+        documenterSearchIndex: index,
+        documenterBaseURL: baseURL,
+        filters: categories
+      });
+
       worker.onmessage = (e) => {
         if (lastSearchText !== searchQuery.value) {
           launchSearch();
@@ -583,4 +607,21 @@ function initWorker() {
   color: var(--vp-c-text-3);
   margin-top: 4px;
 }
+
+/* Bulma compatibility utilities for VitePress */
+.has-text-centered { text-align: center; }
+.my-5 { margin-top: 1.5rem; margin-bottom: 1.5rem; }
+.py-5 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.is-flex { display: flex; }
+.gap-2 { gap: 0.5rem; }
+.is-flex-wrap-wrap { flex-wrap: wrap; }
+.is-justify-content-flex-start { justify-content: flex-start; }
+.is-align-items-center { align-items: center; }
+.is-size-6 { font-size: 1rem; }
+.is-clipped { overflow: hidden; }
+.w-100 { width: 100%; }
+.is-flex-direction-column { flex-direction: column; }
+.is-align-items-flex-start { align-items: flex-start; }
+.has-text-justified { text-align: justify; }
+.mt-1 { margin-top: 0.25rem; }
 </style>

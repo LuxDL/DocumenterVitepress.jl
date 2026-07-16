@@ -248,7 +248,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         nothing
     end
 
-    search_index = []
+    search_index = Dict{String, Any}[]
 
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
@@ -293,7 +293,24 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             empty!(current_text)
         end
 
+        in_frontmatter = false
+        is_first_node = true
         for node in page.mdast.children
+            if is_first_node && node.element isa MarkdownAST.ThematicBreak
+                in_frontmatter = true
+                is_first_node = false
+                continue
+            end
+            if in_frontmatter && node.element isa MarkdownAST.ThematicBreak
+                in_frontmatter = false
+                continue
+            end
+            is_first_node = false
+            
+            if in_frontmatter || (node.element isa MarkdownAST.CodeBlock && node.element.info == "@frontmatter") || (node.element isa Documenter.RawNode && startswith(node.element.text, "---"))
+                continue
+            end
+
             if node.element isa Documenter.AnchoredHeader
                 flush_section!()
                 anchor = node.element.anchor
