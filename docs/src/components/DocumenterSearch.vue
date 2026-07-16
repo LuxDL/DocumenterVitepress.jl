@@ -241,8 +241,10 @@ const groupedResults = computed(() => {
   filteredResults.value.forEach(r => {
     const pagePath = r.location.split('#')[0];
     if (!groups.has(pagePath)) {
-      const pageTitle = r.page || pagePath.split('/').pop().replace(/[-_]/g, ' ');
-      groups.set(pagePath, { pagePath, pageTitle, breadcrumbs: [pageTitle], results: [] });
+      const segments = pagePath.replace(/\.[^.]+$/, '').split('/');
+      const breadcrumbs = segments.map(s => s.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
+      const pageTitle = r.page || breadcrumbs[breadcrumbs.length - 1] || pagePath;
+      groups.set(pagePath, { pagePath, pageTitle, breadcrumbs, results: [] });
     }
     groups.get(pagePath).results.push({ ...r });
   });
