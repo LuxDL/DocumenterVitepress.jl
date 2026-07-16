@@ -210,9 +210,7 @@ function initWorker() {
       const categories = [...new Set(index.map(x => x.category))];
       availableFilters.value = categories;
       
-      const baseURL = typeof __DEPLOY_ABSPATH__ !== 'undefined' && __DEPLOY_ABSPATH__ !== '' 
-        ? __DEPLOY_ABSPATH__ 
-        : import.meta.env.BASE_URL;
+      const baseURL = import.meta.env.BASE_URL;
       
       const workerFunction = `
         function worker_function() {
@@ -300,7 +298,7 @@ function initWorker() {
             finalUrl = finalUrl.replace(/\\/\\//g, '/').replace('http:/', 'http://').replace('https:/', 'https://');
 
             return \`
-              <a href="\${encodeURI(finalUrl)}" class="search-result-link px-4 py-2">
+              <a href="\${finalUrl}" class="search-result-link px-4 py-2">
                 <div class="search-result-header">
                   <div class="search-result-title \${titleClass}">\${escape(result.title)}</div>
                   <div class="property-search-result-badge">\${result.category}</div>
