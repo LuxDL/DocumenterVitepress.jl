@@ -277,7 +277,8 @@ This creates the following structure in your `docs/src` folder:
 ```
 docs/src/
 ├── .vitepress/
-│   ├── config.mts      # Main Vitepress configuration
+│   ├── config.mts         # Main Vitepress configuration
+│   ├── search-options.mjs # Julia-aware local search defaults
 │   └── theme/
 │       ├── index.ts    # Theme customization
 │       └── style.css   # Custom styles
@@ -290,6 +291,7 @@ docs/src/
 ### What Gets Generated
 
 - **`config.mts`**: The main Vitepress configuration file. Edit this to customize navigation, sidebar, search, and other site settings.
+- **`search-options.mjs`**: Julia-aware MiniSearch tokenization and ranking defaults used by the generated configuration.
 - **`theme/index.ts`**: Theme entry point. Use this to add custom Vue components or override Vitepress theme defaults.
 - **`theme/style.css`**: Custom CSS styles for your documentation.
 - **`assets/`**: Images and icons used by your documentation.
@@ -307,6 +309,29 @@ Once you've generated the template:
 4. Build as usual with `include("make.jl")`
 
 For detailed Vitepress configuration options, see the [Vitepress documentation](https://vitepress.dev/reference/site-config).
+
+### Using the Julia-aware Search Defaults in an Existing Configuration
+
+DocumenterVitepress does not rewrite a custom `config.mts`. To opt an existing configuration into the default Julia-aware local search, import the search options module and pass it to Vitepress:
+
+```ts [config.mts]
+import { defineConfig } from 'vitepress'
+import { documenterVitepressSearchOptions } from './search-options.mjs'
+
+export default defineConfig({
+  themeConfig: {
+    search: {
+      provider: 'local',
+      options: {
+        detailedView: true,
+        miniSearch: documenterVitepressSearchOptions
+      }
+    }
+  }
+})
+```
+
+The `search-options.mjs` fallback is copied into the generated Vitepress build automatically. It can also be created in the source tree with `DocumenterVitepress.generate_template` if you want to customize its tokenization or ranking.
 
 ## Common Issues and Solutions
 

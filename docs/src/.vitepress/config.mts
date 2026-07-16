@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs'
 import { mathjaxPlugin } from './mathjax-plugin'
 import { juliaReplTransformer } from './julia-repl-transformer'
+import { documenterVitepressSearchOptions } from './search-options.mjs'
 import footnote from "markdown-it-footnote";
 import path from 'path'
 
@@ -92,7 +93,8 @@ export default defineConfig({
     search: {
       provider: 'local',
       options: {
-        detailedView: true
+        detailedView: true,
+        miniSearch: documenterVitepressSearchOptions
       }
     },
     nav,
