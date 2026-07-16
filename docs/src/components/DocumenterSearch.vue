@@ -37,7 +37,7 @@
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-            <button @click="showFilters = !showFilters" class="filter-toggle-btn" title="Toggle Filters">
+            <button @click="toggleFiltersVisibility" class="filter-toggle-btn" title="Toggle Filters">
               <svg v-if="!showFilters" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
               </svg>
@@ -45,7 +45,7 @@
                 <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line>
               </svg>
             </button>
-            <button @click="isCollected = !isCollected" class="filter-toggle-btn" :class="{ 'sort-toggle-active': isCollected }" title="Group by page" style="margin-right: 8px;">
+            <button @click="toggleCollected" class="filter-toggle-btn" :class="{ 'sort-toggle-active': isCollected }" title="Group by page" style="margin-right: 8px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                 <path d="M16 2H8l-2 5h12L16 2z"></path>
@@ -97,7 +97,7 @@
               </div>
 
               <!-- Grouped (Collect) view -->
-              <div v-else-if="isCollected" class="is-clipped w-100 is-flex is-flex-direction-column has-text-justified mt-1" @click="handleResultClick">
+              <div v-else-if="isCollected" class="is-clipped w-100 is-flex is-flex-direction-column has-text-justified mt-1" @click="handleResultClick" @mousemove="onMouseMove">
                 <div v-for="group in groupedResults" :key="group.pagePath" class="search-group">
                   <div class="search-group-header">
                     <div class="search-group-breadcrumbs">
@@ -114,7 +114,7 @@
                       :key="result.location" 
                       class="search-result-wrapper"
                       :class="{ 'is-selected': result._flatIndex === selectedIndex }"
-                      @mouseenter="selectedIndex = result._flatIndex"
+                      @mouseenter="onResultHover(result._flatIndex)"
                       v-html="result.div"
                     ></div>
                   </div>
@@ -122,13 +122,13 @@
               </div>
 
               <!-- Flat view (default or Sort A-Z) -->
-              <div v-else class="is-clipped w-100 is-flex is-flex-direction-column gap-2 has-text-justified mt-1" @click="handleResultClick">
+              <div v-else class="is-clipped w-100 is-flex is-flex-direction-column gap-2 has-text-justified mt-1" @click="handleResultClick" @mousemove="onMouseMove">
                 <div 
                   v-for="(result, index) in filteredResults" 
                   :key="result.location" 
                   class="search-result-wrapper"
                   :class="{ 'is-selected': index === selectedIndex }"
-                  @mouseenter="selectedIndex = index"
+                  @mouseenter="onResultHover(index)"
                   v-html="result.div"
                 ></div>
               </div>
@@ -167,8 +167,11 @@ function clearSearch() {
   });
 }
 
+let isKeyboardNav = false;
+
 function navigateDown() {
   if (filteredResults.value.length > 0) {
+    isKeyboardNav = true;
     selectedIndex.value = Math.min(selectedIndex.value + 1, filteredResults.value.length - 1);
     scrollToSelected();
   }
@@ -176,6 +179,7 @@ function navigateDown() {
 
 function navigateUp() {
   if (filteredResults.value.length > 0) {
+    isKeyboardNav = true;
     selectedIndex.value = Math.max(selectedIndex.value - 1, 0);
     scrollToSelected();
   }
@@ -198,6 +202,16 @@ function scrollToSelected() {
       el.scrollIntoView({ block: 'nearest' });
     }
   });
+}
+
+function onResultHover(index) {
+  if (!isKeyboardNav) {
+    selectedIndex.value = index;
+  }
+}
+
+function onMouseMove() {
+  isKeyboardNav = false;
 }
 
 // The filtered results computed on the frontend
@@ -224,28 +238,18 @@ const filteredResults = computed(() => {
 // Grouped results for Collect mode
 const groupedResults = computed(() => {
   const groups = new Map();
-  let flatIndex = 0;
-  
-  for (const result of filteredResults.value) {
-    const pagePath = result.location.split('#')[0];
+  filteredResults.value.forEach(r => {
+    const pagePath = r.location.split('#')[0];
     if (!groups.has(pagePath)) {
-      // Build breadcrumbs from the path segments
-      const segments = pagePath.replace(/\.[^.]+$/, '').split('/');
-      const breadcrumbs = segments.map(s => 
-        s.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-      );
-      groups.set(pagePath, {
-        pagePath,
-        pageTitle: result.page || breadcrumbs[breadcrumbs.length - 1] || pagePath,
-        breadcrumbs,
-        results: [],
-      });
+      const pageTitle = r.page || pagePath.split('/').pop().replace(/[-_]/g, ' ');
+      groups.set(pagePath, { pagePath, pageTitle, breadcrumbs: [pageTitle], results: [] });
     }
-    const r = { ...result, _flatIndex: flatIndex++ };
-    groups.get(pagePath).results.push(r);
-  }
+    groups.get(pagePath).results.push({ ...r });
+  });
   
-  return Array.from(groups.values());
+  const arr = Array.from(groups.values());
+  let i = 0; arr.forEach(g => g.results.forEach(r => r._flatIndex = i++));
+  return arr;
 });
 
 // Calculate counts per category based on current unfiltered results
@@ -274,15 +278,23 @@ watch(filteredResults, () => {
 
 // Toggle a filter
 function toggleFilter(filter) {
-  if (filter === '') {
-    selectedFilter.value = '';
-    return;
-  }
   if (selectedFilter.value === filter) {
     selectedFilter.value = '';
   } else {
     selectedFilter.value = filter;
   }
+  nextTick(() => searchInputRef.value?.focus());
+}
+
+function toggleFiltersVisibility() {
+  showFilters.value = !showFilters.value;
+  nextTick(() => searchInputRef.value?.focus());
+}
+
+function toggleCollected() {
+  isCollected.value = !isCollected.value;
+  selectedIndex.value = -1;
+  nextTick(() => searchInputRef.value?.focus());
 }
 
 // Close modal when clicking a result link
