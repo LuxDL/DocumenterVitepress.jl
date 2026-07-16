@@ -28,6 +28,14 @@
               @input="onInput"
               @keydown.esc="isOpen = false"
             />
+            <button @click="showFilters = !showFilters" class="filter-toggle-btn" title="Toggle Filters" style="margin-right: 8px;">
+              <svg v-if="!showFilters" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line>
+              </svg>
+            </button>
             <button class="close-btn" @click="isOpen = false">Esc</button>
           </div>
 
@@ -40,27 +48,26 @@
             
             <div v-else>
               <!-- Filters -->
-              <div class="is-flex gap-2 is-flex-wrap-wrap is-justify-content-flex-start is-align-items-center search-filters">
-                <span class="is-size-6" style="margin-right: 12px; font-weight: bold;">Filters:</span>
-                <button 
-                  class="search-filter"
-                  :class="{ 'search-filter-selected': selectedFilter === '' }"
-                  @click="toggleFilter('')"
-                >
-                  All <span class="filter-badge">{{ unfilteredResults.length }}</span>
-                </button>
-                <button 
-                  v-for="filter in availableFilters" 
-                  :key="filter"
-                  class="search-filter"
-                  :class="{ 'search-filter-selected': selectedFilter === filter.toLowerCase() }"
-                  @click="toggleFilter(filter.toLowerCase())"
-                >
-                  {{ filter }} <span class="filter-badge">{{ categoryCounts[filter.toLowerCase()] || 0 }}</span>
-                </button>
-              </div>
+              <div v-show="showFilters" class="is-flex gap-2 is-flex-wrap-wrap is-justify-content-flex-start is-align-items-center search-filters" style="margin-bottom: 12px;">
+                  <button 
+                    class="search-filter"
+                    :class="{ 'search-filter-selected': selectedFilter === '' }"
+                    @click="toggleFilter('')"
+                  >
+                    All <span class="filter-badge">{{ unfilteredResults.length }}</span>
+                  </button>
+                  <button 
+                    v-for="filter in availableFilters" 
+                    :key="filter"
+                    class="search-filter"
+                    :class="{ 'search-filter-selected': selectedFilter === filter.toLowerCase() }"
+                    @click="toggleFilter(filter.toLowerCase())"
+                  >
+                    {{ filter }} <span class="filter-badge">{{ categoryCounts[filter.toLowerCase()] || 0 }}</span>
+                  </button>
+                </div>
               
-              <div class="search-divider"></div>
+              <div class="search-divider" v-show="showFilters"></div>
               
               <!-- Result Count -->
               <div class="is-size-6 result-count">
@@ -88,6 +95,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 
 const isOpen = ref(false);
+const showFilters = ref(true);
 const searchQuery = ref('');
 const searchInputRef = ref(null);
 const selectedFilter = ref('');
@@ -206,7 +214,7 @@ function initWorker() {
       clearInterval(checkInterval);
       
       const index = window.documenterSearchIndex;
-      // Extract unique categories
+      // Extract unique categories dynamically to prevent filtering mismatch
       const categories = [...new Set(index.map(x => x.category))];
       availableFilters.value = categories;
       
@@ -492,20 +500,40 @@ function initWorker() {
 .search-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
   align-items: center;
 }
 
-.search-filter {
+.filter-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.filter-toggle-btn:hover {
   background: var(--vp-c-bg-alt);
+  color: var(--vp-c-brand-1);
+}
+
+.search-filter {
+  background: transparent;
   border: 1px solid var(--vp-c-divider);
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 0.85rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
   cursor: pointer;
   color: var(--vp-c-text-2);
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .search-filter:hover {
@@ -523,16 +551,15 @@ function initWorker() {
 }
 
 .filter-badge {
-  background: var(--vp-c-bg);
+  background: var(--vp-c-bg-soft);
   color: var(--vp-c-text-2);
-  padding: 1px 6px;
-  border-radius: 10px;
-  font-size: 0.7rem;
-  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 8px;
+  font-size: 0.65rem;
 }
 .search-filter-selected .filter-badge {
-  background: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand-1);
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
 }
 
 .search-divider {
