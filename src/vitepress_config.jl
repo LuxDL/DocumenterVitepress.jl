@@ -38,7 +38,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     mkpath(joinpath(build_vitepress_dir, "theme"))
 
     # Check for the config and plugin files
-    for f in ["config.mts", "mathjax-plugin.ts", "julia-repl-transformer.ts"]
+    for f in ["config.mts", "mathjax-plugin.ts", "julia-repl-transformer.ts", "search-options.mjs"]
         vitepress_config_file = joinpath(source_vitepress_dir, f) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
         if !isfile(vitepress_config_file)
             mkpath(splitdir(vitepress_config_file)[1])
