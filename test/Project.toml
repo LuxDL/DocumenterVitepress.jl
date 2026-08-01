@@ -1,2 +1,3 @@
 [deps]
+DocumenterVitepress = "4710194d-e776-4893-9690-8d956a29c365"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

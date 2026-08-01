@@ -1,27 +1,42 @@
 # CSS Styling
 
-You can customize the appearance of your site by modifying the `style.css` file: 
+DocumenterVitepress contains several CSS files, which all belong in the `docs/src/.vitepress/theme/` folder:
 
 ```
-docs
-└── src
-    └── .vitepress
-        └── theme
-            └── style.css
+MyPackage.jl
+├── CHANGELOG.md
+├── docs
+│   ├── src
+│   │   ├── .vitepress
+│   │   │   └── theme
+│   │   │       ├── style.css
+│   │   │       ├── docstrings.css
+│   │   │       └── overrides.css
+│   │   └── ...
+│   ├── make.jl
+│   └── ...
+└── ...
 ```
+
+If you are happy with DocumenterVitepress's defaults, you do not need to provide these files, as DocumenterVitepress will copy the default CSS files from the package, which can be found here:
+
+- [`style.css`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/main/template/src/.vitepress/theme/style.css)
+- [`docstrings.css`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/main/template/src/.vitepress/theme/docstrings.css)
+- [`overrides.css`](https://github.com/LuxDL/DocumenterVitepress.jl/blob/main/template/src/.vitepress/theme/overrides.css)
+
+However, if you want to customise the appearance of your site, you can provide your own versions of these files.
+
+For small changes it is easiest to modify `overrides.css`, which by default is empty, and is loaded after the other CSS files.
+This lets you apply overrides to the defaults without having to copy the entire `style.css` or `docstrings.css` files.
+
+Note that Vitepress itself also contains a number of style sheets which are not part of DocumenterVitepress (see [the Vitepress docs](https://vitepress.dev/guide/custom-theme) for more info).
+Modifying the style sheets here will also allow you to override the default Vitepress styles if you want to do so.
 
 ## Layout options
 
-For example, the following settings can be adjusted to increase the available space for your content.
-
-::: warning
-
-To restore the default options, copy and paste the `style.css` file into `docs/src/.vitepress/theme/` and delete the following lines:
-
-:::
+For example, to increase the available space for your content, you can add the following to `overrides.css`:
 
 ```css
-
 .VPDoc.has-aside .content-container {
   max-width: 100% !important;
 }
@@ -131,6 +146,25 @@ The following settings allows your content to fill out all available space on sc
 
 ```
 
+## Colors
+
+Vitepress (and thus DocumenterVitepress) use CSS variables to define colors, which can be modified in `overrides.css` to change the color scheme of your site.
+
+For example, the primary text color is `--vp-c-text-1`, which you can set to a different value if desired.
+The colors here correspond to light and dark mode respectively.
+
+```css
+:root {
+    --vp-c-text-1: #000000;
+}
+
+.dark {
+    --vp-c-text-1: #ffffff;
+}
+```
+
+To see a full list of available CSS variables, see [the Vitepress source code](https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css).
+
 ## More
 
-Other attributes can also be modified there, i.e., text colors, link colors, font family, etc.
+Other attributes can also be modified there, i.e., font family, etc.

@@ -2,6 +2,7 @@ import Documenter: Documenter, Builder, Expanders, MarkdownAST
 import Documenter.DOM: escapehtml
 using DocInventories: DocInventories, Inventory, InventoryItem
 using TOML: TOML
+import JSON
 
 import ANSIColoredPrinters
 using Base64: base64decode, base64encode
@@ -11,8 +12,8 @@ import Markdown
 """
     MarkdownVitepress(; repo, devbranch, devurl, kwargs...)
 
-This is the main entry point for the Vitepress Markdown writer.  
-    
+This is the main entry point for the Vitepress Markdown writer.
+
 It is a config which can be passed to the `format` keyword argument in `Documenter.makedocs`, and causes it to emit a Vitepress site.
 
 !!! tip "Quick start"
@@ -38,7 +39,7 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     "The URL path to the development site, like `dev` or `dev-branch`."
     devurl::String = "dev"
     """
-    The URL of the repository to which the documentation will be deployed.  
+    The URL of the repository to which the documentation will be deployed.
     This **must** be the full URL, **including `https://`**, like `https://rafaqz.github.io/Rasters.jl` or `https://geo.makie.jl/`.
     """
     deploy_url::Union{String, Nothing} = nothing
@@ -56,7 +57,7 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     - `nothing`: **Default**. Automatically determine whether to deploy the documentation.
     - `Documenter.DeployDecision`: Override the automatic decision and deploy based on the passed config.
     It might be useful to use the latter if DocumenterVitepress fails to deploy automatically.
-    You can pass a manually constructed `Documenter.DeployDecision` struct, or the output of 
+    You can pass a manually constructed `Documenter.DeployDecision` struct, or the output of
     `Documenter.deploy_folder(Documenter.auto_detect_deploy_system(); repo, devbranch, devurl, push_preview)`.
     """
     deploy_decision::Union{Nothing, Documenter.DeployDecision} = nothing
@@ -64,6 +65,12 @@ Base.@kwdef struct MarkdownVitepress <: Documenter.Writer
     assets = nothing
     "A version string to write to the header of the objects.inv inventory file. This should be a valid version number without a v prefix. Defaults to the version defined in the Project.toml file in the parent folder of the documentation root"
     inventory_version::Union{String,Nothing} = nothing
+    """Enables a sidebar drawer toggle button on desktop. When enabled, a small chevron button appears at the edge of the sidebar, allowing users to collapse and expand it. The collapsed state is persisted in `localStorage`. Defaults to `false`."""
+    sidebar_drawer::Bool = false
+    "Whether to write inventory files (InterSphinx format) or not.  This is usually used with DocumenterInterLinks.jl to link to external docs."
+    write_inventory::Bool = true
+    "Whether to add a `noindex` meta tag to non-stable deployments, preventing search engines from indexing dev/preview docs."
+    noindex_non_stable::Bool = true
     """
     Sets the granularity of versions which should be kept. Options are :patch, :minor or :breaking (the default).
     You can use this to reduce the number of docs versions that coexist on your dev branch. With :patch, every patch
@@ -106,7 +113,7 @@ end
 """
     render(args...)
 
-This is the main entry point and recursive function to render a Documenter document to 
+This is the main entry point and recursive function to render a Documenter document to
 Markdown in the Vitepress flavour.  It is called by `Documenter.build` and should not be
 called directly.
 
@@ -136,7 +143,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     else
         deploy_decision = settings.deploy_decision
     end
-    
+
     # copy_assets(doc, settings.md_output_path)
     # Handle the case where the site name has to be set...
     mime = MIME"text/plain"() # TODO: why?
@@ -150,7 +157,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
     # and copy the previous build files to the new location.
     if settings.md_output_path != "."
         for file_or_dir in current_build_files_or_dirs
-            
+
             src = joinpath(builddir, file_or_dir)
             dst = joinpath(builddir, settings.md_output_path, file_or_dir)
 
@@ -203,7 +210,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                     cp(file, file_destpath; force = true)
                 end
             end
-        end 
+        end
         if any(favicon_files)
             for file in files[favicon_files]
                 file_relpath = relpath(file, joinpath(builddir, settings.md_output_path, "assets"))
@@ -217,34 +224,60 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         end
     end
 
-    version = settings.inventory_version
-    if isnothing(version)
-        project_toml = joinpath(dirname(doc.user.root), "Project.toml")
-        version = _get_inventory_version(project_toml)
+    # Copy each plugin's static assets into `public/` (see `extension_hooks.jl`).
+    public_dir = joinpath(builddir, settings.md_output_path, "public")
+    mkpath(public_dir)
+    for plugin in values(doc.plugins)
+        for asset_dir in vitepress_assets(plugin)
+            if !isdir(asset_dir)
+                @warn "DocumenterVitepress: plugin $(typeof(plugin)) registered asset directory $(repr(asset_dir)) which does not exist; skipping."
+                continue
+            end
+            _merge_copy!(asset_dir, public_dir)
+        end
     end
-    inventory = Inventory(; project=doc.user.sitename, version)
+
+    inventory = if settings.write_inventory
+        version = settings.inventory_version
+        if isnothing(version)
+            project_toml = joinpath(dirname(doc.user.root), "Project.toml")
+            version = _get_inventory_version(project_toml)
+        end
+        Inventory(; project=doc.user.sitename, version)
+    else
+        nothing
+    end
 
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
         open(docpath(page.build, builddir, settings.md_output_path), "w") do io
+            merge_and_render_frontmatter(io, MIME("text/yaml"), page, doc)
             for node in page.mdast.children
-                render(io, mime, node, page, doc; inventory)
+                kwargs = if settings.write_inventory
+                    (; inventory = inventory)
+                else
+                    (;)
+                end
+                render(io, mime, node, page, doc; kwargs...)
             end
         end
-        item = InventoryItem(
-            name = replace(splitext(src)[1], "\\" => "/"),
-            domain = "std",
-            role = "doc",
-            dispname = _pagetitle(page),
-            priority = -1,
-            uri = _get_inventory_uri(doc, page, nothing)
-        )
-        push!(inventory, item)
+        if settings.write_inventory
+            item = InventoryItem(
+                name = replace(splitext(src)[1], "\\" => "/"),
+                domain = "std",
+                role = "doc",
+                dispname = _pagetitle(page),
+                priority = -1,
+                uri = _get_inventory_uri(doc, page, nothing)
+            )
+            push!(inventory, item)
+        end
     end
-
-    objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
-    DocInventories.save(objects_inv, inventory)
+    if settings.write_inventory
+        objects_inv = joinpath(builddir, settings.md_output_path, "public", "objects.inv")
+        DocInventories.save(objects_inv, inventory)
+    end
 
     bases = determine_bases(deploy_decision.subfolder; settings.keep)
 
@@ -264,62 +297,7 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
         # Now that the Markdown files are written, we can build the Vitepress site if required.
         if settings.build_vitepress
-            @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
-            # Build the docs using `npm`
-            should_remove_package_json = false
-            try
-                if !isfile(joinpath(dirname(builddir), "package.json"))
-                    @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
-                    cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
-                    should_remove_package_json = true
-                end
-
-                cd(dirname(builddir)) do
-                    # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
-                    # when interpolating the `npm` command.  
-                    # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
-                    # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
-
-                    package_json_path = joinpath(dirname(builddir), "package.json")
-                    template_path = joinpath(dirname(@__DIR__), "template", "package.json")
-                    build_output_path = joinpath(builddir, settings.md_output_path)
-                    
-                    if settings.install_npm || should_remove_package_json
-                        if !isfile(package_json_path)
-                            cp(template_path, package_json_path)
-                            should_remove_package_json = true
-                        end
-                        # wrap in `node(...) do _`
-                        node(; adjust_PATH = true, adjust_LIBPATH = true) do _
-                            # On Windows systems
-                            if Sys.iswindows()
-                                # system_npm = "C:\\Program Files\\nodejs\\npm.cmd"
-                                @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
-                                @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
-                                # install dependecies
-                                run(`cmd /c $npm install`)
-                                # run(`cmd /c $npm exec vitepress build $build_output_path`) # activate once a new > NodeJS_20_jll artifact is available.
-                                # Debugging alternative
-                                # run(`cmd /c "set DEBUG=vitepress:* & $npm exec vitepress build $build_output_path"`)
-                            else
-                                run(`$(npm) install`)
-                                run(`$(npm) run env -- vitepress build $(build_output_path)`)
-                            end
-                        end
-                    end                
-                end
-                # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
-                open(joinpath(builddir, "$i_base", "siteinfo.js"), "w") do io
-                    println(io, """var DOCUMENTER_CURRENT_VERSION = "$(deploy_decision.subfolder)";""")
-                end
-            catch e
-                rethrow(e)
-            finally
-                if should_remove_package_json
-                    rm(joinpath(dirname(builddir), "package.json"))
-                    rm(joinpath(dirname(builddir), "package-lock.json"))
-                end
-            end
+            build_vitepress(bases, base, i_base, builddir, deploy_decision.subfolder, settings, doc)
         else
             @info """
                 DocumenterVitepress: did not build Vitepress site because `build_vitepress` was set to `false`.
@@ -332,12 +310,158 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
                 All emitted markdown can be found in `$(joinpath(builddir, settings.md_output_path))`.
                 """
         end
-        # This is only useful if placed in the root of the `docs` folder, and we don't 
+        # This is only useful if placed in the root of the `docs` folder, and we don't
         # have any names which conflict with Jekyll (beginning with _ or .) in any case.
         # touch(joinpath(builddir, "final_site", ".nojekyll"))
     end
 
     return
+end
+
+# Recursively copy `src` into `dst`, merging into existing dirs instead of
+# replacing them (`cp(; force=true)` on a dir nukes the whole subtree first,
+# dropping other files); only individual files are overwritten.
+function _merge_copy!(src, dst)
+    if isdir(src)
+        mkpath(dst)
+        for entry in readdir(src)
+            _merge_copy!(joinpath(src, entry), joinpath(dst, entry))
+        end
+    else
+        mkpath(dirname(dst))
+        cp(src, dst; force = true)
+    end
+end
+
+"""
+    merge_plugin_dependencies!(package_json_path::String, doc)
+
+Merge every plugin's `vitepress_dependencies` into the `dependencies` object of
+the `package.json` at `package_json_path`, rewriting it in place (2-space indent,
+trailing newline). No-op when no plugin contributes a dependency.
+"""
+function merge_plugin_dependencies!(package_json_path::String, doc)
+    extra = Dict{String,String}()
+    for plugin in values(doc.plugins)
+        merge!(extra, vitepress_dependencies(plugin))
+    end
+    isempty(extra) && return
+    pkg = JSON.parsefile(package_json_path; dicttype = Dict{String,Any})
+    deps = get!(pkg, "dependencies", Dict{String,Any}())
+    if !(deps isa AbstractDict)
+        @warn "DocumenterVitepress: `dependencies` in $(package_json_path) is not an object; replacing it."
+        deps = Dict{String,Any}()
+        pkg["dependencies"] = deps
+    end
+    for (k, v) in extra
+        deps[k] = v
+    end
+    open(package_json_path, "w") do io
+        JSON.print(io, pkg, 2)
+        println(io) # trailing newline
+    end
+    return
+end
+
+function build_vitepress(bases, base, i_base, builddir, subfolder, settings, doc=nothing)
+    @info "DocumenterVitepress: building Vitepress site $i_base of $(length(bases)) with base \"$base\"."
+    # Build the docs using `npm`
+    should_remove_package_json = false
+    # Pre-merge snapshots, restored in `finally` so injected deps don't dirty the
+    # tree. `nothing` = nothing to restore (absent, or we delete it ourselves).
+    user_package_json_bytes::Union{Vector{UInt8},Nothing} = nothing
+    user_package_lock_bytes::Union{Vector{UInt8},Nothing} = nothing
+    try
+        if !isfile(joinpath(dirname(builddir), "package.json"))
+            @warn "DocumenterVitepress: Did not find `docs/package.json` in your repository.  Substituting default for now."
+            cp(joinpath(dirname(@__DIR__), "template", "package.json"), joinpath(dirname(builddir), "package.json"))
+            should_remove_package_json = true
+        end
+
+        cd(dirname(builddir)) do
+            # NodeJS_20_jll treats `npm` as a `FileProduct`, meaning that it has no associated environment variable
+            # when interpolating the `npm` command.
+            # However, `node() do ...` actually uses `withenv` internally, so we can wrap all invocations of `npm` in
+            # a `node()` block to ensure that the `npm` from the JLL finds the `node` from the JLL.
+
+            package_json_path = joinpath(dirname(builddir), "package.json")
+            template_path = joinpath(dirname(@__DIR__), "template", "package.json")
+            build_output_path = joinpath(builddir, settings.md_output_path)
+
+            if settings.install_npm || should_remove_package_json
+                if !isfile(package_json_path)
+                    cp(template_path, package_json_path)
+                    should_remove_package_json = true
+                end
+                # Merge plugin-provided npm deps into package.json (see `extension_hooks.jl`).
+                if doc !== nothing
+                    # Snapshot before mutating; skip if we'll delete the file anyway.
+                    if !should_remove_package_json
+                        user_package_json_bytes = read(package_json_path)
+                        package_lock_path = joinpath(dirname(builddir), "package-lock.json")
+                        isfile(package_lock_path) && (user_package_lock_bytes = read(package_lock_path))
+                    end
+                    merge_plugin_dependencies!(package_json_path, doc)
+                end
+                # wrap in `node(...) do _`
+                node(; adjust_PATH = true, adjust_LIBPATH = true) do _
+                    # On Windows systems
+                    if Sys.iswindows()
+                        # system_npm = "C:\\Program Files\\nodejs\\npm.cmd"
+                        # install dependecies
+                        run(`cmd /c $npm install`)
+                        # run(`cmd /c $npm exec vitepress build $build_output_path`) # activate once a new > NodeJS_20_jll artifact is available.
+                        # Debugging alternative
+                        # run(`cmd /c "set DEBUG=vitepress:* & $npm exec vitepress build $build_output_path"`)
+                        @warn "On Windows, use `npm run docs:dev` and `npm run docs:build` directly in the terminal inside your `docs` folder."
+                        @info "Go to https://nodejs.org/en, download, and install the latest version. Version 22.11.0 or higher should work."
+                    else
+                        # Surface npm's real error, not a bare ProcessExited.
+                        npm_out = IOBuffer()
+                        npm_err = IOBuffer()
+                        try
+                            run(pipeline(`$(npm) install`; stdout=npm_out, stderr=npm_err))
+                        catch e
+                            stdout_text = String(take!(npm_out))
+                            stderr_text = String(take!(npm_err))
+                            log_msg = "npm install failed"
+                            isempty(stdout_text) || (log_msg *= "\n── npm install stdout ──\n" * stdout_text)
+                            isempty(stderr_text) || (log_msg *= "\n── npm install stderr ──\n" * stderr_text)
+                            @error log_msg
+                            rethrow(e)
+                        end
+                        run(`$(npm) run env -- vitepress build $(build_output_path)`)
+                    end
+                end
+            end
+        end
+        basedir = joinpath(builddir, "$i_base")
+        # On Windows, the build is manual. This check ensures we only write `siteinfo.js` if the build output directory exists and is not empty. This also handles cases where an automated build might fail on other systems.
+        if isdir(basedir) && !isempty(readdir(basedir))
+            # Documenter normally writes this itself in `deploydocs`, but we're not using its versioning
+            open(joinpath(basedir, "siteinfo.js"), "w") do io
+                println(io, """var DOCUMENTER_CURRENT_VERSION = "$(subfolder)";""")
+            end
+        end
+
+    catch e
+        rethrow(e)
+    finally
+        if should_remove_package_json
+            rm(joinpath(dirname(builddir), "package.json"))
+            rm(joinpath(dirname(builddir), "package-lock.json"))
+        elseif user_package_json_bytes !== nothing
+            # Restore the checked-in package.json + lockfile (drop injected deps),
+            # removing a generated lockfile if the user had none.
+            write(joinpath(dirname(builddir), "package.json"), user_package_json_bytes)
+            package_lock_path = joinpath(dirname(builddir), "package-lock.json")
+            if user_package_lock_bytes !== nothing
+                write(package_lock_path, user_package_lock_bytes)
+            else
+                rm(package_lock_path; force = true)
+            end
+        end
+    end
 end
 
 is_version_string(str) = try (VersionNumber(str); true) catch; false end
@@ -365,7 +489,7 @@ function determine_bases(
         else
             log && @info "Not adding base `$(patch_base)` because keep == $(repr(keep))"
         end
-        
+
         higher_versions = filter(>(v), all_tagged_versions)
         if !isempty(v.prerelease)
             log && @info "`$v` is a prerelease, not adding base `stable`"
@@ -413,7 +537,13 @@ end
 stripped_version(v::VersionNumber) = VersionNumber(v.major, v.minor, v.patch)
 
 function get_all_tagged_release_versions()::Vector{VersionNumber}
-    tags = readlines(`$(Documenter.git()) tag`)
+    tags = try
+        readlines(`$(Documenter.git()) tag`)
+    catch e
+        (e isa ProcessFailedException || e isa Base.IOError) || rethrow(e)
+        @info "DocumenterVitepress: could not get git tags, assuming no tagged releases exist."
+        return VersionNumber[]
+    end
     version_numbers = stripped_version.(VersionNumber.(filter(is_version_string, tags)))
     filter!(version_numbers) do v
         isempty(v.prerelease) # we never want alias bases for prereleases so we don't clobber `stable` etc.
@@ -608,7 +738,7 @@ function intelligent_language(lang::String)
 end
 
 function join_multiblock(node::Documenter.MarkdownAST.Node)
-    @assert node.element isa Documenter.MultiCodeBlock 
+    @assert node.element isa Documenter.MultiCodeBlock
     mcb = node.element
     if mcb.language == "ansi"
         # Return a vector of Markdown code blocks
@@ -623,9 +753,9 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
         for thing in code_blocks
             # reset the buffer and push the old code block
             if thing.language != current_language
-                # Remove this if statement if you want to 
+                # Remove this if statement if you want to
                 # include empty code blocks in the output.
-                if isempty(thing.code) 
+                if isempty(thing.code)
                     current_string *= "\n\n"
                     continue
                 end
@@ -639,21 +769,50 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
         # push the last code block
         push!(codes, Markdown.Code(intelligent_language(current_language), current_string))
         return codes
+    end
 
-    else
-        io = IOBuffer()
-        codeblocks = [n.element::MarkdownAST.CodeBlock for n in node.children]
-        for (i, thing) in enumerate(codeblocks)
-            print(io, thing.code)
-            if i != length(codeblocks)
-              !isempty(thing.code) && println(io)
-                if findnext(x -> x.info == mcb.language, codeblocks, i + 1) == i + 1
-                    println(io)
-                end
+    # `@repl` children: `julia-repl` input and `documenter-ansi` output.
+    codeblocks = [n.element::MarkdownAST.CodeBlock for n in node.children]
+
+    # ANSI output: emit one `ansi` fence with a `julia-repl-runs` spec for
+    # julia-repl-transformer.ts; else a plain single `julia` block (below).
+    if any(cb -> occursin('\e', cb.code), codeblocks)
+        # Per-line (text, run-language); blank line before each input entry.
+        lines = String[]
+        line_langs = String[]
+        for (i, cb) in enumerate(codeblocks)
+            lang = intelligent_language(cb.info)  # "julia" or "ansi"
+            if i > 1 && cb.info == mcb.language
+                push!(lines, ""); push!(line_langs, lang)
+            end
+            for line in split(cb.code, '\n')
+                push!(lines, line); push!(line_langs, lang)
             end
         end
-        return [Markdown.Code(intelligent_language(mcb.language), String(take!(io)))]
+        # Collapse into `lang:linecount` runs.
+        runs = Tuple{String, Int}[]
+        for lang in line_langs
+            if !isempty(runs) && runs[end][1] == lang
+                runs[end] = (lang, runs[end][2] + 1)
+            else
+                push!(runs, (lang, 1))
+            end
+        end
+        spec = join(("$lang:$count" for (lang, count) in runs), ",")
+        return [Markdown.Code("ansi julia-repl-runs=$spec", join(lines, '\n'))]
     end
+
+    io = IOBuffer()
+    for (i, thing) in enumerate(codeblocks)
+        print(io, thing.code)
+        if i != length(codeblocks)
+          !isempty(thing.code) && println(io)
+            if findnext(x -> x.info == mcb.language, codeblocks, i + 1) == i + 1
+                println(io)
+            end
+        end
+    end
+    return [Markdown.Code(intelligent_language(mcb.language), String(take!(io)))]
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc; kwargs...)
@@ -728,12 +887,25 @@ function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kw
         end
         return
     end
-    # v-html takes a javascript expression that results in a string of html, but this
-    # has to be parsed within the context of an html attribute, so we escape all the offending
-    # characters. vitepress will not further modify this html as is usually intended with display values.
-    print(io, "<div v-html=\"`")
-    escapehtml(io, repr(mime, element))
-    println(io, "`\"></div>")
+    # Escape so the html can sit inside a `v-html` js template literal in an html attribute.
+    html = repr(mime, element)
+
+    # `v-html` sets `innerHTML`, which never runs `<script>` tags. So output containing a script
+    # (e.g. WGLMakie/Bonito figures) is wrapped in `<ClientOnly>` (no point server-rendering a
+    # client-only, possibly multi-MB widget) and tagged with the `v-exec-scripts` directive,
+    # which executes the scripts on mount (see `template/src/.vitepress/theme/index.ts`).
+    # Script-free output keeps the plain, server-rendered `v-html`.
+    if occursin(r"<script"i, html)
+        println(io, "<ClientOnly>")
+        print(io, "<div class=\"vp-raw-html\" v-exec-scripts v-html=\"`")
+        escapehtml(io, html)
+        println(io, "`\"></div>")
+        println(io, "</ClientOnly>")
+    else
+        print(io, "<div class=\"vp-raw-html\" v-html=\"`")
+        escapehtml(io, html)
+        println(io, "`\"></div>")
+    end
 end
 
 function render_mime(io::IO, mime::MIME"image/svg+xml", node, element, page, doc; md_output_path, kwargs...)
@@ -948,6 +1120,9 @@ render(io::IO, mime::MIME"text/plain", node::MarkdownAST.Node, ::Documenter.Setu
 # Raw nodes are used to insert raw HTML into the output. We just print it as is.
 # TODO: what if the `raw` is not HTML?  That is not addressed here but we ought to address it...
 function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, raw::Documenter.RawNode, page, doc; kwargs...)
+    if startswith(raw.text, "---")
+        return # this was already handled by frontmatter.
+    end
     return raw.name === :html ? println(io, raw.text, "\n") : nothing
 end
 
@@ -960,8 +1135,20 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io)
 end
 # Plain text
+const EQREF_REGEX = r"(?<![$\\])\\(eqref|ref)\{[^}]+\}"
+
+function autowrap_eqref(text::AbstractString)
+    replace(text, EQREF_REGEX => m -> "\$$(m)\$")
+end
+
+# Only escape `<` and `>` here (Vue would otherwise parse them as HTML tags, see #101).
+# We deliberately do not escape `&`: vitepress copies the markdown title verbatim into
+# the per-page JSON used to set `document.title` on hydration, so an escaped `&amp;`
+# would surface as the literal 5-char string in the browser tab.
+escape_markdown_text(text::AbstractString) = replace(text, '<' => "&lt;", '>' => "&gt;")
+
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
-    print(io, escapehtml(text.text))
+    print(io, escape_markdown_text(autowrap_eqref(text.text)))
 end
 # Heading
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Heading, page, doc; kwargs...)
@@ -1073,25 +1260,28 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     # Main.@infiltrate
     print(io, "\$", math.math, "\$")
 end
-# Display math 
+# Display math
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, math::MarkdownAST.DisplayMath, page, doc; kwargs...)
     # Main.@infiltrate
     println(io)
     println(io, "\$\$", math.math, "\$\$")
 end
 # Lists
-# TODO: list ordering is broken!
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.List, page, doc; kwargs...)
-    # @infiltrate
-    k = 0
-    bullet() = list.type === :ordered ? "$(k+=1). " : "- "
+    bullet(i) = list.type === :ordered ? "$(i). " : "- "
+    # `iob` is reset at `take!` and then reused in the next loop
     iob = IOBuffer()
-    for item in node.children
+    # Loop through all items of the list
+    for (i, item) in enumerate(node.children)
         render(iob, mime, item, item.children, page, doc; prenewline = false, kwargs...)
         eachline = split(String(take!(iob)), '\n')
-        eachline[2:end] .= "  " .* eachline[2:end]
-        print(io, bullet())
-        println.((io,), eachline)
+        eachline[2:end] .= "    " .* eachline[2:end]
+        final_string = join(eachline, '\n')
+        if !endswith(final_string, '\n')
+            final_string = final_string * "\n"
+        end
+        print(io, bullet(i))
+        print(io, final_string)
     end
 end
 # HTMLInline
@@ -1122,7 +1312,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         end
     end
     # We create this IOBuffer in order to render to it.
-    iob = IOBuffer() 
+    iob = IOBuffer()
     # This will eventually hold the rendered table cells as Strings.
     cell_strings = Vector{Vector{String}}()
     current_row_vec = String[]
@@ -1140,14 +1330,44 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     println(io, Markdown.plain(Markdown.MD(Markdown.Table(cell_strings, alignment_style))))
 
 end
+
+const VIDEO_EXTENSIONS = [".mp4", ".webm", ".ogg", ".ogv", ".m4v", ".avi", ".mov", ".mkv"]
+function is_video_file(video_path::AbstractString)
+    return any(ext -> endswith(lowercase(video_path), ext), VIDEO_EXTENSIONS)
+end
+
+function render_video_tag(io::IO, mime, node, video_path, page, doc; kwargs...)
+    vp_parts = split(video_path, '"', limit=2)
+    actual_path = strip(vp_parts[1])
+    title = ""
+    if length(vp_parts) > 1
+        title = strip(vp_parts[2])  # Title is in the second part (after the first quote)
+        title = strip(title, ['"', ' ']) # Remove any remaining quotes or whitespace
+    elseif !isempty(node.children)
+        title = strip(sprint() do io_alt
+            render(io_alt, mime, node, node.children, page, doc; kwargs...)
+        end)
+    end
+
+    print(io, "<video src=\"", escapehtml(actual_path), "\" controls")
+    if !isempty(title)
+        print(io, " title=\"", escapehtml(title), "\"")
+    end
+    println(io, "></video>")
+end
 # Images
 # Here, we are rendering images as HTML.  It is my hope that at some point we figure out how to render them in Markdown, but for now, this is also perfectly sufficient.
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::MarkdownAST.Image, page, doc; kwargs...)
-    println()
+    println(io)
     url = replace(image.destination, "\\" => "/")
-    print(io, "<img src=\"", url, "\" alt=\"")
-    render(io, mime, node, node.children, page, doc; kwargs...)
-    println(io, "\">")
+    url_video_check = strip(first(split(url, '"', limit=2)))
+    if is_video_file(url_video_check)
+        render_video_tag(io, mime, node, url, page, doc; kwargs...)
+    else
+        print(io, "<img src=\"", url, "\" alt=\"")
+        render(io, mime, node, node.children, page, doc; kwargs...)
+        println(io, "\">")
+    end
 end
 
 # ### Footnote Links
@@ -1198,6 +1418,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     else
         resolve_relative_path(page.build, link.page, doc)
     end
+    path = replace(path, "\\" => "/")
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")
@@ -1211,19 +1432,25 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         relative_path = resolve_relative_path(page.build, page.build, doc)
         replace(relative_path, ".md" => "") * "#" * link.fragment
     end
+    path = replace(path, "\\" => "/")
     print(io, "[")
     render(io, mime, node, node.children, page, doc; kwargs...)
     print(io, "]($(replace(path, " " => "%20")))")
 end
-
 # Documenter.jl local images
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, image::Documenter.LocalImage, page, doc; kwargs...)
-    # Main.@infiltrate
-    image_path = relpath(joinpath(doc.user.build, image.path), dirname(page.build))
-    println(io)
-    println(io, "![]($image_path)")
-end
 
+    abs_path = joinpath(doc.user.build, image.path)
+    image_path = relpath(abs_path, dirname(page.build))
+    image_path = replace(image_path, "\\" => "/") # windows paths are the worst
+    println(io)
+    if is_video_file(image_path)
+        image_path = dirname(image_path) == "" ? "./" * image_path : image_path
+        render_video_tag(io, mime, node, image_path, page, doc; kwargs...)
+    else
+        println(io, "![]($image_path)")
+    end
+end
 
 function _get_inventory_version(project_toml)
     version = ""

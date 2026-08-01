@@ -2,6 +2,7 @@
 import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import type { Theme as ThemeConfig } from 'vitepress'
+import 'virtual:mathjax-styles.css';
 
 import { 
   NolebaseEnhancedReadabilitiesMenu, 
@@ -13,6 +14,7 @@ import VersionPicker from "@/VersionPicker.vue"
 import StarUs from '@/StarUs.vue'
 import AuthorBadge from '@/AuthorBadge.vue'
 import Authors from '@/Authors.vue'
+import SidebarDrawerToggle from '@/SidebarDrawerToggle.vue'
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
 
 import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
@@ -30,6 +32,8 @@ export const Theme: ThemeConfig = {
       ],
       // A enhanced readabilities menu for narrower screens (usually smaller than iPad Mini)
       'nav-screen-content-after': () => h(NolebaseEnhancedReadabilitiesScreenMenu),
+      // Sidebar drawer toggle button (to the left of search bar)
+      'nav-bar-content-before': () => h(SidebarDrawerToggle),
     })
   },
   enhanceApp({ app, router, siteData }) {

@@ -184,6 +184,26 @@ b = 2; # hide
 a + b
 ```
 
+### Colored output
+
+Output carrying ANSI color codes (e.g. from [`StyledStrings`](https://docs.julialang.org/en/v1/stdlib/StyledStrings/) or a colored `show` method) is rendered in color, with the input still syntax-highlighted.
+
+**Input**
+
+````
+```@repl
+using StyledStrings
+styled"{red:red} {green:green} {blue:blue} {cyan,bold:cyan bold}"
+```
+````
+
+**Output**
+
+```@repl
+using StyledStrings
+styled"{red:red} {green:green} {blue:blue} {cyan,bold:cyan bold}"
+```
+
 ## @doctest
 **Input**
 ````

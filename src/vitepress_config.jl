@@ -37,33 +37,45 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Make the theme directory
     mkpath(joinpath(build_vitepress_dir, "theme"))
 
-    # Check for the config file
-    vitepress_config_file = joinpath(source_vitepress_dir, "config.mts") # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
-    if !isfile(vitepress_config_file)
-        mkpath(splitdir(vitepress_config_file)[1])
-        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/config.mts` file. Substituting in the default file."
-        # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
-        # which may not be writable.  However, `write` creates a new file for which Julia must have write permissions.
-        write(joinpath(build_vitepress_dir, "config.mts"), read(joinpath(template_vitepress_dir, "config.mts"), String))
-    else # the user has provided a config file
-        # Sometimes this file can get corrupted by makedocs(clean=false),
-        # so we need to copy it over again.
-        write(joinpath(build_vitepress_dir, "config.mts"), read(vitepress_config_file, String))
+    # Check for the config and plugin files
+    for f in ["config.mts", "mathjax-plugin.ts", "julia-repl-transformer.ts"]
+        vitepress_config_file = joinpath(source_vitepress_dir, f) # We check the source dir here because `clean=false` will persist the old, non-generated file in the build dir, and we need to overwrite it.
+        if !isfile(vitepress_config_file)
+            mkpath(splitdir(vitepress_config_file)[1])
+            @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/$(f)` file. Substituting in the default file."
+            # We use `write` instead of `cp` here, because `cp`'ed files inherit the permissions of the source file,
+            # which may not be writable.  However, `write` creates a new file for which Julia must have write permissions.
+            write(joinpath(build_vitepress_dir, f), read(joinpath(template_vitepress_dir, f), String))
+        else # the user has provided a config / plugin file
+            # Sometimes this file can get corrupted by makedocs(clean=false),
+            # so we need to copy it over again.
+            write(joinpath(build_vitepress_dir, f), read(vitepress_config_file, String))
+        end
     end
 
-    # ? theme / check for index.ts, style.css and docstrings.css files
-    if !isfile(joinpath(source_vitepress_dir, "theme", "index.ts"))
-        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/index.ts` file. Substituting in the default file."
-        write(joinpath(build_vitepress_dir, "theme", "index.ts"), read(joinpath(template_vitepress_dir, "theme", "index.ts"), String))
+    for f in ["index.ts", "style.css", "docstrings.css", "overrides.css"]
+        theme_f = joinpath("theme", f)
+        if !isfile(joinpath(source_vitepress_dir, theme_f))
+            @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/$theme_f` file. Substituting in the default file."
+            write(joinpath(build_vitepress_dir, theme_f), read(joinpath(template_vitepress_dir, theme_f), String))
+        end
     end
-    if !isfile(joinpath(source_vitepress_dir, "theme", "style.css"))
-        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/style.css` file. Substituting in the default file."
-        write(joinpath(build_vitepress_dir, "theme", "style.css"), read(joinpath(template_vitepress_dir, "theme", "style.css"), String))
+
+    # Copy SidebarDrawerToggle.vue if user hasn't provided one
+    sidebar_toggle_source = joinpath(sourcedir, "components", "SidebarDrawerToggle.vue")
+    sidebar_toggle_build = joinpath(builddir, settings.md_output_path, "components", "SidebarDrawerToggle.vue")
+    if !isfile(sidebar_toggle_source) && !isfile(sidebar_toggle_build)
+        template_component = joinpath(dirname(@__DIR__), "template", "src", "components", "SidebarDrawerToggle.vue")
+        if isfile(template_component)
+            mkpath(joinpath(builddir, settings.md_output_path, "components"))
+            write(sidebar_toggle_build, read(template_component, String))
+        end
     end
-    if !isfile(joinpath(source_vitepress_dir, "theme", "docstrings.css"))
-        @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/theme/docstrings.css` file. Substituting in the default file."
-        write(joinpath(build_vitepress_dir, "theme", "docstrings.css"), read(joinpath(template_vitepress_dir, "theme", "docstrings.css"), String))
-    end
+
+    # Inject plugin Vue components into the theme entry (see `extension_hooks.jl`),
+    # after it's been written to the build dir.
+    inject_plugin_components!(joinpath(build_vitepress_dir, "theme", "index.ts"), doc)
+
     # We have already rewritten the config file, so we can't get burned by clean=false
     # again.
     vitepress_config_file = joinpath(build_vitepress_dir, "config.mts")
@@ -89,14 +101,21 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
             @info "Base is \"\" and ENV[\"CI\"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path \"/\" to facilitate serving docs locally."
             "/"
         elseif isnothing(settings.deploy_url)
-            "/" * splitpath(settings.repo)[end]  # Get the last identifier of the repo path, i.e., `user/$repo`.
+            "/" * split(rstrip(settings.repo, '/'), '/')[end]
         else
-            s_path = startswith(settings.deploy_url, r"http[s?]:\/\/") ? splitpath(settings.deploy_url)[2:end] : splitpath(settings.deploy_url)
-            s = length(s_path) > 1 ? joinpath(s_path) : "" # ignore custom URL here
+            # Full URL: subpath starts at index 4 after scheme+host,
+            # e.g. ["https:", "", "host", "sub", "dir"].
+            s_path = if startswith(settings.deploy_url, r"^https?://")
+                frags = split(rstrip(settings.deploy_url, '/'), '/')
+                length(frags) >= 4 ? frags[4:end] : [""]
+            else
+                split(rstrip(settings.deploy_url, '/'), '/')
+            end
+            s = join(s_path, '/')
             isempty(s) ? "/" : "/$(s)"
         end
 
-    base_str = deploy_abspath == "/" ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
+    base_str = endswith(deploy_abspath, "/") ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
 
     push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH" => deploy_abspath)
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
@@ -106,10 +125,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # # Vitepress navbar and sidebar
 
     provided_page_list = doc.user.pages
-    sidebar_navbar_info = pagelist2str.((doc,), provided_page_list)
-    sidebar_navbar_string = join(sidebar_navbar_info, ",\n")
-    push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: [\n$sidebar_navbar_string\n]\n")
-    push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: [\n$sidebar_navbar_string\n]\n")
+    sidebar_info = sprint(print, pagelist2str(doc, provided_page_list, Val(:sidebar)))
+    navbar_info = sprint(print, pagelist2str(doc, provided_page_list, Val(:navbar)))
+    push!(replacers, "sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "sidebar: $(sidebar_info)\n")
+    push!(replacers, "nav: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "nav: $(navbar_info)\n")
 
     # # Title
     push!(replacers, "title: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "title: '$(doc.user.sitename)'")
@@ -137,6 +156,13 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
+    # # Sidebar drawer toggle
+    push!(replacers, "sidebarDrawer: 'REPLACE_ME_DOCUMENTER_VITEPRESS_SIDEBAR_DRAWER'" => "sidebarDrawer: $(settings.sidebar_drawer)")
+
+    # # Noindex for non-stable deployments
+    # Handled separately in `apply_noindex` (after the other replacers run)
+    # so that user configs without the marker still get the meta tag injected.
+
     # # Favicon
 
     if occursin("rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON'", config)
@@ -151,6 +177,15 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # Finally, run all the replacers and write the new config file
 
     new_config = replace(config, replacers...)
+
+    # Noindex for non-stable deployments
+    new_config = apply_noindex(new_config, settings.noindex_non_stable, base)
+
+    # Apply each plugin's config transform (see `extension_hooks.jl`).
+    for plugin in values(doc.plugins)
+        new_config = vitepress_config_transform(plugin, new_config)
+    end
+
     write(vitepress_config_file, new_config)
     yield()
     touch(vitepress_config_file)
@@ -158,10 +193,99 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     return
 end
 
-function _get_raw_text(element)
+# Utility methods to get data about pages
+
+"""
+    apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::AbstractString) -> String
+
+Inject a `noindex, nofollow` robots meta into `config` for non-stable, non-root
+deployments. Replaces the marker if present, else injects into the `head` array;
+warns and returns `config` unchanged if neither is found.
+"""
+function apply_noindex(config::AbstractString, noindex_non_stable::Bool, base::AbstractString)
+    marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"
+    # Empty base = root deploy (single-version); keep it indexable.
+    if !(noindex_non_stable && base != "stable" && !isempty(base))
+        return replace(config, marker => "")
+    end
+    head_entry = "['meta', { name: 'robots', content: 'noindex, nofollow' }],"
+    if occursin(marker, config)
+        return replace(config, marker => head_entry)
+    end
+    # Match `head: [`, allowing quoted keys and flexible whitespace.
+    m = match(r"['\"]?head['\"]?\s*:\s*\[", config)
+    if m !== nothing
+        return replace(config, m.match => "$(m.match)\n    $(head_entry)"; count = 1)
+    end
+    @warn """
+    DocumenterVitepress: `noindex_non_stable` is enabled and this build (base = $(repr(base))) should not be indexed,
+    but the config file contains neither the `$marker` marker nor a `head` array to inject the robots meta tag into.
+    Search engines may index this deployment. Add the marker inside the `head` array of `docs/src/.vitepress/config.mts`.
+    """
+    return config
 end
 
-function pagelist2str(doc, page::String)
+"""
+    inject_plugin_components!(theme_index_path::String, doc)
+
+Inject every plugin's `vitepress_components` into `theme_index_path` at its two
+injection markers. Warns and no-ops if a custom theme lacks them, or if no
+components are contributed.
+"""
+function inject_plugin_components!(theme_index_path::String, doc)
+    components = @NamedTuple{name::String, import_path::String}[]
+    for plugin in values(doc.plugins)
+        append!(components, vitepress_components(plugin))
+    end
+    isempty(components) && return
+    isfile(theme_index_path) || return  # nothing to inject into
+
+    contents = read(theme_index_path, String)
+
+    import_marker = "// __DV_PLUGIN_COMPONENT_IMPORTS__"
+    register_marker = "// __DV_PLUGIN_COMPONENT_REGISTRATIONS__"
+
+    if !occursin(import_marker, contents) || !occursin(register_marker, contents)
+        @warn """
+            DocumenterVitepress: plugin(s) registered Vue components via `vitepress_components`,
+            but `$(theme_index_path)` does not contain the required injection markers
+            `$(import_marker)` and `$(register_marker)`. Skipping injection. Add these markers
+            to your custom `theme/index.ts` (one in the import section, one inside `enhanceApp`)
+            to opt in.
+            """
+        return
+    end
+
+    # A stable, file-unique JS identifier per component name.
+    seen = Set{String}()
+    imports = String[]
+    registrations = String[]
+    for c in components
+        sym = "DV_PLUGIN_" * replace(c.name, r"[^A-Za-z0-9_]" => "_")
+        # Ensure the local symbol is unique within this file.
+        base_sym = sym
+        i = 1
+        while sym in seen
+            i += 1
+            sym = string(base_sym, "_", i)
+        end
+        push!(seen, sym)
+        push!(imports, "import $(sym) from $(repr(c.import_path));")
+        push!(registrations, "app.component($(repr(c.name)), $(sym));")
+    end
+
+    # The marker supplies the first line's indent; indent only continuation lines
+    # (imports at column 0, registrations inside `enhanceApp` at 4 spaces).
+    new_contents = replace(
+        contents,
+        import_marker => join(imports, "\n"),
+        register_marker => join(registrations, "\n    "),
+    )
+    write(theme_index_path, new_contents)
+    return
+end
+
+function get_title(doc, page::AbstractString)
     # If no name is given, find the first header in the page,
     # and use that as the name.
     elements = collect(doc.blueprint.pages[page].mdast.children)
@@ -174,35 +298,59 @@ function pagelist2str(doc, page::String)
     else
         Documenter.MDFlatten.mdflatten(elements[idx])
     end
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
+    return name
 end
+get_title(doc, page::Pair{<: AbstractString, <: Any}) = first(page)
 
-pagelist2str(doc, name_any::Pair{String, <: Any}) = pagelist2str(doc, first(name_any) => last(name_any))
-
-function pagelist2str(doc, name_page::Pair{String, String})
-    name, page = name_page
-    # This is the simplest and easiest case.
-    return "{ text: '$(replace(name, "'" => "\\'"))', link: '/$(splitext(page)[1])' }" # , $(sidebar_items(doc, page)) }"
-end
-
-function pagelist2str(doc, name_contents::Pair{String, <: AbstractVector})
-    name, contents = name_contents
-    # This is for nested stuff.  Should work automatically but you never know...
-    rendered_contents = pagelist2str.((doc,), contents)
-    return "{ text: '$(replace(name, "'" => "\\'"))', collapsed: false, items: [\n$(join(rendered_contents, ",\n"))]\n }" # TODO: add a link here if the name is the same name as a file?
-end
-
-function sidebar_items(doc, page::String)
-    # We look at the page elements, and obtain all level 1 and 2 headers.
-    elements = doc.blueprint.pages[page].elements
-    headers = filter(x -> x isa Union{MarkdownAST.Heading{1}, MarkdownAST.Heading{2}}, elements)
-    # If nothing is found, move on in life
-    if length(headers) ≤ 1
-        return ""
+# Catch-all: treat any other iterable as a collection of page entries.
+function pagelist2str(doc, pages, sidenav::Val)
+    contents = String[]
+    for page in pages
+        str = pagelist2str(doc, page, sidenav)
+        isempty(str) || push!(contents, "{ " * str * " }")
     end
-    # Otherwise, we return a collapsible tree of headers for each level 1 and 2 header.
-    items = headers
-    return "collapsed: true, items: [\n $(join(_item_link.((page,), items), ",\n"))\n]"
+    return "[" * join(contents, ",\n") * "]"
+end
+function pagelist2str(doc, page::AbstractString, sidenav::Val)
+    name = get_title(doc, page)
+    path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
+    return "text: '$(replace(name, "'" => "\\'"))', link: '/$(path)'"
+end
+
+function pagelist2str(doc, name_page::Pair{<: Any, <: Any}, sidenav::Val)
+    name, page = name_page
+    # Normalize name to String so the pair hits a concrete method; error (don't
+    # recurse forever) if the type is unchanged, i.e. an unsupported page type.
+    new_pair = string(name) => page
+    typeof(new_pair) === typeof(name_page) &&
+        error("DocumenterVitepress: unsupported `pages` entry $(repr(name_page)) of type $(typeof(name_page)).")
+    return pagelist2str(doc, new_pair, sidenav)
+end
+
+function pagelist2str(doc, name_page::Pair{<: Any, <: Nothing}, sidenav::Val)
+    return ""
+end
+
+function pagelist2str(doc, name_page::Pair{<: AbstractString, <: AbstractString}, sidenav::Val)
+    name, page = name_page
+    path = replace(splitext(page)[1], "\\" => "/") # Handle Windows paths.
+    return "text: '$(replace(name, "'" => "\\'"))', link: '/$(path)'"
+end
+function pagelist2str(doc, name_contents::Pair{<: AbstractString, <: AbstractArray}, sidenav::Val)
+    name, contents = name_contents
+    # Nested section: a name => array of child page entries.
+    rendered_contents = String[]
+    for content in contents
+        str = pagelist2str(doc, content, sidenav)
+        isempty(str) || push!(rendered_contents, "{" * str * "}")
+    end
+    final_contents = join(rendered_contents, ",\n")
+    collapse = if sidenav === Val(:sidebar)
+        "collapsed: false,"
+    else
+        ""
+    end
+    return "text: '$(replace(name, "'" => "\\'"))', $collapse items: [\n$(final_contents)\n]" # TODO: add a link here if the name is the same name as a file?
 end
 
 function _item_link(page, item)
@@ -216,4 +364,80 @@ end
 
 function _get_first_or_string(x)
     return first(x)
+end
+
+"""
+    DecomposeInSidebar(path::String, pages)
+
+A wrapper for a collection of pages that allows for multi-sidebar configurations in Vitepress. 
+
+When you pass a list of `DecomposeInSidebar` objects to the `pages` argument of `makedocs`,
+DocumenterVitepress will generate a sidebar configuration that maps different sidebars to 
+different routes. `path` should be the URL path prefix (e.g., `"guide"` or `"manual"`), and 
+`pages` should be the standard Documenter page list for that section.
+"""
+struct DecomposeInSidebar
+    path::String
+    pages::Any
+end
+
+function pagelist2str(doc, ds::Vector{<: Any}, ::Val{:sidebar})
+    if !any(x -> x isa DecomposeInSidebar, ds)
+        return invoke(pagelist2str, Tuple{Any, Any, Val{:sidebar}}, doc, ds, Val(:sidebar))
+    end
+    
+    decomposed_items = filter(x -> x isa DecomposeInSidebar, ds)
+    regular_items = filter(x -> !(x isa DecomposeInSidebar), ds)
+    
+    contents = String[]
+    for x in decomposed_items
+        push!(contents, pagelist2str(doc, x, Val(:sidebar)))
+    end
+    
+    if !isempty(regular_items)
+        raw_regular = invoke(pagelist2str, Tuple{Any, Any, Val{:sidebar}}, doc, regular_items, Val(:sidebar))
+        push!(contents, "\"/\": " * raw_regular)
+    end
+    
+    return "{\n" * join(contents, ",\n") * "\n}"
+end
+
+function pagelist2str(doc, ds::DecomposeInSidebar, ::Val{:sidebar})
+    raw_contents = pagelist2str(doc, ds.pages, Val(:sidebar))
+    
+    if startswith(raw_contents, "[")
+        return "\"/$(ds.path)/\": $(raw_contents)"
+    else
+        return "\"/$(ds.path)/\": [\n{\n$(raw_contents)\n}\n]"
+    end
+end
+
+function pagelist2str(doc, ds::DecomposeInSidebar, ::Val{:navbar})
+    return pagelist2str(doc, ds.pages, Val(:sidebar))
+end
+
+function pagelist2str(doc, ds::Vector{<: Any}, ::Val{:navbar})
+    if !any(x -> x isa DecomposeInSidebar, ds)
+        return invoke(pagelist2str, Tuple{Any, Any, Val{:navbar}}, doc, ds, Val(:navbar))
+    end
+
+    contents = String[]
+    for x in ds
+        if x isa DecomposeInSidebar
+            # Expand vectors, otherwise treat as single item
+            items = x.pages isa AbstractVector ? x.pages : [x.pages]
+            for p in items
+                str = pagelist2str(doc, p, Val(:sidebar))
+                isempty(str) || push!(contents, "{ " * str * " }")
+            end
+        else
+            str = pagelist2str(doc, x, Val(:navbar))
+            isempty(str) || push!(contents, "{ " * str * " }")
+        end
+    end
+    return "[" * join(contents, ",\n") * "]"
+end
+
+function Documenter.walk_navpages(ds::DecomposeInSidebar, parent, doc)
+    return Documenter.walk_navpages(ds.pages, parent, doc)
 end
