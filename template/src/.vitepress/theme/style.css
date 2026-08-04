@@ -16,10 +16,10 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
 
 :root {
 scroll-behavior: smooth;
-/* Typography */
---vp-font-family-base: "Barlow", "Inter var experimental", "Inter var",
-  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-  Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+/* Typography: deliberately no `--vp-font-family-base` override, so VitePress' own
+   stack applies. It leads with the Inter that VitePress self-hosts, and it has a
+   `:lang(zh)` variant that prepends "Punctuation SC" — both of which an override here
+   would clobber. */
 
 /* Code Snippet font */
 --vp-font-family-mono: JuliaMono-Regular, monospace;
