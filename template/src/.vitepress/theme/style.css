@@ -16,10 +16,9 @@ https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/var
 
 :root {
 scroll-behavior: smooth;
-/* Typography: deliberately no `--vp-font-family-base` override, so VitePress' own
-   stack applies. It leads with the Inter that VitePress self-hosts, and it has a
-   `:lang(zh)` variant that prepends "Punctuation SC" — both of which an override here
-   would clobber. */
+/* Typography: don't set `--vp-font-family-base` override, so VitePress' own
+   stack applies. It starts with Inter and has a Punctuation SC override for lang-zh.
+*/
 
 /* Code Snippet font */
 --vp-font-family-mono: JuliaMono-Regular, monospace;
