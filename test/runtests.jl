@@ -493,6 +493,15 @@ end
 
     # No plugin prefixes at all -> untouched, whatever the base.
     @test rebase(md, String[], bases[1], bases) == md
+
+    # One base ending with another: stripping the shorter one first would eat
+    # only the tail and leave "/Pkg.jl/previews" welded to the front.
+    nested = ["/dev/", "/Pkg.jl/previews/dev/"]
+    built = rebase(md, prefixes, nested[2], nested)
+    @test occursin("/Pkg.jl/previews/dev/bonito/js/WGLMakie.bundled.js", built)
+    @test rebase(built, prefixes, nested[1], nested) ==
+        rebase(md, prefixes, nested[1], nested)
+    @test !occursin("previews", rebase(built, prefixes, nested[1], nested))
 end
 
 @testset "Bonito asset URLs carry the deploy base (full build)" begin

@@ -375,7 +375,10 @@ end
 # The string half of `rebase_asset_urls!`, kept separate so it can be tested
 # without a build directory.
 function rebase_asset_urls(content::AbstractString, prefixes, base::AbstractString, all_bases)
-    applied = filter(!isempty, unique(rstrip.(all_bases, '/')))
+    # Longest first: a base that ends with another one ("/Pkg.jl/previews/dev"
+    # and "/dev") would otherwise have its tail stripped by the shorter match,
+    # leaving a mangled prefix behind rather than a bare one.
+    applied = sort!(filter(!isempty, unique(rstrip.(all_bases, '/'))); by = length, rev = true)
     new_base = rstrip(base, '/')
     for prefix in prefixes
         for old in applied
