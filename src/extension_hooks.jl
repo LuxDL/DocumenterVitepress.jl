@@ -38,6 +38,17 @@ and skipped. Default: empty.
 vitepress_assets(::Documenter.Plugin) = String[]
 
 """
+    vitepress_asset_prefixes(plugin::Documenter.Plugin) -> Vector{String}
+
+Root-relative URL prefixes (e.g. `"/bonito/"`) under which the plugin's `public/`
+assets are referenced from rendered page content. Pages are rendered before the
+deploy base is known, so the writer prefixes these with the base of each build it
+runs — without that, a project-page deployment 404s on every such URL. Only the
+generated Markdown is rewritten. Default: empty.
+"""
+vitepress_asset_prefixes(::Documenter.Plugin) = String[]
+
+"""
     vitepress_theme_transform(plugin::Documenter.Plugin, theme::String) -> String
 
 Transform the `theme/plugin-hooks.ts` source, called once per plugin. Default:

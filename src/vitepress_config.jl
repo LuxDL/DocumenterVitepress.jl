@@ -106,29 +106,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # because vitepress isn't relocatable
     # folder = deploy_decision.subfolder
 
-    deploy_relpath = "$(base)$(isempty(base) ? "" : "/")"
-    deploy_abspath = if isempty(base) && !haskey(ENV, "CI")
-            @info "Base is \"\" and ENV[\"CI\"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path \"/\" to facilitate serving docs locally."
-            "/"
-        elseif isnothing(settings.deploy_url)
-            "/" * split(rstrip(settings.repo, '/'), '/')[end]
-        else
-            # Full URL: subpath starts at index 4 after scheme+host,
-            # e.g. ["https:", "", "host", "sub", "dir"].
-            s_path = if startswith(settings.deploy_url, r"^https?://")
-                frags = split(rstrip(settings.deploy_url, '/'), '/')
-                length(frags) >= 4 ? frags[4:end] : [""]
-            else
-                split(rstrip(settings.deploy_url, '/'), '/')
-            end
-            s = join(s_path, '/')
-            isempty(s) ? "/" : "/$(s)"
-        end
-
-    base_str = endswith(deploy_abspath, "/") ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
+    deploy_abspath = deploy_root_path(settings, base)
 
     push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH" => deploy_abspath)
-    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
+    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "base: '$(join_base(deploy_abspath, base))'")
 
     # # Vitepress output path
     push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../$(i_folder)'")
@@ -202,6 +183,54 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
 
     return
 end
+
+"""
+    deploy_root_path(settings, base; log = true) -> String
+
+The path the *site root* sits at once deployed, i.e. everything before the version
+base — `"/YourPackage.jl"` for a GitHub project page, `"/"` for a user/org page or
+a local build. Derived from `deploy_url` if given, else from the repository name.
+"""
+function deploy_root_path(settings, base; log = true)
+    if isempty(base) && !haskey(ENV, "CI")
+        log && @info "Base is \"\" and ENV[\"CI\"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path \"/\" to facilitate serving docs locally."
+        return "/"
+    elseif isnothing(settings.deploy_url)
+        return "/" * split(rstrip(settings.repo, '/'), '/')[end]
+    else
+        # Full URL: subpath starts at index 4 after scheme+host,
+        # e.g. ["https:", "", "host", "sub", "dir"].
+        s_path = if startswith(settings.deploy_url, r"^https?://")
+            frags = split(rstrip(settings.deploy_url, '/'), '/')
+            length(frags) >= 4 ? frags[4:end] : [""]
+        else
+            split(rstrip(settings.deploy_url, '/'), '/')
+        end
+        s = join(s_path, '/')
+        return isempty(s) ? "/" : "/$(s)"
+    end
+end
+
+"""
+    join_base(deploy_abspath, base) -> String
+
+Vitepress's `base` for one build: the deploy root joined with the version base,
+always with a trailing slash (`"/"` for a root deploy). Root-relative URLs in the
+generated site resolve against exactly this string.
+"""
+function join_base(deploy_abspath::AbstractString, base::AbstractString)
+    deploy_relpath = "$(base)$(isempty(base) ? "" : "/")"
+    return endswith(deploy_abspath, "/") ? "$(deploy_abspath)$(deploy_relpath)" : "$(deploy_abspath)/$(deploy_relpath)"
+end
+
+"""
+    site_base(settings, base) -> String
+
+`join_base` over the deploy root implied by `settings`; the value written as
+Vitepress's `base` for the build of `base`. Silent, since `modify_config_file`
+does the logging for the build it configures.
+"""
+site_base(settings, base) = join_base(deploy_root_path(settings, base; log = false), base)
 
 # Utility methods to get data about pages
 

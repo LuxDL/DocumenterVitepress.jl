@@ -27,9 +27,13 @@ import { runPluginScriptHooks } from './plugin-hooks'
 
 // Root-relative URLs inside `v-html` content bypass Vite's own base
 // resolution, so this adds it by hand; already-absolute URLs are untouched.
+// A URL that already starts with the base is left alone: the writer bakes the
+// base into plugin asset URLs at build time (`rebase_asset_urls!`), and adding
+// it a second time here would 404 on `/base/base/…`.
 // Exported for plugin-hooks.ts, whose injected content may need to rebase a URL.
 export function rebase(url: string): string {
-  return url.startsWith('/') && !url.startsWith('//') ? withBase(url) : url
+  if (!url.startsWith('/') || url.startsWith('//')) return url
+  return url.startsWith(withBase('/')) ? url : withBase(url)
 }
 
 // `v-exec-scripts` runs the <script> tags inside a `v-html`'d block: innerHTML never executes
