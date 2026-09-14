@@ -1,7 +1,7 @@
 // .vitepress/theme/index.ts
 import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
-import type { Theme as ThemeConfig } from 'vitepress'
+import { withBase, type Theme as ThemeConfig } from 'vitepress'
 import 'virtual:mathjax-styles.css';
 
 import { 
@@ -22,14 +22,31 @@ import './style.css' // You could setup your own, or else a default will be copi
 import './docstrings.css' // You could setup your own, or else a default will be copied.
 import './overrides.css' // You could setup your own, or else a default will be copied.
 
+import { runPluginScriptHooks } from './plugin-hooks'
+
+// Root-relative URLs inside `v-html` content bypass Vite's own base
+// resolution, so this adds it by hand; already-absolute URLs are untouched.
+// A URL that already starts with the base is left alone: the writer bakes the
+// base into plugin asset URLs at build time (`rebase_asset_urls!`), and adding
+// it a second time here would 404 on `/base/base/…`.
+// Exported for plugin-hooks.ts, whose injected content may need to rebase a URL.
+export function rebase(url: string): string {
+  if (!url.startsWith('/') || url.startsWith('//')) return url
+  return url.startsWith(withBase('/')) ? url : withBase(url)
+}
+
 // `v-exec-scripts` runs the <script> tags inside a `v-html`'d block: innerHTML never executes
 // scripts, so we re-create each one. `src` scripts are awaited so order holds (bundle before
 // its callers). Used on interactive text/html output (WGLMakie/Bonito, Plotly) which the writer
 // wraps in <ClientOnly> + this directive.
 async function activateScripts(container: Element): Promise<void> {
   for (const old of Array.from(container.querySelectorAll('script'))) {
+    await runPluginScriptHooks()
     const fresh = document.createElement('script')
-    for (const attr of Array.from(old.attributes)) fresh.setAttribute(attr.name, attr.value)
+    for (const attr of Array.from(old.attributes)) {
+      const value = attr.name === 'src' ? rebase(attr.value) : attr.value
+      fresh.setAttribute(attr.name, value)
+    }
     fresh.textContent = old.textContent
     const hasSrc = old.hasAttribute('src')
     const ran = hasSrc

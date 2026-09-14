@@ -279,8 +279,9 @@ docs/src/
 ├── .vitepress/
 │   ├── config.mts      # Main Vitepress configuration
 │   └── theme/
-│       ├── index.ts    # Theme customization
-│       └── style.css   # Custom styles
+│       ├── index.ts        # Theme customization
+│       ├── plugin-hooks.ts # Client-side code injected by plugins
+│       └── style.css       # Custom styles
 └── assets/
     ├── favicon.ico
     ├── logo_dark.png
@@ -291,6 +292,7 @@ docs/src/
 
 - **`config.mts`**: The main Vitepress configuration file. Edit this to customize navigation, sidebar, search, and other site settings.
 - **`theme/index.ts`**: Theme entry point. Use this to add custom Vue components or override Vitepress theme defaults.
+- **`theme/plugin-hooks.ts`**: Holds client-side code that `Documenter.Plugin`s (such as `BonitoPlugin`) inject at build time. Keep its `// __DV_PLUGIN_…__` marker comments in place.
 - **`theme/style.css`**: Custom CSS styles for your documentation.
 - **`assets/`**: Images and icons used by your documentation.
 

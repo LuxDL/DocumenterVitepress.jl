@@ -281,10 +281,15 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
 
     bases = determine_bases(deploy_decision.subfolder; settings.keep)
 
+    # Every base serves the same Markdown from a different root, so the base has to
+    # go onto the plugins' root-relative asset URLs here rather than at render time.
+    site_bases = [site_base(settings, b) for b in bases]
+
     for (i_base, base) in enumerate(bases)
         # from `vitepress_config.jl`
         # This needs to be run after favicons and logos are moved to the public subfolder
         modify_config_file(doc, settings, deploy_decision, i_base, base)
+        rebase_asset_urls!(joinpath(builddir, settings.md_output_path), doc, site_bases[i_base], site_bases)
         open(joinpath(builddir, "bases.txt"), i_base == 1 ? "w" : "a") do io
             println(io, base)
         end
@@ -331,6 +336,57 @@ function _merge_copy!(src, dst)
         mkpath(dirname(dst))
         cp(src, dst; force = true)
     end
+end
+
+"""
+    rebase_asset_urls!(mddir::AbstractString, doc, base::AbstractString, all_bases)
+
+Prefix `base` onto the root-relative plugin asset URLs (`vitepress_asset_prefixes`,
+see `extension_hooks.jl`) in the generated Markdown under `mddir`, in place.
+
+Bonito writes `<script src="/bonito/js/…">` into the rendered HTML, and that HTML
+ends up inside a `v-html` string literal, so neither Vitepress nor the client-side
+`rebase()` in `theme/index.ts` reaches it — under a project-page base like
+`/YourPackage.jl/dev/` the browser asks for `/bonito/js/…` and gets a 404.
+
+Every base builds from this one Markdown tree, so each pass first strips whatever
+base a previous pass wrote (`all_bases`, which includes `base`); that also makes
+repeated passes idempotent. A root deploy (`base == "/"`) is left untouched.
+"""
+function rebase_asset_urls!(mddir::AbstractString, doc, base::AbstractString, all_bases)
+    prefixes = String[]
+    for plugin in values(doc.plugins)
+        append!(prefixes, vitepress_asset_prefixes(plugin))
+    end
+    isempty(prefixes) && return
+    isdir(mddir) || return
+    for (root, _, files) in walkdir(mddir)
+        for file in files
+            endswith(file, ".md") || continue
+            path = joinpath(root, file)
+            content = read(path, String)
+            rebased = rebase_asset_urls(content, prefixes, base, all_bases)
+            rebased == content || write(path, rebased)
+        end
+    end
+    return
+end
+
+# The string half of `rebase_asset_urls!`, kept separate so it can be tested
+# without a build directory.
+function rebase_asset_urls(content::AbstractString, prefixes, base::AbstractString, all_bases)
+    # Longest first: a base that ends with another one ("/Pkg.jl/previews/dev"
+    # and "/dev") would otherwise have its tail stripped by the shorter match,
+    # leaving a mangled prefix behind rather than a bare one.
+    applied = sort!(filter(!isempty, unique(rstrip.(all_bases, '/'))); by = length, rev = true)
+    new_base = rstrip(base, '/')
+    for prefix in prefixes
+        for old in applied
+            content = replace(content, old * prefix => prefix)
+        end
+        isempty(new_base) || (content = replace(content, prefix => new_base * prefix))
+    end
+    return content
 end
 
 """

@@ -1,5 +1,6 @@
 using DocumenterVitepress
 using DocumenterVitepress.Documenter
+using Bonito
 using Test
 
 
@@ -399,4 +400,165 @@ end
     @test !occursin("{}", nested)
     # collection level filters empties too — no `{  }` junk
     @test !occursin("{  }", p2s(["A" => "a.md", "Skip" => nothing]))
+end
+
+@testset "Bonito plugin" begin
+    plugin = DocumenterVitepress.BonitoPlugin()
+    @test plugin isa Documenter.Plugin
+
+    dirs = DocumenterVitepress.vitepress_assets(plugin)
+    @test length(dirs) == 1
+    @test isdir(only(dirs))
+
+    render_button() = sprint() do io
+        show(io, MIME"text/html"(), App() do session
+            count = DOM.span("0")
+            button = Button("Click me!")
+            onjs(session, button.value, js"""
+                function (clicked) {
+                    const el = $(count)
+                    el.textContent = String(parseInt(el.textContent, 10) + 1)
+                }
+                """)
+            return DOM.div(button, DOM.p("Clicks: ", count))
+        end)
+    end
+
+    Page()
+    html1 = render_button()
+    m1 = match(r"src=\"(/bonito/js/[^\"]+)\"", html1)
+    @test m1 !== nothing
+    # absolute, not relative to the rendering page
+    @test startswith(m1[1], "/bonito/")
+
+    # a fresh Page() (new markdown page) reuses the same bundle — the whole
+    # point of a shared asset folder instead of Bonito's per-page default.
+    Page()
+    html2 = render_button()
+    m2 = match(r"src=\"(/bonito/js/[^\"]+)\"", html2)
+    @test m2 !== nothing
+    @test m1[1] == m2[1]
+
+    asset_path = joinpath(only(dirs), m1[1][2:end]) # strip the leading '/'
+    @test isfile(asset_path)
+
+    @test DocumenterVitepress.vitepress_asset_prefixes(plugin) == ["/bonito/"]
+
+    # The `import(new URL(…))` for an ES6 module ends up inside the binary session
+    # blob, so it has to pick the base up from the page at runtime instead.
+    ext = Base.get_extension(DocumenterVitepress, :DocumenterVitepressBonitoExt)
+    mktempdir() do d
+        js = joinpath(d, "mymodule.js")
+        write(js, "export const x = 1;\n")
+        expr = Bonito.import_js_url(ext.VitepressAssetFolder(), Bonito.Asset(js; es6module = true))
+        @test occursin("window.__DV_BASE__", expr)
+        # base-relative, so no root-relative URL survives to be requested as-is
+        @test !occursin("'/bonito/", expr)
+        @test occursin("+ 'bonito/", expr)
+    end
+end
+
+@testset "plugin asset URL rebasing" begin
+    rebase = DocumenterVitepress.rebase_asset_urls
+    prefixes = ["/bonito/"]
+    # As emitted into the markdown: html-escaped, inside a `v-html` literal.
+    md = """
+    <ClientOnly>
+    <div v-html="`<script src=&quot;/bonito/js/WGLMakie.bundled.js&quot;></script>
+    Bonito.fetch_binary('/bonito/bin/f0a1.bin')`"></div>
+    </ClientOnly>
+    """
+    bases = ["/DGG.jl/dev/", "/DGG.jl/stable/"]
+
+    # A project-page base is prefixed onto every asset URL — this is the 404 that
+    # `/bonito/js/WGLMakie.bundled.js` gave on juliageo.org/DiscreteGlobalGrids.jl/dev.
+    dev = rebase(md, prefixes, bases[1], bases)
+    @test occursin("/DGG.jl/dev/bonito/js/WGLMakie.bundled.js", dev)
+    @test occursin("/DGG.jl/dev/bonito/bin/f0a1.bin", dev)
+    @test !occursin("&quot;/bonito/", dev)
+
+    # Idempotent: the same base applied twice must not nest.
+    @test rebase(dev, prefixes, bases[1], bases) == dev
+    @test !occursin("/DGG.jl/dev/DGG.jl", dev)
+
+    # Each base rewrites from the shared markdown tree, so the previous base's
+    # prefix is replaced, not appended to.
+    stable = rebase(dev, prefixes, bases[2], bases)
+    @test occursin("/DGG.jl/stable/bonito/js/WGLMakie.bundled.js", stable)
+    @test !occursin("/DGG.jl/dev/", stable)
+    @test stable == rebase(md, prefixes, bases[2], bases)
+
+    # A root deploy is left exactly as rendered.
+    @test rebase(md, prefixes, "/", ["/"]) == md
+
+    # No plugin prefixes at all -> untouched, whatever the base.
+    @test rebase(md, String[], bases[1], bases) == md
+
+    # One base ending with another: stripping the shorter one first would eat
+    # only the tail and leave "/Pkg.jl/previews" welded to the front.
+    nested = ["/dev/", "/Pkg.jl/previews/dev/"]
+    built = rebase(md, prefixes, nested[2], nested)
+    @test occursin("/Pkg.jl/previews/dev/bonito/js/WGLMakie.bundled.js", built)
+    @test rebase(built, prefixes, nested[1], nested) ==
+        rebase(md, prefixes, nested[1], nested)
+    @test !occursin("previews", rebase(built, prefixes, nested[1], nested))
+end
+
+@testset "Bonito asset URLs carry the deploy base (full build)" begin
+    md_content = raw"""
+# Bonito
+
+```@example bonito
+using Bonito
+App() do
+    DOM.div("hello")
+end
+```
+"""
+    # `subfolder` is what `deploydocs` would hand us on CI; with no `deploy_url`
+    # the site root comes from the repo name, so the base is `/Test.jl/dev/`.
+    function build(dir, subfolder)
+        src = joinpath(dir, "src")
+        mkpath(src)
+        write(joinpath(src, "index.md"), md_content)
+        run(pipeline(`$(Documenter.git()) -C $dir init --quiet`, stdout = devnull))
+        Page() # fresh page state, so this build re-emits the bundle `<script src>`
+        Documenter.makedocs(;
+            sitename = "Test",
+            root = dir,
+            source = "src",
+            build = "build",
+            warnonly = true,
+            remotes = nothing,
+            format = DocumenterVitepress.MarkdownVitepress(
+                repo = "github.com/test/Test.jl",
+                devbranch = "main",
+                devurl = "dev",
+                build_vitepress = false,  # only need the emitted markdown
+                deploy_decision = Documenter.DeployDecision(; all_ok = false, subfolder),
+            ),
+            plugins = [DocumenterVitepress.BonitoPlugin()],
+            pages = ["index.md"],
+        )
+        return read(joinpath(dir, "build", ".documenter", "index.md"), String)
+    end
+
+    mktempdir() do dir
+        rendered = build(realpath(dir), "dev")
+        # The bundle `<script src>` and every binary blob URL carry the base.
+        @test occursin("/Test.jl/dev/bonito/js/", rendered)
+        # No bare URL survives — that is exactly the request that 404s.
+        @test !occursin(r"(?<!/Test\.jl/dev)/bonito/", rendered)
+        @test !occursin("/Test.jl/dev/Test.jl/dev/", rendered)
+    end
+
+    mktempdir() do dir
+        # Root deploy (no base): unchanged, still served from the site root.
+        rendered = withenv("CI" => nothing) do
+            build(realpath(dir), "")
+        end
+        @test occursin("/bonito/js/", rendered)
+        @test !occursin("//bonito/", rendered)
+        @test !occursin("/Test.jl/bonito/", rendered)
+    end
 end

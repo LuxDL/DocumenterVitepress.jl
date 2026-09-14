@@ -53,7 +53,7 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
-    for f in ["index.ts", "style.css", "docstrings.css", "overrides.css"]
+    for f in ["index.ts", "plugin-hooks.ts", "style.css", "docstrings.css", "overrides.css"]
         theme_f = joinpath("theme", f)
         if !isfile(joinpath(source_vitepress_dir, theme_f))
             @info "DocumenterVitepress: Did not detect `docs/src/.vitepress/$theme_f` file. Substituting in the default file."
@@ -72,9 +72,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
         end
     end
 
-    # Inject plugin Vue components into the theme entry (see `extension_hooks.jl`),
-    # after it's been written to the build dir.
+    # See `extension_hooks.jl`: components go into `index.ts`; free-form theme
+    # transforms target `plugin-hooks.ts`, so plugins never touch `index.ts`.
     inject_plugin_components!(joinpath(build_vitepress_dir, "theme", "index.ts"), doc)
+    apply_theme_transforms!(joinpath(build_vitepress_dir, "theme", "plugin-hooks.ts"), doc)
 
     # We have already rewritten the config file, so we can't get burned by clean=false
     # again.
@@ -96,29 +97,10 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     # because vitepress isn't relocatable
     # folder = deploy_decision.subfolder
 
-    deploy_relpath = "$(base)$(isempty(base) ? "" : "/")"
-    deploy_abspath = if isempty(base) && !haskey(ENV, "CI")
-            @info "Base is \"\" and ENV[\"CI\"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path \"/\" to facilitate serving docs locally."
-            "/"
-        elseif isnothing(settings.deploy_url)
-            "/" * split(rstrip(settings.repo, '/'), '/')[end]
-        else
-            # Full URL: subpath starts at index 4 after scheme+host,
-            # e.g. ["https:", "", "host", "sub", "dir"].
-            s_path = if startswith(settings.deploy_url, r"^https?://")
-                frags = split(rstrip(settings.deploy_url, '/'), '/')
-                length(frags) >= 4 ? frags[4:end] : [""]
-            else
-                split(rstrip(settings.deploy_url, '/'), '/')
-            end
-            s = join(s_path, '/')
-            isempty(s) ? "/" : "/$(s)"
-        end
-
-    base_str = endswith(deploy_abspath, "/") ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
+    deploy_abspath = deploy_root_path(settings, base)
 
     push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH" => deploy_abspath)
-    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
+    push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "base: '$(join_base(deploy_abspath, base))'")
 
     # # Vitepress output path
     push!(replacers, "outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => "outDir: '../$(i_folder)'")
@@ -192,6 +174,54 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
 
     return
 end
+
+"""
+    deploy_root_path(settings, base; log = true) -> String
+
+The path the *site root* sits at once deployed, i.e. everything before the version
+base — `"/YourPackage.jl"` for a GitHub project page, `"/"` for a user/org page or
+a local build. Derived from `deploy_url` if given, else from the repository name.
+"""
+function deploy_root_path(settings, base; log = true)
+    if isempty(base) && !haskey(ENV, "CI")
+        log && @info "Base is \"\" and ENV[\"CI\"] is not set so this is a local build. Not adding any additional base prefix based on the repository or deploy url and instead using absolute path \"/\" to facilitate serving docs locally."
+        return "/"
+    elseif isnothing(settings.deploy_url)
+        return "/" * split(rstrip(settings.repo, '/'), '/')[end]
+    else
+        # Full URL: subpath starts at index 4 after scheme+host,
+        # e.g. ["https:", "", "host", "sub", "dir"].
+        s_path = if startswith(settings.deploy_url, r"^https?://")
+            frags = split(rstrip(settings.deploy_url, '/'), '/')
+            length(frags) >= 4 ? frags[4:end] : [""]
+        else
+            split(rstrip(settings.deploy_url, '/'), '/')
+        end
+        s = join(s_path, '/')
+        return isempty(s) ? "/" : "/$(s)"
+    end
+end
+
+"""
+    join_base(deploy_abspath, base) -> String
+
+Vitepress's `base` for one build: the deploy root joined with the version base,
+always with a trailing slash (`"/"` for a root deploy). Root-relative URLs in the
+generated site resolve against exactly this string.
+"""
+function join_base(deploy_abspath::AbstractString, base::AbstractString)
+    deploy_relpath = "$(base)$(isempty(base) ? "" : "/")"
+    return endswith(deploy_abspath, "/") ? "$(deploy_abspath)$(deploy_relpath)" : "$(deploy_abspath)/$(deploy_relpath)"
+end
+
+"""
+    site_base(settings, base) -> String
+
+`join_base` over the deploy root implied by `settings`; the value written as
+Vitepress's `base` for the build of `base`. Silent, since `modify_config_file`
+does the logging for the build it configures.
+"""
+site_base(settings, base) = join_base(deploy_root_path(settings, base; log = false), base)
 
 # Utility methods to get data about pages
 
@@ -282,6 +312,25 @@ function inject_plugin_components!(theme_index_path::String, doc)
         register_marker => join(registrations, "\n    "),
     )
     write(theme_index_path, new_contents)
+    return
+end
+
+"""
+    apply_theme_transforms!(theme_path::String, doc)
+
+Apply every plugin's `vitepress_theme_transform` to the file at `theme_path`
+(normally `theme/plugin-hooks.ts`). No-op if no plugin overrides the default
+identity transform.
+"""
+function apply_theme_transforms!(theme_path::String, doc)
+    isfile(theme_path) || return
+    theme = read(theme_path, String)
+    new_theme = theme
+    for plugin in values(doc.plugins)
+        new_theme = vitepress_theme_transform(plugin, new_theme)
+    end
+    new_theme == theme && return
+    write(theme_path, new_theme)
     return
 end
 

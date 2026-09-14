@@ -2,6 +2,10 @@
 
 ## unreleased
 
+- Added `DocumenterVitepress.BonitoPlugin()`, a `Documenter.Plugin` (supporting Bonito v4 and v5) that ships Bonito's JS/CSS bundle through the site's `public/` folder instead of re-embedding it inline on every figure; asset URLs are rebased client-side so they resolve under any deploy `base` [#366](https://github.com/LuxDL/DocumenterVitepress.jl/pull/366)
+- Added a `vitepress_theme_transform` extension hook (mirrors `vitepress_config_transform`, but for the new `theme/plugin-hooks.ts`), so plugins like `BonitoPlugin` can inject client-side code without hardcoding it into the shared template [#366](https://github.com/LuxDL/DocumenterVitepress.jl/pull/366)
+- **Custom `theme/index.ts` users:** copy the `rebase` export, the `runPluginScriptHooks` import, and the updated `activateScripts` from the template so plugin hooks (including `BonitoPlugin`'s URL patch) run [#366](https://github.com/LuxDL/DocumenterVitepress.jl/pull/366)
+
 ## v0.3.5 - 2026-07-14
 
 - Cleaned up `docs/make.jl` by removing unused `DocumenterCitations` integration code and clarifying remaining dependencies [#382](https://github.com/LuxDL/DocumenterVitepress.jl/pull/382).

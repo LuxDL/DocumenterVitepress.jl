@@ -4,6 +4,7 @@ using DocumenterVitepress: DecomposeInSidebar
 using DocumenterCitations
 using DocumenterInterLinks
 using LaTeXStrings
+using Bonito
 
 # Include custom styles for `citations.md` here instead of inside 
 # the markdown file to avoid Documenter world-age method errors.
@@ -55,6 +56,7 @@ makedocs(;
             "Markdown" => "manual/markdown-examples.md",
             "MIME output" => "manual/mime_examples.md",
             "Video Embedding" => "manual/video_embedding.md",
+            "Bonito interactivity" => "manual/bonito_example.md",
             "DocumenterCitations integration" => "manual/citations.md",
             "CSS Styling" => "manual/style_css.md",
             "Authors' badge" => "manual/author_badge.md",
@@ -66,7 +68,7 @@ makedocs(;
         ],
         "api.md",
     ],
-    plugins = [bib, links],
+    plugins = [bib, links, DocumenterVitepress.BonitoPlugin()],
 )
 
 DocumenterVitepress.deploydocs(;
