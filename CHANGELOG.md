@@ -4,6 +4,14 @@
 
 - Added `DocumenterVitepress.BonitoPlugin()`, a `Documenter.Plugin` (supporting Bonito v4 and v5) that ships Bonito's JS/CSS bundle through the site's `public/` folder instead of re-embedding it inline on every figure; asset URLs are rebased client-side so they resolve under any deploy `base` [#366](https://github.com/LuxDL/DocumenterVitepress.jl/pull/366)
 - Added a `vitepress_theme_transform` extension hook (mirrors `vitepress_config_transform`, but for `theme/index.ts`), so plugins like `BonitoPlugin` can inject client-side code without hardcoding it into the shared template [#366](https://github.com/LuxDL/DocumenterVitepress.jl/pull/366)
+
+## v0.3.5 - 2026-07-14
+
+- Cleaned up `docs/make.jl` by removing unused `DocumenterCitations` integration code and clarifying remaining dependencies [#382](https://github.com/LuxDL/DocumenterVitepress.jl/pull/382).
+- Fixed `DecomposeInSidebar` to properly handle mixed lists of decomposed and regular page entries [#381](https://github.com/LuxDL/DocumenterVitepress.jl/pull/381)
+- Changed the default text colour for code blocks to be the same as plain text, to avoid confusion with hyperlinks [#380](https://github.com/LuxDL/DocumenterVitepress.jl/pull/380)
+- Added an `overrides.css` file to allow for targeted overrides to the default Vitepress and DocumenterVitepress styles without having to copy the entire theme [#379](https://github.com/LuxDL/DocumenterVitepress.jl/pull/379)
+- Fixed a bug where DocumenterVitepress would error if outside of a git repository
 - Fixed ANSI-colored `@repl` output (e.g. from StyledStrings or colored `show` methods) rendering as raw escape codes. `@repl` output whose text carries ANSI escapes is now emitted as a single `ansi` fence annotated with a `julia-repl-runs=` spec, and the `julia-repl-transformer` re-highlights the input as `julia` and the output as `ansi` into one `<pre>` — matching Documenter's HTML output (syntax-highlighted input, colored output in one box). Colorless `@repl` blocks are unchanged [#373](https://github.com/LuxDL/DocumenterVitepress.jl/issues/373)
 - Fixed missing root `index.html` redirect on deploy: `Documenter.deploydocs` writes this for its standard `versions=` argument, but `DocumenterVitepress.deploydocs` uses a custom `versions` type that bypasses that code path, so a freshly-deployed site had nothing at its root and 404'd instead of redirecting to `stable`/`dev` [#368](https://github.com/LuxDL/DocumenterVitepress.jl/pull/368)
 - Made sidebar/navbar generation overloadable: `pagelist2str` now dispatches on a `Val{:sidebar}`/`Val{:navbar}` tag (with a `get_title` helper), so a custom `make.jl` can control how pages map to VitePress nav entries [#357](https://github.com/LuxDL/DocumenterVitepress.jl/pull/357)
