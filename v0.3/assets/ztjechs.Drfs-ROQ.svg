@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-300 -300 600 600">
+<title>SVG Simple Icon Tiny</title>
+<desc>Designed for the SVG Logo Contest in 2006 by Harvey Rayner. It is available under the Creative Commons license for those who have an SVG product or who are using SVG on their site.</desc>
+<use xlink:href="#a" stroke="#000" stroke-width="76.7"/>
+<g id="a">
+	<g id="b">
+		<g id="c" fill="#fff">
+			<circle id="d" cx="-202" r="45.2"/>
+			<path d="m201-32-402,0 0,64 402,0"/>
+			<use xlink:href="#d" x="404"/>
+		</g>
+		<use xlink:href="#c" transform="rotate(90)"/>
+	</g>
+	<use xlink:href="#b" transform="rotate(45)"/>
+</g>
+</svg>
