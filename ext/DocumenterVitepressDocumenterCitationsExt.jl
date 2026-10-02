@@ -7,17 +7,20 @@ using Documenter: Documenter, MarkdownAST
 using .MarkdownAST: @ast
 
 
-# CitationSiteNode is an HTML-only wrapper whose child is the actual
-# citation link. For VitePress/Markdown it should be transparent.
+# CitationSiteNode is an AST node that wraps citation links at a citation site.
+# We render the target anchor for backlinks (if any) and then render the children.
 function DV.render(
     io::IO,
     ::MIME"text/plain",
     node::MarkdownAST.Node,
-    ::DocumenterCitations.CitationSiteNode,
+    citation_site::DocumenterCitations.CitationSiteNode,
     page,
     doc;
     kwargs...
 )
+    if !isempty(citation_site.id)
+        print(io, "<a id='", citation_site.id, "'></a>")
+    end
     return DV.render(
         io,
         MIME"text/plain"(),
@@ -66,11 +69,18 @@ function _bibliography_to_list(
 
     for item in bib.items
         newitem = MarkdownAST.Node(MarkdownAST.Item())
+        reference = item.reference
 
-        # Do not add the anchor here. DocumenterCitations 1.5.0
-        # manages citation-site anchors/backlinks itself.
-        push!(newitem.children, item.reference)
+        if item.anchor_key !== nothing
+            pushfirst!(
+                reference.children,
+                @ast MarkdownAST.HTMLInline(
+                    join(["<a id='", item.anchor_key, "'></a>"])
+                )
+            )
+        end
 
+        push!(newitem.children, reference)
         push!(node.children, newitem)
     end
 
