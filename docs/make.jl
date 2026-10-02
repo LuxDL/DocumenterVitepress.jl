@@ -2,6 +2,7 @@ using Documenter
 using DocumenterVitepress
 using DocumenterVitepress: DecomposeInSidebar
 using DocumenterCitations
+using DocumenterCodeBlocks
 using DocumenterInterLinks
 using LaTeXStrings
 
@@ -66,7 +67,7 @@ makedocs(;
         ],
         "api.md",
     ],
-    plugins = [bib, links],
+    plugins = [bib, links, CodeBlocks()],
 )
 
 DocumenterVitepress.deploydocs(;

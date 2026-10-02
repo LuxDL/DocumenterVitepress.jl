@@ -253,13 +253,16 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
         # This is where you can operate on a per-page level.
         open(docpath(page.build, builddir, settings.md_output_path), "w") do io
             merge_and_render_frontmatter(io, MIME("text/yaml"), page, doc)
+            kwargs = if settings.write_inventory
+                (; inventory = inventory)
+            else
+                (;)
+            end
             for node in page.mdast.children
-                kwargs = if settings.write_inventory
-                    (; inventory = inventory)
-                else
-                    (;)
-                end
                 render(io, mime, node, page, doc; kwargs...)
+            end
+            for plugin in values(doc.plugins)
+                vitepress_page_footer(plugin, io, page, doc; kwargs...)
             end
         end
         if settings.write_inventory
@@ -641,12 +644,15 @@ end
 
 function renderdoc(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, page, doc; kwargs...)
     @assert node.element isa Documenter.DocsNode
+    docstring_ids = [sanitized_anchor_label(node.element.anchor)]
     # The `:results` field contains a vector of `Docs.DocStr` objects associated with
     # each markdown object. The `DocStr` contains data such as file and line info that
     # we need for generating correct source links.
     for (docstringast, result) in zip(node.element.mdasts, node.element.results)
         println(io)
-        render(io, mime, docstringast, docstringast.children, page, doc; kwargs...)
+        for (idx, child) in enumerate(docstringast.children)
+            render(io, mime, child, page, doc; docstring_ids = docstring_ids, is_signature = (idx == 1), kwargs...)
+        end
         println(io)
         # When a source link is available then print the link.
         url = Documenter.source_url(doc, result)
@@ -816,6 +822,11 @@ function join_multiblock(node::Documenter.MarkdownAST.Node)
 end
 
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc; kwargs...)
+    for plugin in values(doc.plugins)
+        if vitepress_render_multicodeblock(plugin, io, mime, node, mcb, page, doc; kwargs...)
+            return
+        end
+    end
     return render(io, mime, node, join_multiblock(node), page, doc; kwargs...)
 end
 
@@ -1186,6 +1197,11 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
 end
 # Code blocks
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::MarkdownAST.CodeBlock, page, doc; kwargs...)
+    for plugin in values(doc.plugins)
+        if vitepress_render_codeblock(plugin, io, mime, node, code, page, doc; kwargs...)
+            return
+        end
+    end
     if startswith(code.info, "@")
         @warn """
         DocumenterVitepress: un-expanded `$(code.info)` block encountered on page $(page.source).

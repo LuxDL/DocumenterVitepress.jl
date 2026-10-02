@@ -400,3 +400,73 @@ end
     # collection level filters empties too — no `{  }` junk
     @test !occursin("{  }", p2s(["A" => "a.md", "Skip" => nothing]))
 end
+
+@testset "DocumenterCodeBlocks Extension" begin
+    using DocumenterCodeBlocks
+    cb = CodeBlocks()
+    # Test assets hook
+    assets = DocumenterVitepress.vitepress_assets(cb)
+    @test assets == [DocumenterCodeBlocks.ASSET_DIR]
+
+    # Test config transform hook
+    mock_config = """
+    export default defineConfig({
+      head: [
+        ['link', { rel: 'icon', href: 'favicon.ico' }],
+      ],
+    })
+    """
+    transformed = DocumenterVitepress.vitepress_config_transform(cb, mock_config)
+    @test occursin("juliasyntax-tokens.css", transformed)
+    @test occursin("line-numbers.css", transformed)
+    @test occursin("ref-popup.css", transformed)
+    @test occursin("article.documenter-code-block", transformed)
+    @test occursin("showPopupFor", transformed)
+
+    # Test makedocs with MarkdownVitepress and CodeBlocks plugin (build_vitepress = false)
+    mktempdir() do root
+        root = realpath(root)
+        src_dir = joinpath(root, "src")
+        build_dir = joinpath(root, "build")
+        mkpath(src_dir)
+        write(joinpath(src_dir, "index.md"), """
+        # Test Page
+
+        ```julia
+        function add(x, y)
+            return x + y
+        end
+        ```
+        """)
+
+        run(pipeline(`$(Documenter.git()) -C $root init --quiet`, stdout=devnull))
+
+        doc = Documenter.makedocs(
+            root = root,
+            source = "src",
+            build = "build",
+            sitename = "CodeBlocksTest",
+            remotes = nothing,
+            warnonly = true,
+            format = DocumenterVitepress.MarkdownVitepress(
+                repo = "github.com/LuxDL/DocumenterVitepress.jl",
+                devbranch = "main",
+                devurl = "dev",
+                deploy_decision = Documenter.DeployDecision(; all_ok = false),
+                build_vitepress = false,
+                install_npm = false,
+            ),
+            plugins = [CodeBlocks()],
+            pages = ["Home" => "index.md"],
+        )
+
+        md_file = joinpath(build_dir, ".documenter", "index.md")
+        @test isfile(md_file)
+        md_content = read(md_file, String)
+        @test occursin("<pre v-pre id=\"c-", md_content)
+        @test occursin("line-numbers", md_content)
+        @test occursin("code-lines", md_content)
+        @test occursin("julia-keyword", md_content)
+    end
+end
+
