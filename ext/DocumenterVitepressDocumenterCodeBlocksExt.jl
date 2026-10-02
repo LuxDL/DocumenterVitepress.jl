@@ -21,6 +21,98 @@ function _get_page_state(doc::Documenter.Document, page::Documenter.Page)
     end
 end
 
+function _process_shiki_directives(html::AbstractString)
+    marker = "<span class=\"code-lines\""
+    idx = findfirst(marker, html)
+    idx === nothing && return (html, false)
+
+    gt = findnext('>', html, last(idx))
+    gt === nothing && return (html, false)
+    prefix = html[1:gt]
+
+    closing = findlast("</span>", html)
+    closing === nothing && return (html, false)
+    code_lines_inner = html[nextind(html, gt):prevind(html, first(closing))]
+    suffix = html[first(closing):end]
+
+    parts = split(code_lines_inner, r"<span class=\"line(?=[\s\>\"])")
+    length(parts) <= 1 && return (html, false)
+
+    nlines = length(parts) - 1
+    extra_classes = [String[] for _ in 1:nlines]
+    cleaned_parts = Vector{Tuple{String, String, String}}(undef, nlines)
+    has_focus_container = false
+
+    directive_regex = r"[\u200e\s]*\[!code\s+([^\s:\]]+)(?::(\d+))?\]"
+
+    for i in 1:nlines
+        part = parts[i+1]
+        first_gt = findfirst('>', part)
+        if first_gt === nothing
+            cleaned_parts[i] = ("", part, "")
+            continue
+        end
+        tag_attr = part[1:prevind(part, first_gt)]
+        body = part[nextind(part, first_gt):end]
+        last_span = findlast("</span>", body)
+        if last_span === nothing
+            cleaned_parts[i] = (tag_attr, body, "")
+            continue
+        end
+        line_content = body[1:prevind(body, first(last_span))]
+        trailing = body[nextind(body, last(last_span)):end]
+
+        for dm in eachmatch(directive_regex, line_content)
+            kind = dm.captures[1]
+            count_str = dm.captures[2]
+            count = count_str === nothing ? 1 : something(tryparse(Int, count_str), 1)
+
+            if kind == "highlight" || kind == "hl"
+                for k in i:min(i + count - 1, nlines)
+                    push!(extra_classes[k], "highlighted")
+                end
+            elseif kind == "focus"
+                has_focus_container = true
+                for k in i:min(i + count - 1, nlines)
+                    push!(extra_classes[k], "has-focus")
+                end
+            elseif kind == "--" || kind == "-"
+                push!(extra_classes[i], "diff", "remove")
+            elseif kind == "++" || kind == "+"
+                push!(extra_classes[i], "diff", "add")
+            elseif kind == "error"
+                push!(extra_classes[i], "error")
+            elseif kind == "warning"
+                push!(extra_classes[i], "warning")
+            end
+        end
+
+        cleaned = replace(line_content, r"\s*<span class=\"julia-comment\">\s*#[\u200e\s]*(?:\[!code\s+[^\s:\]]+(?::\d+)?\][\u200e\s]*)+\s*</span>" => "")
+        cleaned = replace(cleaned, directive_regex => "")
+        cleaned_parts[i] = (tag_attr, cleaned, trailing)
+    end
+
+    io = IOBuffer()
+    print(io, prefix, parts[1])
+    for i in 1:nlines
+        tag_attr, cleaned, trailing = cleaned_parts[i]
+        if isempty(extra_classes[i])
+            print(io, "<span class=\"line", tag_attr, ">", cleaned, "</span>", trailing)
+        else
+            existing = strip(tag_attr)
+            if startswith(existing, "\"")
+                existing = strip(existing, '"')
+            end
+            cls_set = unique(vcat(split(existing), extra_classes[i]))
+            cls_str = isempty(cls_set) ? "" : " " * join(cls_set, " ")
+            print(io, "<span class=\"line", cls_str, "\">", cleaned, "</span>", trailing)
+        end
+    end
+    print(io, suffix)
+
+    return (String(take!(io)), has_focus_container)
+end
+
 function _format_block_html(html::AbstractString)
     # Sanitize any link fragments in generated HTML to match VitePress's sanitized_anchor_label
     html = replace(html, r"(href=\"[^\"]*#)([^\" >]+)(\")" => function (m)
@@ -28,7 +120,11 @@ function _format_block_html(html::AbstractString)
         prefix, frag, suffix = matched.captures
         return prefix * replace(frag, r"[\[\]\(\)*]" => "") * suffix
     end)
-    # Add v-pre and wrap in <article class="documenter-code-block"> for line-numbers.js compatibility
+
+    # Process VitePress/Shiki code directives (line highlights, focus, diffs, error, warning)
+    html, has_focus = _process_shiki_directives(html)
+
+    # Add v-pre and wrap in <article class="documenter-code-block">
     if startswith(html, "<pre ")
         pre = "<pre v-pre " * SubString(html, 6)
     elseif startswith(html, "<pre>")
@@ -36,7 +132,8 @@ function _format_block_html(html::AbstractString)
     else
         pre = replace(html, "<pre " => "<pre v-pre ", count = 1)
     end
-    return "<article class=\"documenter-code-block\">" * pre * "</article>"
+    article_cls = has_focus ? "documenter-code-block has-focused-lines" : "documenter-code-block"
+    return "<article class=\"" * article_cls * "\">" * pre * "</article>"
 end
 
 # 1. Assets hook: point directly to the assets bundled with DocumenterCodeBlocks
@@ -98,6 +195,47 @@ function DV.vitepress_config_transform(plugin::DocumenterCodeBlocks.CodeBlocks, 
       }
       article.documenter-code-block code.line-numbers .line-num {
         background: var(--vp-code-block-bg, #f6f8fa);
+      }
+
+      /* Shiki / VitePress-compatible Line Highlighting in DocumenterCodeBlocks */
+      article.documenter-code-block .line.highlighted {
+        background-color: var(--vp-code-line-highlight-color, rgba(0, 0, 0, 0.05));
+      }
+      html.dark article.documenter-code-block .line.highlighted {
+        background-color: var(--vp-code-line-highlight-color, rgba(255, 255, 255, 0.05));
+      }
+
+      /* Diff lines: -- / ++ */
+      article.documenter-code-block .line.diff.remove {
+        background-color: var(--vp-code-line-diff-remove-color, rgba(244, 63, 94, 0.14));
+      }
+      article.documenter-code-block .line.diff.remove .line-num {
+        color: var(--vp-code-line-diff-remove-symbol-color, #f43f5e);
+      }
+      article.documenter-code-block .line.diff.add {
+        background-color: var(--vp-code-line-diff-add-color, rgba(16, 185, 129, 0.14));
+      }
+      article.documenter-code-block .line.diff.add .line-num {
+        color: var(--vp-code-line-diff-add-symbol-color, #10b981);
+      }
+
+      /* Error & Warning lines */
+      article.documenter-code-block .line.error {
+        background-color: var(--vp-code-line-error-color, rgba(244, 63, 94, 0.14));
+      }
+      article.documenter-code-block .line.warning {
+        background-color: var(--vp-code-line-warning-color, rgba(234, 179, 8, 0.14));
+      }
+
+      /* Focused lines (blurs non-focused lines until hovered) */
+      article.documenter-code-block.has-focused-lines .line:not(.has-focus) {
+        filter: blur(0.095rem);
+        opacity: 0.4;
+        transition: filter 0.35s ease, opacity 0.35s ease;
+      }
+      article.documenter-code-block.has-focused-lines:hover .line:not(.has-focus) {
+        filter: blur(0);
+        opacity: 1;
       }
 
       /* Fixed right-aligned action buttons (Copy + Link) */

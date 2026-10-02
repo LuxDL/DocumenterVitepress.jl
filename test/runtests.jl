@@ -467,6 +467,43 @@ end
         @test occursin("line-numbers", md_content)
         @test occursin("code-lines", md_content)
         @test occursin("julia-keyword", md_content)
+
+        # Test Shiki / VitePress directives in DocumenterCodeBlocks
+        write(joinpath(src_dir, "shiki.md"), """
+        # Shiki Directives
+
+        ```julia
+        x = 1 # [!code highlight]
+        y = 2 # [!code focus]
+        z = 3 # [!code --]
+        w = 4 # [!code ++]
+        ```
+        """)
+        doc = Documenter.makedocs(
+            root = root,
+            source = "src",
+            build = "build",
+            sitename = "CodeBlocksTest",
+            remotes = nothing,
+            warnonly = true,
+            format = DocumenterVitepress.MarkdownVitepress(
+                repo = "github.com/LuxDL/DocumenterVitepress.jl",
+                devbranch = "main",
+                devurl = "dev",
+                deploy_decision = Documenter.DeployDecision(; all_ok = false),
+                build_vitepress = false,
+                install_npm = false,
+            ),
+            plugins = [CodeBlocks()],
+            pages = ["Shiki" => "shiki.md"],
+        )
+        shiki_md = read(joinpath(build_dir, ".documenter", "shiki.md"), String)
+        @test occursin("has-focused-lines", shiki_md)
+        @test occursin("class=\"line highlighted\"", shiki_md)
+        @test occursin("class=\"line has-focus\"", shiki_md)
+        @test occursin("class=\"line diff remove\"", shiki_md)
+        @test occursin("class=\"line diff add\"", shiki_md)
+        @test !occursin("[!code", shiki_md) # directives stripped from output
     end
 end
 
