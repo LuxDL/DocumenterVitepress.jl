@@ -7,8 +7,20 @@ using Documenter: Documenter, MarkdownAST
 using .MarkdownAST: @ast
 
 
+# Register CitationPreview Vue component when show_hover is enabled on CitationBibliography
+function DV.vitepress_components(bib::DocumenterCitations.CitationBibliography)
+    if bib.show_hover
+        return [
+            (name = "CitationPreview", import_path = "@/CitationPreview.vue")
+        ]
+    end
+    return @NamedTuple{name::String, import_path::String}[]
+end
+
+
 # CitationSiteNode is an AST node that wraps citation links at a citation site.
-# We render the target anchor for backlinks (if any) and then render the children.
+# We render the target anchor for backlinks (if any) and render the children,
+# wrapping in <CitationPreview> if hover preview is enabled.
 function DV.render(
     io::IO,
     ::MIME"text/plain",
@@ -18,10 +30,22 @@ function DV.render(
     doc;
     kwargs...
 )
+    bib = try
+        Documenter.getplugin(doc, DocumenterCitations.CitationBibliography)
+    catch
+        nothing
+    end
+    show_hover = (bib !== nothing && bib.show_hover)
+
+    if show_hover
+        print(io, "<CitationPreview>")
+    end
+
     if !isempty(citation_site.id)
         print(io, "<a id='", citation_site.id, "'></a>")
     end
-    return DV.render(
+
+    res = DV.render(
         io,
         MIME"text/plain"(),
         node,
@@ -30,6 +54,12 @@ function DV.render(
         doc;
         kwargs...
     )
+
+    if show_hover
+        print(io, "</CitationPreview>")
+    end
+
+    return res
 end
 
 

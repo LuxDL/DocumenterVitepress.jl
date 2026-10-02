@@ -1,7 +1,7 @@
 # Changelog
 
 ## unreleased
-- Fix citation and backlink anchor navigation in `DocumenterCitations` extension [#392](https://github.com/LuxDL/DocumenterVitepress.jl/pull/392).
+- Fix citation and backlink anchor navigation and add citation hover preview in `DocumenterCitations` extension [#392](https://github.com/LuxDL/DocumenterVitepress.jl/pull/392).
 
 ## v0.3.6 - 2026-09-14
 - fix list numbering and indentation [#387](https://github.com/LuxDL/DocumenterVitepress.jl/pull/387).
