@@ -16,6 +16,7 @@ import AuthorBadge from '@/AuthorBadge.vue'
 import Authors from '@/Authors.vue'
 import SidebarDrawerToggle from '@/SidebarDrawerToggle.vue'
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
+// __DV_PLUGIN_COMPONENT_IMPORTS__
 
 import '@nolebase/vitepress-plugin-enhanced-readabilities/client/style.css'
 import './style.css' // You could setup your own, or else a default will be copied.
@@ -41,6 +42,7 @@ export const Theme: ThemeConfig = {
     app.component('VersionPicker', VersionPicker);
     app.component('AuthorBadge', AuthorBadge)
     app.component('Authors', Authors)
+    // __DV_PLUGIN_COMPONENT_REGISTRATIONS__
   }
 }
 export default Theme
