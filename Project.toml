@@ -16,23 +16,27 @@ NodeJS_20_jll = "c7aee132-11e1-519c-8219-0a43005e73c2"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
+[weakdeps]
+DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
+DocumenterCodeBlocks = "b6400b83-267f-4b55-9fd8-bffc853bdfd8"
+
+[extensions]
+DocumenterVitepressDocumenterCitationsExt = "DocumenterCitations"
+DocumenterVitepressDocumenterCodeBlocksExt = "DocumenterCodeBlocks"
+
 [compat]
 ANSIColoredPrinters = "0.0.1"
 DocInventories = "1.0"
 DocStringExtensions = "0.9"
 Documenter = "1.11"
 DocumenterCitations = "1.5"
+DocumenterCodeBlocks = "1.5"
 IOCapture = "0.2, 1"
 JSON = "0.21, 1"
 NodeJS_20_jll = "20"
 TOML = "0.2,1"
 julia = "1.10"
 
-[weakdeps]
-DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
-
-[extensions]
-DocumenterVitepressDocumenterCitationsExt = "DocumenterCitations"
-
 [extras]
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
+DocumenterCodeBlocks = "b6400b83-267f-4b55-9fd8-bffc853bdfd8"

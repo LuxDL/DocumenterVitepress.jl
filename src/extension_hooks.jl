@@ -37,3 +37,25 @@ directory (a file lands at `public/<filename>`). Missing paths are warned about
 and skipped. Default: empty.
 """
 vitepress_assets(::Documenter.Plugin) = String[]
+
+"""
+    vitepress_render_codeblock(plugin::Documenter.Plugin, io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::Documenter.MarkdownAST.CodeBlock, page, doc; kwargs...) -> Bool
+
+Hook for plugins to intercept rendering of `MarkdownAST.CodeBlock` nodes. Return `true` if handled, `false` to fall back to default rendering.
+"""
+vitepress_render_codeblock(::Documenter.Plugin, io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, code::Documenter.MarkdownAST.CodeBlock, page, doc; kwargs...) = false
+
+"""
+    vitepress_render_multicodeblock(plugin::Documenter.Plugin, io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc; kwargs...) -> Bool
+
+Hook for plugins to intercept rendering of `Documenter.MultiCodeBlock` nodes. Return `true` if handled, `false` to fall back to default rendering.
+"""
+vitepress_render_multicodeblock(::Documenter.Plugin, io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, mcb::Documenter.MultiCodeBlock, page, doc; kwargs...) = false
+
+"""
+    vitepress_page_footer(plugin::Documenter.Plugin, io::IO, page, doc; kwargs...)
+
+Hook for plugins to append content (e.g. tooltip payloads) to the end of a page's markdown output.
+"""
+vitepress_page_footer(::Documenter.Plugin, io::IO, page, doc; kwargs...) = nothing
+
