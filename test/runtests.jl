@@ -2,6 +2,8 @@ using DocumenterVitepress
 using DocumenterVitepress.Documenter
 using Test
 
+include("citations.jl")
+
 
 @testset "frontmatter YAML escaping" begin
     esc = DocumenterVitepress._escape_yaml_double_quoted

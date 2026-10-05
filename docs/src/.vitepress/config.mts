@@ -44,6 +44,7 @@ export default defineConfig({
     ['script', {src: `${baseTemp.base}siteinfo.js`}]
   ],
    markdown: {
+    component: { inlineTags: ['CitationPreview'] },
     codeTransformers: [juliaReplTransformer()],
     config(md) {
       md.use(tabsMarkdownPlugin);

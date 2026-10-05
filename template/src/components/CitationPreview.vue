@@ -25,6 +25,11 @@
   </span>
 </template>
 
+<script>
+// Shared across component instances; failed requests are evicted so hovers can retry.
+const bibliographyPages = new Map()
+</script>
+
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 
@@ -41,14 +46,15 @@ const popoverStyle = reactive({
 
 let hideTimer = null
 let showTimer = null
+let hoverRequest = 0
 
 function cleanReferenceHtml(el) {
   if (!el) return ''
   const container = el.closest('li') || el.closest('dd') || el.parentElement
   if (!container) return ''
   const clone = container.cloneNode(true)
-  // Remove backlink elements (pointing to cit-... or containing ↩)
-  const backlinks = clone.querySelectorAll('a[href*="#cit-"], a[href^="#cit-"]')
+  // Keep the preview focused on the reference, without its navigation backlinks.
+  const backlinks = clone.querySelectorAll('.citation-backlinks, a[href*="-cite-"]')
   backlinks.forEach((bl) => bl.remove())
   // Remove anchor tag if empty
   const anchor = clone.querySelector('.dv-bib-anchor, a[id]')
@@ -86,6 +92,37 @@ function updatePosition(targetEl) {
   popoverStyle.maxWidth = `${popoverWidth}px`
 }
 
+async function referenceHtml(link, targetId) {
+  const url = new URL(link.href)
+  if (url.origin !== window.location.origin) return ''
+  const current = new URL(window.location.href)
+  const pagePath = (pathname) => pathname.replace(/\.html$/, '').replace(/\/$/, '')
+  if (pagePath(url.pathname) === pagePath(current.pathname) && url.search === current.search) {
+    return cleanReferenceHtml(document.getElementById(targetId))
+  }
+  url.hash = ''
+  const key = url.href
+  if (!bibliographyPages.has(key)) {
+    const request = fetch(key).then(async (response) => {
+      if (!response.ok) throw new Error('Cannot load bibliography')
+      return new DOMParser().parseFromString(await response.text(), 'text/html')
+    }).catch((error) => {
+      bibliographyPages.delete(key)
+      throw error
+    })
+    bibliographyPages.set(key, request)
+  }
+  const page = await bibliographyPages.get(key)
+  const html = cleanReferenceHtml(page.getElementById(targetId))
+  // Resolve links against the bibliography's URL, rather than the citing page.
+  const preview = document.createElement('div')
+  preview.innerHTML = html
+  for (const anchor of preview.querySelectorAll('a[href]')) {
+    anchor.href = new URL(anchor.getAttribute('href'), url).href
+  }
+  return preview.innerHTML
+}
+
 function handleMouseOver(e) {
   const link = e.target.closest('a')
   if (!link) return
@@ -95,24 +132,27 @@ function handleMouseOver(e) {
   const hashIndex = href.indexOf('#')
   if (hashIndex === -1) return
   const targetId = decodeURIComponent(href.slice(hashIndex + 1))
-  if (!targetId || targetId.startsWith('cit-')) return
+  if (!targetId || /-cite-\d+$/.test(targetId)) return
 
   clearHideTimer()
+  if (showTimer) clearTimeout(showTimer)
+  const request = ++hoverRequest
   
-  showTimer = setTimeout(() => {
-    const targetEl = document.getElementById(targetId)
-    if (!targetEl) return
-
-    const html = cleanReferenceHtml(targetEl)
-    if (!html) return
-
-    previewContent.value = html
-    updatePosition(link)
-    visible.value = true
+  showTimer = setTimeout(async () => {
+    try {
+      const html = await referenceHtml(link, targetId)
+      if (!html || request !== hoverRequest) return
+      previewContent.value = html
+      updatePosition(link)
+      visible.value = true
+    } catch {
+      // The citation link remains usable if its preview cannot be loaded.
+    }
   }, 100)
 }
 
 function handleMouseLeave() {
+  hoverRequest++
   if (showTimer) clearTimeout(showTimer)
   scheduleHide()
 }
@@ -133,6 +173,8 @@ function scheduleHide() {
 }
 
 function handleScrollOrResize() {
+  hoverRequest++
+  if (showTimer) clearTimeout(showTimer)
   if (visible.value) {
     visible.value = false
   }
@@ -144,6 +186,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  hoverRequest++
   window.removeEventListener('scroll', handleScrollOrResize)
   window.removeEventListener('resize', handleScrollOrResize)
   clearHideTimer()

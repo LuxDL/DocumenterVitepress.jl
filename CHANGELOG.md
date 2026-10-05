@@ -2,6 +2,8 @@
 
 ## unreleased
 
+- Fixed citation rendering in lists and API docstrings, and enabled hover previews for bibliography entries on other pages [#399](https://github.com/LuxDL/DocumenterVitepress.jl/pull/399).
+
 ## v0.3.7 - 2026-10-02
 - Fix citation and backlink anchor navigation and add citation hover preview in `DocumenterCitations` extension [#392](https://github.com/LuxDL/DocumenterVitepress.jl/pull/392).
 
