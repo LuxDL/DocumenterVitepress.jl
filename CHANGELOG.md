@@ -2,6 +2,7 @@
 
 ## unreleased
 
+- Pinned `@nolebase/vitepress-plugin-enhanced-readabilities` to `~2.18.2` in the default `package.json`, since its 2.21 releases require VitePress 2 and made `npm install` fail with `ERESOLVE` [#400](https://github.com/LuxDL/DocumenterVitepress.jl/pull/400).
 - Fixed citation rendering in lists and API docstrings, and enabled hover previews for bibliography entries on other pages [#399](https://github.com/LuxDL/DocumenterVitepress.jl/pull/399).
 
 ## v0.3.7 - 2026-10-02

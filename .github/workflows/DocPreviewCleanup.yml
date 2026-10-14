@@ -20,6 +20,7 @@ jobs:
         with:
           version: '1'
       - name: Check for stale PR previews
+        id: check
         shell: julia --color=yes --project=@temp {0}
         run: |
           using Pkg
@@ -59,7 +60,6 @@ jobs:
 
           if isempty(stale_previews)
               @info "No stale previews"
-              exit(1)
           end
 
           for pr in stale_previews
@@ -67,7 +67,13 @@ jobs:
               @info "Removing $path"
               run(`git rm -rf $path`)
           end
+
+          # Only push when something was removed, instead of failing the job to skip it
+          open(ENV["GITHUB_OUTPUT"], "a") do io
+              println(io, "removed=", !isempty(stale_previews))
+          end
       - name: Push changes
+        if: steps.check.outputs.removed == 'true'
         run: |
           git config user.name "Documenter.jl"
           git config user.email "documenter@juliadocs.github.io"
