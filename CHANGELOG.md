@@ -2,6 +2,10 @@
 
 ## unreleased
 
+## v0.3.9 - 2026-10-23
+
+- Support DocStringExtensions v0.10 [#404](https://github.com/LuxDL/DocumenterVitepress.jl/issues/404)
+
 ## v0.3.8 - 2026-10-14
 
 - Pinned `@nolebase/vitepress-plugin-enhanced-readabilities` to `~2.18.2` in the default `package.json`, since its 2.21 releases require VitePress 2 and made `npm install` fail with `ERESOLVE` [#400](https://github.com/LuxDL/DocumenterVitepress.jl/pull/400).
