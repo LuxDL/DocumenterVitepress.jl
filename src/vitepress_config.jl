@@ -118,6 +118,8 @@ function modify_config_file(doc, settings, deploy_decision, i_folder, base)
     base_str = endswith(deploy_abspath, "/") ? "base: '$(deploy_abspath)$(deploy_relpath)'" : "base: '$(deploy_abspath)/$(deploy_relpath)'"
 
     push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_DEPLOY_ABSPATH" => deploy_abspath)
+    # `versions.js` is shared by all versions and lives at the deploy root
+    push!(replacers, "REPLACE_ME_DOCUMENTER_VITEPRESS_VERSIONS_JS" => rstrip(deploy_abspath, '/') * "/versions.js")
     push!(replacers, "base: 'REPLACE_ME_DOCUMENTER_VITEPRESS'" => base_str)
 
     # # Vitepress output path
