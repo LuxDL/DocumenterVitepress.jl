@@ -359,6 +359,37 @@ end
     @test out == bare_config
 end
 
+@testset "versions.js is loaded from the deploy root (issue #354)" begin
+    # The site root used to be guessed from the first segment of the page base, which
+    # only holds on github.io: on a root custom domain `/dev/versions.js` 404ed.
+    function versions_js_src(deploy_url)
+        mktempdir() do dir
+            dir = realpath(dir)
+            src = joinpath(dir, "src")
+            mkpath(src)
+            write(joinpath(src, "index.md"), "# Test\n")
+            run(pipeline(`$(Documenter.git()) -C $dir init --quiet`, stdout=devnull))
+            Documenter.makedocs(;
+                sitename = "Test", root = dir, source = "src", build = "build",
+                warnonly = true, remotes = nothing, pages = ["index.md"],
+                format = DocumenterVitepress.MarkdownVitepress(;
+                    repo = "github.com/test/Test.jl", devbranch = "main", devurl = "dev",
+                    deploy_url,
+                    # a subfolder, as on CI, so the root comes from `deploy_url`/`repo`
+                    deploy_decision = Documenter.DeployDecision(; all_ok = true, subfolder = "dev"),
+                    build_vitepress = false,
+                ),
+            )
+            config = read(joinpath(dir, "build", ".documenter", ".vitepress", "config.mts"), String)
+            m = match(r"\['script', \{src: '([^']*versions\.js)'\}\]", config)
+            m === nothing ? nothing : m.captures[1]
+        end
+    end
+    @test versions_js_src(nothing) == "/Test.jl/versions.js"                   # github.io
+    @test versions_js_src("https://example.org/") == "/versions.js"              # root custom domain
+    @test versions_js_src("https://example.org/sub/dir/") == "/sub/dir/versions.js"
+end
+
 @testset "plugin asset merge-copy" begin
     merge_copy! = DocumenterVitepress._merge_copy!
     mktempdir() do root

@@ -7,12 +7,6 @@ import path from 'path'
 
 const mathjax = mathjaxPlugin()
 
-function getBaseRepository(base: string): string {
-  if (!base || base === '/') return '/';
-  const parts = base.split('/').filter(Boolean);
-  return parts.length > 0 ? `/${parts[0]}/` : '/';
-}
-
 const baseTemp = {
   base: 'REPLACE_ME_DOCUMENTER_VITEPRESS',// TODO: replace this in makedocs!
 }
@@ -38,8 +32,8 @@ export default defineConfig({
   outDir: 'REPLACE_ME_DOCUMENTER_VITEPRESS', // This is required for MarkdownVitepress to work correctly...
   head: [
     ['link', { rel: 'icon', href: 'REPLACE_ME_DOCUMENTER_VITEPRESS_FAVICON' }],
-    ['script', {src: `${getBaseRepository(baseTemp.base)}versions.js`}],
-    // ['script', {src: '/versions.js'], for custom domains, I guess if deploy_url is available.
+    // shared by all versions, filled in by makedocs from the deploy root
+    ['script', {src: 'REPLACE_ME_DOCUMENTER_VITEPRESS_VERSIONS_JS'}],
     ['script', {src: `${baseTemp.base}siteinfo.js`}],
     // REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX
   ],
