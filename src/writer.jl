@@ -876,6 +876,9 @@ end
 function render_mime(io::IO, mime::MIME"text/html", node, element, page, doc; kwargs...)
     function escapehtml(io, text::AbstractString)
         for char in text
+            # A backslash starts an escape sequence in the template literal, so it is doubled:
+            # otherwise `\d` loses its backslash and `\1` is a syntax error.
+            char === '\\' ? write(io, "\\\\") :
             char === '<' ? write(io, "&lt;") :
             char === '>' ? write(io, "&gt;") :
             char === '&' ? write(io, "&amp;") :
