@@ -175,6 +175,25 @@ end
     @test esc("plain text") == "plain text"
 end
 
+@testset "text/html output escaping for the v-html template literal (issue #407)" begin
+    render(html) = sprint() do io
+        DocumenterVitepress.render_mime(io, MIME"text/html"(), nothing, HTML(html), nothing, nothing)
+    end
+    # The html is written into a js template literal (v-html="`…`"), where a backslash starts
+    # an escape sequence: vitepress would drop the backslash of `\d` and fail the build on
+    # `\1`. So every backslash must reach the literal doubled.
+    @test render(raw"<code>\d+</code>") ==
+        raw"""<div class="vp-raw-html" v-html="`&lt;code&gt;\\d+&lt;/code&gt;`"></div>""" * "\n"
+    # The same holds for output with a `<script>`, which takes the `v-exec-scripts` path.
+    script = render(raw"<script>var m = 'aa'.match(/(a)\1/), s = 'a\nb';</script>")
+    @test occursin("v-exec-scripts", script)
+    @test occursin(raw"/(a)\\1/", script)
+    @test occursin(raw"&#39;a\\nb&#39;", script)
+    # The escapes of a backtick and of `$` keep their single backslash.
+    @test render(raw"<code>`$x`</code>") ==
+        raw"""<div class="vp-raw-html" v-html="`&lt;code&gt;\`\$x\`&lt;/code&gt;`"></div>""" * "\n"
+end
+
 @testset "heading escaping (full vitepress round-trip)" begin
     mktempdir() do dir
         dir = realpath(dir)
