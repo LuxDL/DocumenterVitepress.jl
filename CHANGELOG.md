@@ -2,6 +2,7 @@
 
 ## unreleased
 
+- Keep the alt text of local images. They were written as `![](path)`, so their description was lost; it now becomes the alt text, as in Documenter's HTML output.
 - Load `versions.js` from the deploy root (`/` on a custom domain, `/Repo.jl` on github.io) instead of guessing it from the first segment of the page base, which made the version picker list only `dev` on sites deployed at the root of a custom domain [#354](https://github.com/LuxDL/DocumenterVitepress.jl/issues/354).
 
 ## v0.3.9 - 2026-10-23
