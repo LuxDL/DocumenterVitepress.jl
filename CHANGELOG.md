@@ -2,6 +2,8 @@
 
 ## unreleased
 
+## v0.3.10 - 2026-11-23
+
 - Fixed `@ansi` blocks being written to the page unexpanded (as a literal ` ```@ansi ` fence, with no colored output) on Documenter v1.20. Their matcher called `Documenter.iscode(node, r"^@ansi")`, and since Documenter v1.20 `iscode` compares the info string to a string instead of matching a `Regex`, so it never matched. The info string is now matched directly.
 - Fixed `@contents` blocks failing to render on Julia 1.14, where `Markdown.Link` text is always a vector and the one-argument `Markdown.plaininline` no longer exists [#410](https://github.com/LuxDL/DocumenterVitepress.jl/issues/410).
 - Keep the alt text of local images. They were written as `![](path)`, so their description was lost; it now becomes the alt text, as in Documenter's HTML output.
