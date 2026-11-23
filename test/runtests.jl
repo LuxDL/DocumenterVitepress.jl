@@ -357,6 +357,61 @@ Colored()
     end
 end
 
+@testset "@ansi blocks are expanded" begin
+    # Raw escape codes, so the result does not depend on the color of `stdout`.
+    md_content = raw"""
+# ANSI
+
+```@ansi
+print("\e[31mred\e[39m")
+```
+
+```@ansi named
+print("\e[32mgreen\e[39m")
+```
+"""
+    mktempdir() do dir
+        dir = realpath(dir)
+        src = joinpath(dir, "src")
+        mkpath(src)
+        write(joinpath(src, "index.md"), md_content)
+        run(pipeline(`$(Documenter.git()) -C $dir init --quiet`, stdout = devnull))
+
+        Documenter.makedocs(;
+            sitename = "Test",
+            root = dir,
+            source = "src",
+            build = "build",
+            warnonly = true,
+            remotes = nothing,
+            format = DocumenterVitepress.MarkdownVitepress(
+                repo = "github.com/test/Test.jl",
+                devbranch = "main",
+                devurl = "dev",
+                build_vitepress = false,  # only need the emitted markdown
+                deploy_decision = Documenter.DeployDecision(; all_ok = false),
+            ),
+            pages = ["index.md"],
+        )
+
+        rendered = read(joinpath(dir, "build", ".documenter", "index.md"), String)
+
+        @test !occursin("```@ansi", rendered)
+        @test occursin("```ansi\n\e[31mred\e[39m\n```", rendered)
+        @test occursin("```ansi\n\e[32mgreen\e[39m\n```", rendered)
+    end
+
+    isansiblock = DocumenterVitepress.isansiblock
+    codenode(info) = Documenter.MarkdownAST.Node(Documenter.MarkdownAST.CodeBlock(info, ""))
+    @test isansiblock(codenode("@ansi"))
+    @test isansiblock(codenode("@ansi name"))
+    @test isansiblock(codenode("@ansi name; k = 1"))
+    @test isansiblock(codenode("@ansi; k = 1"))
+    @test !isansiblock(codenode("@ansible"))
+    @test !isansiblock(codenode("ansi"))
+    @test !isansiblock(Documenter.MarkdownAST.Node(Documenter.MarkdownAST.Paragraph()))
+end
+
 @testset "noindex injection" begin
     apply_noindex = DocumenterVitepress.apply_noindex
     marker = "// REPLACE_ME_DOCUMENTER_VITEPRESS_NOINDEX"
