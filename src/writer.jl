@@ -708,7 +708,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
         anchor_frag = vitepress_anchor(anchor_frag)
         url = replace(string(path, anchor_frag), " " => "%20")
         anchor_id = replace(anchor.id, "-" => " ")
-        link = Markdown.Link(anchor_id, url)
+        link = Markdown.Link(Any[anchor_id], url)
         level = header.level
         # Reset level to 1 if this is a new path
         if path != current_path
@@ -718,7 +718,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
 
         print(io, "    "^(level - 1), "- ")
         linkfix = ".md#"
-        println(io, replace(Markdown.plaininline(link), linkfix => "#"))
+        println(io, replace(sprint(Markdown.plaininline, link), linkfix => "#"))
     end
     return println(io)
 end

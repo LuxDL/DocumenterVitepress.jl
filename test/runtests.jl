@@ -440,6 +440,27 @@ end
     @test versions_js_src("https://example.org/sub/dir/") == "/sub/dir/versions.js"
 end
 
+@testset "@contents block renders" begin
+    # Julia 1.14 made `Markdown.Link` text always a vector and dropped the one-argument
+    # `Markdown.plaininline`, so a `@contents` block failed to render there.
+    mktempdir() do dir
+        dir = realpath(dir)
+        src = joinpath(dir, "src")
+        mkpath(src)
+        write(joinpath(src, "index.md"), "# Home\n\n```@contents\n```\n\n## Section\n")
+        Documenter.makedocs(;
+            sitename = "Test", root = dir, source = "src", build = "build",
+            warnonly = true, remotes = nothing, pages = ["index.md"],
+            format = DocumenterVitepress.MarkdownVitepress(;
+                repo = "github.com/test/Test.jl", devbranch = "main", devurl = "dev",
+                build_vitepress = false,
+            ),
+        )
+        md = read(joinpath(dir, "build", ".documenter", "index.md"), String)
+        @test occursin("- [Home](index#home)\n    - [Section](index#section)\n", md)
+    end
+end
+
 @testset "plugin asset merge-copy" begin
     merge_copy! = DocumenterVitepress._merge_copy!
     mktempdir() do root
