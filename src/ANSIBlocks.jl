@@ -3,12 +3,16 @@ import Documenter: Selectors
 import Markdown, REPL
 import Base64: stringmime
 import IOCapture
-import Documenter: iscode, droplines, prepend_prompt, remove_sandbox_from_output
+import Documenter: droplines, prepend_prompt, remove_sandbox_from_output
+import Documenter: MarkdownAST
 
 abstract type ANSIBlocks <: Expanders.ExpanderPipeline end
 
+# Not `Documenter.iscode`: since Documenter v1.20 it no longer matches a `Regex`.
+isansiblock(node) = node.element isa MarkdownAST.CodeBlock && occursin(r"^@ansi(?:[\s;]|$)", node.element.info)
+
 Selectors.order(::Type{ANSIBlocks})     = 12.0
-Selectors.matcher(::Type{ANSIBlocks},     node, page, doc) = iscode(node, r"^@ansi")
+Selectors.matcher(::Type{ANSIBlocks},     node, page, doc) = isansiblock(node)
 
 function Selectors.runner(::Type{ANSIBlocks}, node, page, doc)
     matched = match(r"^@ansi(?:\s+([^\s;]+))?\s*(;.*)?$", node.element.info)
