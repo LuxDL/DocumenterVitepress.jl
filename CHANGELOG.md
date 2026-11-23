@@ -5,6 +5,7 @@
 - Fixed `@contents` blocks failing to render on Julia 1.14, where `Markdown.Link` text is always a vector and the one-argument `Markdown.plaininline` no longer exists [#410](https://github.com/LuxDL/DocumenterVitepress.jl/issues/410).
 - Keep the alt text of local images. They were written as `![](path)`, so their description was lost; it now becomes the alt text, as in Documenter's HTML output.
 - Load `versions.js` from the deploy root (`/` on a custom domain, `/Repo.jl` on github.io) instead of guessing it from the first segment of the page base, which made the version picker list only `dev` on sites deployed at the root of a custom domain [#354](https://github.com/LuxDL/DocumenterVitepress.jl/issues/354).
+- Fixed `text/html` show output that contains backslashes. The output is written into a JavaScript template literal (`v-html`), where an unescaped backslash started an escape sequence: `\1` in an inline script failed the VitePress build with `Invalid escape sequence in template`, and other backslashes (a regex `\d`, a JSON `\"`) were silently dropped from the page [#407](https://github.com/LuxDL/DocumenterVitepress.jl/issues/407).
 
 ## v0.3.9 - 2026-10-23
 
