@@ -193,6 +193,55 @@ end
     @test render(raw"<code>`$x`</code>") ==
         raw"""<div class="vp-raw-html" v-html="`&lt;code&gt;\`\$x\`&lt;/code&gt;`"></div>""" * "\n"
 end
+@testset "local images keep their alt text" begin
+    esc = DocumenterVitepress.escape_markdown_image_alt
+    @test esc("a figure") == "a figure"
+    # line breaks would split the image syntax, brackets and backslashes would end or change it
+    @test esc("a\n  figure") == "a figure"
+    @test esc("a [b] c") == "a \\[b\\] c"
+    @test esc("a\\b") == "a\\\\b"
+
+    mktempdir() do dir
+        dir = realpath(dir)
+        src = joinpath(dir, "src")
+        mkpath(joinpath(src, "assets"))
+        write(joinpath(src, "assets", "figure.svg"), """<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>""")
+        write(joinpath(src, "index.md"), """
+        # Images
+
+        ![A small figure](assets/figure.svg)
+
+        ![A figure with *emphasis*
+        over two lines](assets/figure.svg)
+
+        ![](assets/figure.svg)
+        """)
+
+        Documenter.makedocs(;
+            sitename = "Test",
+            root = dir,
+            source = "src",
+            build = "build",
+            warnonly = true,
+            remotes = nothing,
+            format = DocumenterVitepress.MarkdownVitepress(
+                repo = "github.com/test/Test.jl",
+                devbranch = "main",
+                devurl = "dev",
+                build_vitepress = false,  # only need the emitted markdown
+                deploy_decision = Documenter.DeployDecision(; all_ok = false),
+            ),
+            pages = ["index.md"],
+        )
+
+        rendered = read(joinpath(dir, "build", ".documenter", "index.md"), String)
+        @test occursin("![A small figure](assets/figure.svg)", rendered)
+        # inline markup stays Markdown inside the alt text, and the line break becomes a space
+        @test occursin("![A figure with *emphasis* over two lines](assets/figure.svg)", rendered)
+        # an image without a description keeps an empty alt text
+        @test occursin("![](assets/figure.svg)", rendered)
+  end
+end
 
 @testset "heading escaping (full vitepress round-trip)" begin
     mktempdir() do dir
@@ -407,6 +456,27 @@ end
     @test versions_js_src(nothing) == "/Test.jl/versions.js"                   # github.io
     @test versions_js_src("https://example.org/") == "/versions.js"              # root custom domain
     @test versions_js_src("https://example.org/sub/dir/") == "/sub/dir/versions.js"
+end
+
+@testset "@contents block renders" begin
+    # Julia 1.14 made `Markdown.Link` text always a vector and dropped the one-argument
+    # `Markdown.plaininline`, so a `@contents` block failed to render there.
+    mktempdir() do dir
+        dir = realpath(dir)
+        src = joinpath(dir, "src")
+        mkpath(src)
+        write(joinpath(src, "index.md"), "# Home\n\n```@contents\n```\n\n## Section\n")
+        Documenter.makedocs(;
+            sitename = "Test", root = dir, source = "src", build = "build",
+            warnonly = true, remotes = nothing, pages = ["index.md"],
+            format = DocumenterVitepress.MarkdownVitepress(;
+                repo = "github.com/test/Test.jl", devbranch = "main", devurl = "dev",
+                build_vitepress = false,
+            ),
+        )
+        md = read(joinpath(dir, "build", ".documenter", "index.md"), String)
+        @test occursin("- [Home](index#home)\n    - [Section](index#section)\n", md)
+    end
 end
 
 @testset "plugin asset merge-copy" begin

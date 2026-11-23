@@ -708,7 +708,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
         anchor_frag = vitepress_anchor(anchor_frag)
         url = replace(string(path, anchor_frag), " " => "%20")
         anchor_id = replace(anchor.id, "-" => " ")
-        link = Markdown.Link(anchor_id, url)
+        link = Markdown.Link(Any[anchor_id], url)
         level = header.level
         # Reset level to 1 if this is a new path
         if path != current_path
@@ -718,7 +718,7 @@ function render(io::IO, ::MIME"text/plain", node::Documenter.MarkdownAST.Node, c
 
         print(io, "    "^(level - 1), "- ")
         linkfix = ".md#"
-        println(io, replace(Markdown.plaininline(link), linkfix => "#"))
+        println(io, replace(sprint(Markdown.plaininline, link), linkfix => "#"))
     end
     return println(io)
 end
@@ -1150,6 +1150,9 @@ end
 # would surface as the literal 5-char string in the browser tab.
 escape_markdown_text(text::AbstractString) = replace(text, '<' => "&lt;", '>' => "&gt;")
 
+# The alt text of a Markdown image on one line, with the characters escaped that would end or change the image syntax
+escape_markdown_image_alt(text::AbstractString) = replace(text, r"\s+" => " ", r"([\\\[\]])" => s"\\\1")
+
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
     print(io, escape_markdown_text(autowrap_eqref(text.text)))
 end
@@ -1457,7 +1460,9 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         image_path = dirname(image_path) == "" ? "./" * image_path : image_path
         render_video_tag(io, mime, node, image_path, page, doc; kwargs...)
     else
-        println(io, "![]($image_path)")
+        # The description of the image is its alt text, as in Documenter's HTML output
+        alt = escape_markdown_image_alt(Documenter.MDFlatten.mdflatten(node.children))
+        println(io, "![", alt, "](", image_path, ")")
     end
 end
 
